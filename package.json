@@ -11,6 +11,9 @@
     "type": "git",
     "url": "git+https://github.com/bnanner/sculpture-park-core.git"
   },
+  "files": [
+    "/jsapi/*"
+  ],
   "keywords": [
     "glsl",
     "sdf",
