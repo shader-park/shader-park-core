@@ -1,4 +1,4 @@
-import {sourceGenerator} from './jsapi/generator.js'
+import {sourceGenerator} from './jsapi/generate'
 import {
     defaultVertexSource, 
     defaultFragSourceJS, 
