@@ -1,0 +1,36 @@
+{
+  "name": "sculpture-park-core",
+  "version": "0.0.1",
+  "description": "core glsl and js framework for sculpture-park",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bnanner/sculpture-park-core.git"
+  },
+  "keywords": [
+    "glsl",
+    "sdf",
+    "raymarching",
+    "js",
+    "signed",
+    "distance",
+    "field",
+    "procedural",
+    "modeling",
+    "realtime",
+    "graphics"
+  ],
+  "author": "Torin Blankensmith, Peter Whidden",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/bnanner/sculpture-park-core/issues"
+  },
+  "homepage": "https://github.com/bnanner/sculpture-park-core#readme",
+  "dependencies": {
+    "escodegen": "^1.11.1",
+    "esprima": "^4.0.1"
+  }
+}
