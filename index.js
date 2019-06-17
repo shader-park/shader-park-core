@@ -1,11 +1,11 @@
-import {sourceGenerator} from '/jsapi/generator.js'
+import {sourceGenerator} from './jsapi/generator.js'
 import {
     defaultVertexSource, 
     defaultFragSourceJS, 
     defaultFragSourceGLSL, 
     sculptureStarterCode, 
     fragFooter
-} from 'jsapi/default-shader.js'
+} from './jsapi/default-shader.js'
 
 module.exports = {
     sourceGenerator,
