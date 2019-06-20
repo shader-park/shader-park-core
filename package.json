@@ -5,7 +5,8 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node -r esm index.js"
   },
   "repository": {
     "type": "git",
@@ -32,6 +33,7 @@
   "homepage": "https://github.com/bnanner/sculpture-park-core#readme",
   "dependencies": {
     "escodegen": "^1.11.1",
+    "esm": "^3.2.25",
     "esprima": "^4.0.1"
   }
 }

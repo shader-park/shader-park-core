@@ -33,7 +33,7 @@ vec3 shade(vec3 p, vec3 normal) {
 }
 `;
 
-export const sculptureStarterCode = `
+export const defaultUniforms = `
 uniform mat4 projectionMatrix;
 uniform float time;
 uniform float opacity;
@@ -42,15 +42,23 @@ uniform vec3 mouse;
 uniform float stepSize;
 
 varying vec4 worldPos;
+`;
+
+export const sculptureStarterCode = `
+
 
 float surfaceDistance(vec3 p);
 
-const float PI = 3.14159265;
-const float TAU = PI*2.0;
-const float TWO_PI = TAU;
-
-const float max_dist = 4.0;
-const float intersection_threshold = 0.00007;
+#define PI 3.14159265
+#define TAU = 6.283185
+#define TWO_PI 6.283185307179586
+#define stepSize 0.9
+#ifdef USE_HLSL
+#define max_dist 25.0
+#else
+#define max_dist 4.0
+#endif
+#define intersection_threshold 0.00007
 
 // Trig functions normalized to the range 0.0-1.0
 float nsin(float x) {
@@ -96,7 +104,7 @@ float osc() {
 vec3 hsv2rgb( in vec3 c )
 {
     vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
-    return c.z * mix( vec3(1.0), rgb, c.y);
+    return c.z * mix( vec3(1.0,1.0,1.0), rgb, c.y);
 }
 
 vec3 rgb2hsv( in vec3 c)
@@ -112,7 +120,7 @@ vec3 rgb2hsv( in vec3 c)
 
 // Primitives
 
-float line(vec3 p, vec3 a, vec3 b) {
+float lineGeo(vec3 p, vec3 a, vec3 b) {
 	vec3 pa = p-a;
   	vec3 ba = b-a;
 	float t = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
@@ -120,7 +128,7 @@ float line(vec3 p, vec3 a, vec3 b) {
 }
 
 //line with radius
-float line( vec3 p, vec3 a, vec3 b, float radius ){
+float lineGeo( vec3 p, vec3 a, vec3 b, float radius ){
     vec3 pa = p - a, ba = b - a;
     float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
     return length( pa - ba*h ) - radius;
@@ -379,7 +387,7 @@ float noise( in vec2 p )
 	vec2 c = a - 1.0 + 2.0*K2;
     vec3 h = max( 0.5-vec3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );
 	vec3 n = h*h*h*h*vec3( dot(a,_hash(i+0.0)), dot(b,_hash(i+o)), dot(c,_hash(i+1.0)));
-    return dot( n, vec3(70.0) );
+    return dot( n, vec3(70.0,70.0,70.0) );
 }
 
 vec3 _hash33(vec3 p3)
@@ -399,7 +407,7 @@ float noise(vec3 p)
     vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);
     
     // thx nikita: https://www.shadertoy.com/view/XsX3zB
-    vec3 e = step(vec3(0.0), d0 - d0.yzx);
+    vec3 e = step(vec3(0.0,0.0,0.0), d0 - d0.yzx);
 	vec3 i1 = e * (1.0 - e.zxy);
 	vec3 i2 = 1.0 - e.zxy * (1.0 - e);
     
@@ -410,7 +418,7 @@ float noise(vec3 p)
     vec4 h = max(0.6 - vec4(dot(d0, d0), dot(d1, d1), dot(d2, d2), dot(d3, d3)), 0.0);
     vec4 n = h * h * h * h * vec4(dot(d0, _hash33(i)), dot(d1, _hash33(i + i1)), dot(d2, _hash33(i + i2)), dot(d3, _hash33(i + 1.0)));
     
-    return dot(vec4(31.316), n);
+    return dot(vec4(31.316,31.316,31.316,31.316), n);
 }
 
 float fractalNoise(vec3 p, float falloff, int iterations) {
@@ -452,8 +460,11 @@ vec4 sphericalDistribution( vec3 p, float n )
 
     mat2 iB = mat2( ka.y, -ka.x,
     kb.y, -kb.x ) / (ka.y*kb.x - ka.x*kb.y);
-
+    #ifdef USE_HLSL
+    vec2 c = floor( mul(vec2(phi, cosTheta - m),iB));
+    #else
     vec2 c = floor( iB * vec2(phi, cosTheta - m));
+    #endif
     float d = 8.0;
     float j = 0.0;
     vec3 bestQ = vec3(0.0,0.0,8.0);
@@ -490,14 +501,16 @@ float intersect(vec3 ro, vec3 rd, float stepFraction) {
 	return t;
 }
 
-vec3 getRayDirection() {
-	return normalize(worldPos.xyz-cameraPosition);
+vec3 getRayDirection(vec3 pos) {
+	return normalize(pos-cameraPosition);
 }
 
-vec3 mouseIntersection() {
-    vec3 rayDirection = getRayDirection();
+#ifndef USE_HLSL
+vec3 mouseIntersection(vec3 pos) {
+    vec3 rayDirection = getRayDirection(pos);
     return mouse+rayDirection*intersect(mouse, rayDirection, 0.8);
 }
+#endif
 
 // Calculate the normal of a SDF
 vec3 calcNormal( in vec3 pos )
@@ -512,7 +525,7 @@ vec3 calcNormal( in vec3 pos )
 float simpleLighting(vec3 p, vec3 normal, vec3 lightdir) {
     // Simple phong-like shading
     float value = clamp(dot(normal, normalize(lightdir)),0.0, 1.0);
-	return value * 0.3 + 0.7;
+	return value * 0.27 + 0.63;
 }
 
 float specularLighting(vec3 p, vec3 normal, vec3 lightDirection, float shine) {
@@ -545,13 +558,18 @@ float occlusion(vec3 p,vec3 n) {
 `;
 
 export const fragFooter = `
-// For advanced users //
-void main() {
+    #ifdef USE_HLSL
+    #define sculptureCenter mul(_Object2World, float4(0.0,0.0,0.0,1.0) ).xyz
+    #endif
 	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
-	vec3 rayDirection = getRayDirection();
+	vec3 rayDirection = getRayDirection(worldPos.xyz);
 	rayOrigin -= rayDirection*2.0;
-	float t = intersect(rayOrigin, rayDirection, stepSize);
+    float t = intersect(rayOrigin, rayDirection, stepSize);
+    #ifdef USE_HLSL
+    if(t < 20.0) {
+    #else
 	if(t < 2.5) {
+    #endif
 		vec3 p = (rayOrigin + rayDirection*t);
 		//vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0);
 		vec3 normal = calcNormal(p);
@@ -561,8 +579,9 @@ void main() {
 	} else {
 		discard;
 	}
-}
 `;
+
+export const fragFooterWMain = "void main() {\n" + fragFooter + "\n}";
 
 export const voxelFooter = `
 void main() {
