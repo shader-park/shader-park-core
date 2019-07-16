@@ -2,11 +2,20 @@
   "name": "sculpture-park-core",
   "version": "0.0.1",
   "description": "core glsl and js framework for sculpture-park",
-  "main": "index.js",
+  "main": "dist/sculpture-park-core.cjs.js",
+  "module": "dist/sculpture-park-core.esm.js",
+  "browser": "dist/sculpture-park-core.umd.js",
+  "bundle": "dist/sculpture-park-core.bundle.js",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "node test/test.js",
+    "pretest": "npm run build"
   },
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bnanner/sculpture-park-core.git"
@@ -33,5 +42,14 @@
   "dependencies": {
     "escodegen": "^1.11.1",
     "esprima": "^4.0.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.5.4",
+    "@babel/preset-env": "^7.5.4",
+    "rollup": "^1.15.6",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.0.1",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0"
   }
 }

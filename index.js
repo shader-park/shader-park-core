@@ -7,7 +7,7 @@ import {
     fragFooter
 } from './jsapi/default-shader.js'
 
-module.exports = {
+export {
     sourceGenerator,
     defaultVertexSource,
     defaultFragSourceJS,
