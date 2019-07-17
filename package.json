@@ -2,15 +2,15 @@
   "name": "sculpture-park-core",
   "version": "0.0.1",
   "description": "core glsl and js framework for sculpture-park",
-  "main": "dist/sculpture-park-core.cjs.js",
+  "main": "dist/sculpture-park-core.esm.js",
+  "csj": "dist/sculpture-park-core.cjs.js",
   "module": "dist/sculpture-park-core.esm.js",
   "browser": "dist/sculpture-park-core.umd.js",
   "bundle": "dist/sculpture-park-core.bundle.js",
   "private": true,
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "test": "node test/test.js",
+    "build": "rollup -c --no-treeshake",
+    "dev": "rollup -c -w --no-treeshake",
     "pretest": "npm run build"
   },
   "files": [

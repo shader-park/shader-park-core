@@ -12,12 +12,771 @@ function _typeof(obj) {
   return _typeof(obj);
 }
 
+var REACT_ELEMENT_TYPE;
+
+function _jsx(type, props, key, children) {
+  if (!REACT_ELEMENT_TYPE) {
+    REACT_ELEMENT_TYPE = typeof Symbol === "function" && Symbol["for"] && Symbol["for"]("react.element") || 0xeac7;
+  }
+
+  var defaultProps = type && type.defaultProps;
+  var childrenLength = arguments.length - 3;
+
+  if (!props && childrenLength !== 0) {
+    props = {
+      children: void 0
+    };
+  }
+
+  if (props && defaultProps) {
+    for (var propName in defaultProps) {
+      if (props[propName] === void 0) {
+        props[propName] = defaultProps[propName];
+      }
+    }
+  } else if (!props) {
+    props = defaultProps || {};
+  }
+
+  if (childrenLength === 1) {
+    props.children = children;
+  } else if (childrenLength > 1) {
+    var childArray = new Array(childrenLength);
+
+    for (var i = 0; i < childrenLength; i++) {
+      childArray[i] = arguments[i + 3];
+    }
+
+    props.children = childArray;
+  }
+
+  return {
+    $$typeof: REACT_ELEMENT_TYPE,
+    type: type,
+    key: key === undefined ? null : '' + key,
+    ref: null,
+    props: props,
+    _owner: null
+  };
+}
+
+function _asyncIterator(iterable) {
+  var method;
+
+  if (typeof Symbol !== "undefined") {
+    if (Symbol.asyncIterator) {
+      method = iterable[Symbol.asyncIterator];
+      if (method != null) return method.call(iterable);
+    }
+
+    if (Symbol.iterator) {
+      method = iterable[Symbol.iterator];
+      if (method != null) return method.call(iterable);
+    }
+  }
+
+  throw new TypeError("Object is not async iterable");
+}
+
+function _AwaitValue(value) {
+  this.wrapped = value;
+}
+
+function _AsyncGenerator(gen) {
+  var front, back;
+
+  function send(key, arg) {
+    return new Promise(function (resolve, reject) {
+      var request = {
+        key: key,
+        arg: arg,
+        resolve: resolve,
+        reject: reject,
+        next: null
+      };
+
+      if (back) {
+        back = back.next = request;
+      } else {
+        front = back = request;
+        resume(key, arg);
+      }
+    });
+  }
+
+  function resume(key, arg) {
+    try {
+      var result = gen[key](arg);
+      var value = result.value;
+      var wrappedAwait = value instanceof _AwaitValue;
+      Promise.resolve(wrappedAwait ? value.wrapped : value).then(function (arg) {
+        if (wrappedAwait) {
+          resume("next", arg);
+          return;
+        }
+
+        settle(result.done ? "return" : "normal", arg);
+      }, function (err) {
+        resume("throw", err);
+      });
+    } catch (err) {
+      settle("throw", err);
+    }
+  }
+
+  function settle(type, value) {
+    switch (type) {
+      case "return":
+        front.resolve({
+          value: value,
+          done: true
+        });
+        break;
+
+      case "throw":
+        front.reject(value);
+        break;
+
+      default:
+        front.resolve({
+          value: value,
+          done: false
+        });
+        break;
+    }
+
+    front = front.next;
+
+    if (front) {
+      resume(front.key, front.arg);
+    } else {
+      back = null;
+    }
+  }
+
+  this._invoke = send;
+
+  if (typeof gen.return !== "function") {
+    this.return = undefined;
+  }
+}
+
+if (typeof Symbol === "function" && Symbol.asyncIterator) {
+  _AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+    return this;
+  };
+}
+
+_AsyncGenerator.prototype.next = function (arg) {
+  return this._invoke("next", arg);
+};
+
+_AsyncGenerator.prototype.throw = function (arg) {
+  return this._invoke("throw", arg);
+};
+
+_AsyncGenerator.prototype.return = function (arg) {
+  return this._invoke("return", arg);
+};
+
+function _wrapAsyncGenerator(fn) {
+  return function () {
+    return new _AsyncGenerator(fn.apply(this, arguments));
+  };
+}
+
+function _awaitAsyncGenerator(value) {
+  return new _AwaitValue(value);
+}
+
+function _asyncGeneratorDelegate(inner, awaitWrap) {
+  var iter = {},
+      waiting = false;
+
+  function pump(key, value) {
+    waiting = true;
+    value = new Promise(function (resolve) {
+      resolve(inner[key](value));
+    });
+    return {
+      done: false,
+      value: awaitWrap(value)
+    };
+  }
+
+  ;
+
+  if (typeof Symbol === "function" && Symbol.iterator) {
+    iter[Symbol.iterator] = function () {
+      return this;
+    };
+  }
+
+  iter.next = function (value) {
+    if (waiting) {
+      waiting = false;
+      return value;
+    }
+
+    return pump("next", value);
+  };
+
+  if (typeof inner.throw === "function") {
+    iter.throw = function (value) {
+      if (waiting) {
+        waiting = false;
+        throw value;
+      }
+
+      return pump("throw", value);
+    };
+  }
+
+  if (typeof inner.return === "function") {
+    iter.return = function (value) {
+      return pump("return", value);
+    };
+  }
+
+  return iter;
+}
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+  try {
+    var info = gen[key](arg);
+    var value = info.value;
+  } catch (error) {
+    reject(error);
+    return;
+  }
+
+  if (info.done) {
+    resolve(value);
+  } else {
+    Promise.resolve(value).then(_next, _throw);
+  }
+}
+
+function _asyncToGenerator(fn) {
+  return function () {
+    var self = this,
+        args = arguments;
+    return new Promise(function (resolve, reject) {
+      var gen = fn.apply(self, args);
+
+      function _next(value) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+      }
+
+      function _throw(err) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+      }
+
+      _next(undefined);
+    });
+  };
+}
+
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
+
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
+  }
+}
+
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
+
+function _defineEnumerableProperties(obj, descs) {
+  for (var key in descs) {
+    var desc = descs[key];
+    desc.configurable = desc.enumerable = true;
+    if ("value" in desc) desc.writable = true;
+    Object.defineProperty(obj, key, desc);
+  }
+
+  if (Object.getOwnPropertySymbols) {
+    var objectSymbols = Object.getOwnPropertySymbols(descs);
+
+    for (var i = 0; i < objectSymbols.length; i++) {
+      var sym = objectSymbols[i];
+      var desc = descs[sym];
+      desc.configurable = desc.enumerable = true;
+      if ("value" in desc) desc.writable = true;
+      Object.defineProperty(obj, sym, desc);
+    }
+  }
+
+  return obj;
+}
+
+function _defaults(obj, defaults) {
+  var keys = Object.getOwnPropertyNames(defaults);
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var value = Object.getOwnPropertyDescriptor(defaults, key);
+
+    if (value && value.configurable && obj[key] === undefined) {
+      Object.defineProperty(obj, key, value);
+    }
+  }
+
+  return obj;
+}
+
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
+function _extends() {
+  _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
+  return _extends.apply(this, arguments);
+}
+
+function _objectSpread(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+    var ownKeys = Object.keys(source);
+
+    if (typeof Object.getOwnPropertySymbols === 'function') {
+      ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(source, sym).enumerable;
+      }));
+    }
+
+    ownKeys.forEach(function (key) {
+      _defineProperty(target, key, source[key]);
+    });
+  }
+
+  return target;
+}
+
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    keys.push.apply(keys, Object.getOwnPropertySymbols(object));
+  }
+
+  if (enumerableOnly) keys = keys.filter(function (sym) {
+    return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+  });
+  return keys;
+}
+
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+
+    if (i % 2) {
+      ownKeys(source, true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(source).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+  }
+
+  return target;
+}
+
+function _inherits(subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function");
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) _setPrototypeOf(subClass, superClass);
+}
+
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
+}
+
+function _getPrototypeOf(o) {
+  _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+    return o.__proto__ || Object.getPrototypeOf(o);
+  };
+  return _getPrototypeOf(o);
+}
+
+function _setPrototypeOf(o, p) {
+  _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+    o.__proto__ = p;
+    return o;
+  };
+
+  return _setPrototypeOf(o, p);
+}
+
+function isNativeReflectConstruct() {
+  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+  if (Reflect.construct.sham) return false;
+  if (typeof Proxy === "function") return true;
+
+  try {
+    Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function _construct(Parent, args, Class) {
+  if (isNativeReflectConstruct()) {
+    _construct = Reflect.construct;
+  } else {
+    _construct = function _construct(Parent, args, Class) {
+      var a = [null];
+      a.push.apply(a, args);
+      var Constructor = Function.bind.apply(Parent, a);
+      var instance = new Constructor();
+      if (Class) _setPrototypeOf(instance, Class.prototype);
+      return instance;
+    };
+  }
+
+  return _construct.apply(null, arguments);
+}
+
+function _isNativeFunction(fn) {
+  return Function.toString.call(fn).indexOf("[native code]") !== -1;
+}
+
+function _wrapNativeSuper(Class) {
+  var _cache = typeof Map === "function" ? new Map() : undefined;
+
+  _wrapNativeSuper = function _wrapNativeSuper(Class) {
+    if (Class === null || !_isNativeFunction(Class)) return Class;
+
+    if (typeof Class !== "function") {
+      throw new TypeError("Super expression must either be null or a function");
+    }
+
+    if (typeof _cache !== "undefined") {
+      if (_cache.has(Class)) return _cache.get(Class);
+
+      _cache.set(Class, Wrapper);
+    }
+
+    function Wrapper() {
+      return _construct(Class, arguments, _getPrototypeOf(this).constructor);
+    }
+
+    Wrapper.prototype = Object.create(Class.prototype, {
+      constructor: {
+        value: Wrapper,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    return _setPrototypeOf(Wrapper, Class);
+  };
+
+  return _wrapNativeSuper(Class);
+}
+
+function _instanceof(left, right) {
+  if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) {
+    return right[Symbol.hasInstance](left);
+  } else {
+    return left instanceof right;
+  }
+}
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {
+    default: obj
+  };
+}
+
+function _interopRequireWildcard(obj) {
+  if (obj && obj.__esModule) {
+    return obj;
+  } else {
+    var newObj = {};
+
+    if (obj != null) {
+      for (var key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {};
+
+          if (desc.get || desc.set) {
+            Object.defineProperty(newObj, key, desc);
+          } else {
+            newObj[key] = obj[key];
+          }
+        }
+      }
+    }
+
+    newObj.default = obj;
+    return newObj;
+  }
+}
+
+function _newArrowCheck(innerThis, boundThis) {
+  if (innerThis !== boundThis) {
+    throw new TypeError("Cannot instantiate an arrow function");
+  }
+}
+
+function _objectDestructuringEmpty(obj) {
+  if (obj == null) throw new TypeError("Cannot destructure undefined");
+}
+
+function _objectWithoutPropertiesLoose(source, excluded) {
+  if (source == null) return {};
+  var target = {};
+  var sourceKeys = Object.keys(source);
+  var key, i;
+
+  for (i = 0; i < sourceKeys.length; i++) {
+    key = sourceKeys[i];
+    if (excluded.indexOf(key) >= 0) continue;
+    target[key] = source[key];
+  }
+
+  return target;
+}
+
+function _objectWithoutProperties(source, excluded) {
+  if (source == null) return {};
+
+  var target = _objectWithoutPropertiesLoose(source, excluded);
+
+  var key, i;
+
+  if (Object.getOwnPropertySymbols) {
+    var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
+
+    for (i = 0; i < sourceSymbolKeys.length; i++) {
+      key = sourceSymbolKeys[i];
+      if (excluded.indexOf(key) >= 0) continue;
+      if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue;
+      target[key] = source[key];
+    }
+  }
+
+  return target;
+}
+
+function _assertThisInitialized(self) {
+  if (self === void 0) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return self;
+}
+
+function _possibleConstructorReturn(self, call) {
+  if (call && (typeof call === "object" || typeof call === "function")) {
+    return call;
+  }
+
+  return _assertThisInitialized(self);
+}
+
+function _superPropBase(object, property) {
+  while (!Object.prototype.hasOwnProperty.call(object, property)) {
+    object = _getPrototypeOf(object);
+    if (object === null) break;
+  }
+
+  return object;
+}
+
+function _get(target, property, receiver) {
+  if (typeof Reflect !== "undefined" && Reflect.get) {
+    _get = Reflect.get;
+  } else {
+    _get = function _get(target, property, receiver) {
+      var base = _superPropBase(target, property);
+
+      if (!base) return;
+      var desc = Object.getOwnPropertyDescriptor(base, property);
+
+      if (desc.get) {
+        return desc.get.call(receiver);
+      }
+
+      return desc.value;
+    };
+  }
+
+  return _get(target, property, receiver || target);
+}
+
+function set(target, property, value, receiver) {
+  if (typeof Reflect !== "undefined" && Reflect.set) {
+    set = Reflect.set;
+  } else {
+    set = function set(target, property, value, receiver) {
+      var base = _superPropBase(target, property);
+
+      var desc;
+
+      if (base) {
+        desc = Object.getOwnPropertyDescriptor(base, property);
+
+        if (desc.set) {
+          desc.set.call(receiver, value);
+          return true;
+        } else if (!desc.writable) {
+          return false;
+        }
+      }
+
+      desc = Object.getOwnPropertyDescriptor(receiver, property);
+
+      if (desc) {
+        if (!desc.writable) {
+          return false;
+        }
+
+        desc.value = value;
+        Object.defineProperty(receiver, property, desc);
+      } else {
+        _defineProperty(receiver, property, value);
+      }
+
+      return true;
+    };
+  }
+
+  return set(target, property, value, receiver);
+}
+
+function _set(target, property, value, receiver, isStrict) {
+  var s = set(target, property, value, receiver || target);
+
+  if (!s && isStrict) {
+    throw new Error('failed to set property');
+  }
+
+  return value;
+}
+
+function _taggedTemplateLiteral(strings, raw) {
+  if (!raw) {
+    raw = strings.slice(0);
+  }
+
+  return Object.freeze(Object.defineProperties(strings, {
+    raw: {
+      value: Object.freeze(raw)
+    }
+  }));
+}
+
+function _taggedTemplateLiteralLoose(strings, raw) {
+  if (!raw) {
+    raw = strings.slice(0);
+  }
+
+  strings.raw = raw;
+  return strings;
+}
+
+function _temporalRef(val, name) {
+  if (val === _temporalUndefined) {
+    throw new ReferenceError(name + " is not defined - temporal dead zone");
+  } else {
+    return val;
+  }
+}
+
+function _readOnlyError(name) {
+  throw new Error("\"" + name + "\" is read-only");
+}
+
+function _classNameTDZError(name) {
+  throw new Error("Class \"" + name + "\" cannot be referenced in computed property keys.");
+}
+
+var _temporalUndefined = {};
+
 function _slicedToArray(arr, i) {
   return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
 }
 
+function _slicedToArrayLoose(arr, i) {
+  return _arrayWithHoles(arr) || _iterableToArrayLimitLoose(arr, i) || _nonIterableRest();
+}
+
+function _toArray(arr) {
+  return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest();
+}
+
+function _toConsumableArray(arr) {
+  return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+}
+
+function _arrayWithoutHoles(arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+}
+
 function _arrayWithHoles(arr) {
   if (Array.isArray(arr)) return arr;
+}
+
+function _iterableToArray(iter) {
+  if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
 }
 
 function _iterableToArrayLimit(arr, i) {
@@ -46,8 +805,649 @@ function _iterableToArrayLimit(arr, i) {
   return _arr;
 }
 
+function _iterableToArrayLimitLoose(arr, i) {
+  var _arr = [];
+
+  for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
+    _arr.push(_step.value);
+
+    if (i && _arr.length === i) break;
+  }
+
+  return _arr;
+}
+
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance");
+}
+
 function _nonIterableRest() {
   throw new TypeError("Invalid attempt to destructure non-iterable instance");
+}
+
+function _skipFirstGeneratorNext(fn) {
+  return function () {
+    var it = fn.apply(this, arguments);
+    it.next();
+    return it;
+  };
+}
+
+function _toPrimitive(input, hint) {
+  if (typeof input !== "object" || input === null) return input;
+  var prim = input[Symbol.toPrimitive];
+
+  if (prim !== undefined) {
+    var res = prim.call(input, hint || "default");
+    if (typeof res !== "object") return res;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+
+  return (hint === "string" ? String : Number)(input);
+}
+
+function _toPropertyKey(arg) {
+  var key = _toPrimitive(arg, "string");
+
+  return typeof key === "symbol" ? key : String(key);
+}
+
+function _initializerWarningHelper(descriptor, context) {
+  throw new Error('Decorating class property failed. Please ensure that ' + 'proposal-class-properties is enabled and set to use loose mode. ' + 'To use proposal-class-properties in spec mode with decorators, wait for ' + 'the next major version of decorators in stage 2.');
+}
+
+function _initializerDefineProperty(target, property, descriptor, context) {
+  if (!descriptor) return;
+  Object.defineProperty(target, property, {
+    enumerable: descriptor.enumerable,
+    configurable: descriptor.configurable,
+    writable: descriptor.writable,
+    value: descriptor.initializer ? descriptor.initializer.call(context) : void 0
+  });
+}
+
+function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) {
+  var desc = {};
+  Object.keys(descriptor).forEach(function (key) {
+    desc[key] = descriptor[key];
+  });
+  desc.enumerable = !!desc.enumerable;
+  desc.configurable = !!desc.configurable;
+
+  if ('value' in desc || desc.initializer) {
+    desc.writable = true;
+  }
+
+  desc = decorators.slice().reverse().reduce(function (desc, decorator) {
+    return decorator(target, property, desc) || desc;
+  }, desc);
+
+  if (context && desc.initializer !== void 0) {
+    desc.value = desc.initializer ? desc.initializer.call(context) : void 0;
+    desc.initializer = undefined;
+  }
+
+  if (desc.initializer === void 0) {
+    Object.defineProperty(target, property, desc);
+    desc = null;
+  }
+
+  return desc;
+}
+
+var id = 0;
+
+function _classPrivateFieldLooseKey(name) {
+  return "__private_" + id++ + "_" + name;
+}
+
+function _classPrivateFieldLooseBase(receiver, privateKey) {
+  if (!Object.prototype.hasOwnProperty.call(receiver, privateKey)) {
+    throw new TypeError("attempted to use private field on non-instance");
+  }
+
+  return receiver;
+}
+
+function _classPrivateFieldGet(receiver, privateMap) {
+  var descriptor = privateMap.get(receiver);
+
+  if (!descriptor) {
+    throw new TypeError("attempted to get private field on non-instance");
+  }
+
+  if (descriptor.get) {
+    return descriptor.get.call(receiver);
+  }
+
+  return descriptor.value;
+}
+
+function _classPrivateFieldSet(receiver, privateMap, value) {
+  var descriptor = privateMap.get(receiver);
+
+  if (!descriptor) {
+    throw new TypeError("attempted to set private field on non-instance");
+  }
+
+  if (descriptor.set) {
+    descriptor.set.call(receiver, value);
+  } else {
+    if (!descriptor.writable) {
+      throw new TypeError("attempted to set read only private field");
+    }
+
+    descriptor.value = value;
+  }
+
+  return value;
+}
+
+function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) {
+  if (receiver !== classConstructor) {
+    throw new TypeError("Private static access of wrong provenance");
+  }
+
+  return descriptor.value;
+}
+
+function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) {
+  if (receiver !== classConstructor) {
+    throw new TypeError("Private static access of wrong provenance");
+  }
+
+  if (!descriptor.writable) {
+    throw new TypeError("attempted to set read only private field");
+  }
+
+  descriptor.value = value;
+  return value;
+}
+
+function _classStaticPrivateMethodGet(receiver, classConstructor, method) {
+  if (receiver !== classConstructor) {
+    throw new TypeError("Private static access of wrong provenance");
+  }
+
+  return method;
+}
+
+function _classStaticPrivateMethodSet() {
+  throw new TypeError("attempted to set read only static private field");
+}
+
+function _decorate(decorators, factory, superClass, mixins) {
+  var api = _getDecoratorsApi();
+
+  if (mixins) {
+    for (var i = 0; i < mixins.length; i++) {
+      api = mixins[i](api);
+    }
+  }
+
+  var r = factory(function initialize(O) {
+    api.initializeInstanceElements(O, decorated.elements);
+  }, superClass);
+  var decorated = api.decorateClass(_coalesceClassElements(r.d.map(_createElementDescriptor)), decorators);
+  api.initializeClassElements(r.F, decorated.elements);
+  return api.runClassFinishers(r.F, decorated.finishers);
+}
+
+function _getDecoratorsApi() {
+  _getDecoratorsApi = function () {
+    return api;
+  };
+
+  var api = {
+    elementsDefinitionOrder: [["method"], ["field"]],
+    initializeInstanceElements: function (O, elements) {
+      ["method", "field"].forEach(function (kind) {
+        elements.forEach(function (element) {
+          if (element.kind === kind && element.placement === "own") {
+            this.defineClassElement(O, element);
+          }
+        }, this);
+      }, this);
+    },
+    initializeClassElements: function (F, elements) {
+      var proto = F.prototype;
+      ["method", "field"].forEach(function (kind) {
+        elements.forEach(function (element) {
+          var placement = element.placement;
+
+          if (element.kind === kind && (placement === "static" || placement === "prototype")) {
+            var receiver = placement === "static" ? F : proto;
+            this.defineClassElement(receiver, element);
+          }
+        }, this);
+      }, this);
+    },
+    defineClassElement: function (receiver, element) {
+      var descriptor = element.descriptor;
+
+      if (element.kind === "field") {
+        var initializer = element.initializer;
+        descriptor = {
+          enumerable: descriptor.enumerable,
+          writable: descriptor.writable,
+          configurable: descriptor.configurable,
+          value: initializer === void 0 ? void 0 : initializer.call(receiver)
+        };
+      }
+
+      Object.defineProperty(receiver, element.key, descriptor);
+    },
+    decorateClass: function (elements, decorators) {
+      var newElements = [];
+      var finishers = [];
+      var placements = {
+        static: [],
+        prototype: [],
+        own: []
+      };
+      elements.forEach(function (element) {
+        this.addElementPlacement(element, placements);
+      }, this);
+      elements.forEach(function (element) {
+        if (!_hasDecorators(element)) return newElements.push(element);
+        var elementFinishersExtras = this.decorateElement(element, placements);
+        newElements.push(elementFinishersExtras.element);
+        newElements.push.apply(newElements, elementFinishersExtras.extras);
+        finishers.push.apply(finishers, elementFinishersExtras.finishers);
+      }, this);
+
+      if (!decorators) {
+        return {
+          elements: newElements,
+          finishers: finishers
+        };
+      }
+
+      var result = this.decorateConstructor(newElements, decorators);
+      finishers.push.apply(finishers, result.finishers);
+      result.finishers = finishers;
+      return result;
+    },
+    addElementPlacement: function (element, placements, silent) {
+      var keys = placements[element.placement];
+
+      if (!silent && keys.indexOf(element.key) !== -1) {
+        throw new TypeError("Duplicated element (" + element.key + ")");
+      }
+
+      keys.push(element.key);
+    },
+    decorateElement: function (element, placements) {
+      var extras = [];
+      var finishers = [];
+
+      for (var decorators = element.decorators, i = decorators.length - 1; i >= 0; i--) {
+        var keys = placements[element.placement];
+        keys.splice(keys.indexOf(element.key), 1);
+        var elementObject = this.fromElementDescriptor(element);
+        var elementFinisherExtras = this.toElementFinisherExtras((0, decorators[i])(elementObject) || elementObject);
+        element = elementFinisherExtras.element;
+        this.addElementPlacement(element, placements);
+
+        if (elementFinisherExtras.finisher) {
+          finishers.push(elementFinisherExtras.finisher);
+        }
+
+        var newExtras = elementFinisherExtras.extras;
+
+        if (newExtras) {
+          for (var j = 0; j < newExtras.length; j++) {
+            this.addElementPlacement(newExtras[j], placements);
+          }
+
+          extras.push.apply(extras, newExtras);
+        }
+      }
+
+      return {
+        element: element,
+        finishers: finishers,
+        extras: extras
+      };
+    },
+    decorateConstructor: function (elements, decorators) {
+      var finishers = [];
+
+      for (var i = decorators.length - 1; i >= 0; i--) {
+        var obj = this.fromClassDescriptor(elements);
+        var elementsAndFinisher = this.toClassDescriptor((0, decorators[i])(obj) || obj);
+
+        if (elementsAndFinisher.finisher !== undefined) {
+          finishers.push(elementsAndFinisher.finisher);
+        }
+
+        if (elementsAndFinisher.elements !== undefined) {
+          elements = elementsAndFinisher.elements;
+
+          for (var j = 0; j < elements.length - 1; j++) {
+            for (var k = j + 1; k < elements.length; k++) {
+              if (elements[j].key === elements[k].key && elements[j].placement === elements[k].placement) {
+                throw new TypeError("Duplicated element (" + elements[j].key + ")");
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        elements: elements,
+        finishers: finishers
+      };
+    },
+    fromElementDescriptor: function (element) {
+      var obj = {
+        kind: element.kind,
+        key: element.key,
+        placement: element.placement,
+        descriptor: element.descriptor
+      };
+      var desc = {
+        value: "Descriptor",
+        configurable: true
+      };
+      Object.defineProperty(obj, Symbol.toStringTag, desc);
+      if (element.kind === "field") obj.initializer = element.initializer;
+      return obj;
+    },
+    toElementDescriptors: function (elementObjects) {
+      if (elementObjects === undefined) return;
+      return _toArray(elementObjects).map(function (elementObject) {
+        var element = this.toElementDescriptor(elementObject);
+        this.disallowProperty(elementObject, "finisher", "An element descriptor");
+        this.disallowProperty(elementObject, "extras", "An element descriptor");
+        return element;
+      }, this);
+    },
+    toElementDescriptor: function (elementObject) {
+      var kind = String(elementObject.kind);
+
+      if (kind !== "method" && kind !== "field") {
+        throw new TypeError('An element descriptor\'s .kind property must be either "method" or' + ' "field", but a decorator created an element descriptor with' + ' .kind "' + kind + '"');
+      }
+
+      var key = _toPropertyKey(elementObject.key);
+
+      var placement = String(elementObject.placement);
+
+      if (placement !== "static" && placement !== "prototype" && placement !== "own") {
+        throw new TypeError('An element descriptor\'s .placement property must be one of "static",' + ' "prototype" or "own", but a decorator created an element descriptor' + ' with .placement "' + placement + '"');
+      }
+
+      var descriptor = elementObject.descriptor;
+      this.disallowProperty(elementObject, "elements", "An element descriptor");
+      var element = {
+        kind: kind,
+        key: key,
+        placement: placement,
+        descriptor: Object.assign({}, descriptor)
+      };
+
+      if (kind !== "field") {
+        this.disallowProperty(elementObject, "initializer", "A method descriptor");
+      } else {
+        this.disallowProperty(descriptor, "get", "The property descriptor of a field descriptor");
+        this.disallowProperty(descriptor, "set", "The property descriptor of a field descriptor");
+        this.disallowProperty(descriptor, "value", "The property descriptor of a field descriptor");
+        element.initializer = elementObject.initializer;
+      }
+
+      return element;
+    },
+    toElementFinisherExtras: function (elementObject) {
+      var element = this.toElementDescriptor(elementObject);
+
+      var finisher = _optionalCallableProperty(elementObject, "finisher");
+
+      var extras = this.toElementDescriptors(elementObject.extras);
+      return {
+        element: element,
+        finisher: finisher,
+        extras: extras
+      };
+    },
+    fromClassDescriptor: function (elements) {
+      var obj = {
+        kind: "class",
+        elements: elements.map(this.fromElementDescriptor, this)
+      };
+      var desc = {
+        value: "Descriptor",
+        configurable: true
+      };
+      Object.defineProperty(obj, Symbol.toStringTag, desc);
+      return obj;
+    },
+    toClassDescriptor: function (obj) {
+      var kind = String(obj.kind);
+
+      if (kind !== "class") {
+        throw new TypeError('A class descriptor\'s .kind property must be "class", but a decorator' + ' created a class descriptor with .kind "' + kind + '"');
+      }
+
+      this.disallowProperty(obj, "key", "A class descriptor");
+      this.disallowProperty(obj, "placement", "A class descriptor");
+      this.disallowProperty(obj, "descriptor", "A class descriptor");
+      this.disallowProperty(obj, "initializer", "A class descriptor");
+      this.disallowProperty(obj, "extras", "A class descriptor");
+
+      var finisher = _optionalCallableProperty(obj, "finisher");
+
+      var elements = this.toElementDescriptors(obj.elements);
+      return {
+        elements: elements,
+        finisher: finisher
+      };
+    },
+    runClassFinishers: function (constructor, finishers) {
+      for (var i = 0; i < finishers.length; i++) {
+        var newConstructor = (0, finishers[i])(constructor);
+
+        if (newConstructor !== undefined) {
+          if (typeof newConstructor !== "function") {
+            throw new TypeError("Finishers must return a constructor.");
+          }
+
+          constructor = newConstructor;
+        }
+      }
+
+      return constructor;
+    },
+    disallowProperty: function (obj, name, objectType) {
+      if (obj[name] !== undefined) {
+        throw new TypeError(objectType + " can't have a ." + name + " property.");
+      }
+    }
+  };
+  return api;
+}
+
+function _createElementDescriptor(def) {
+  var key = _toPropertyKey(def.key);
+
+  var descriptor;
+
+  if (def.kind === "method") {
+    descriptor = {
+      value: def.value,
+      writable: true,
+      configurable: true,
+      enumerable: false
+    };
+  } else if (def.kind === "get") {
+    descriptor = {
+      get: def.value,
+      configurable: true,
+      enumerable: false
+    };
+  } else if (def.kind === "set") {
+    descriptor = {
+      set: def.value,
+      configurable: true,
+      enumerable: false
+    };
+  } else if (def.kind === "field") {
+    descriptor = {
+      configurable: true,
+      writable: true,
+      enumerable: true
+    };
+  }
+
+  var element = {
+    kind: def.kind === "field" ? "field" : "method",
+    key: key,
+    placement: def.static ? "static" : def.kind === "field" ? "own" : "prototype",
+    descriptor: descriptor
+  };
+  if (def.decorators) element.decorators = def.decorators;
+  if (def.kind === "field") element.initializer = def.value;
+  return element;
+}
+
+function _coalesceGetterSetter(element, other) {
+  if (element.descriptor.get !== undefined) {
+    other.descriptor.get = element.descriptor.get;
+  } else {
+    other.descriptor.set = element.descriptor.set;
+  }
+}
+
+function _coalesceClassElements(elements) {
+  var newElements = [];
+
+  var isSameElement = function (other) {
+    return other.kind === "method" && other.key === element.key && other.placement === element.placement;
+  };
+
+  for (var i = 0; i < elements.length; i++) {
+    var element = elements[i];
+    var other;
+
+    if (element.kind === "method" && (other = newElements.find(isSameElement))) {
+      if (_isDataDescriptor(element.descriptor) || _isDataDescriptor(other.descriptor)) {
+        if (_hasDecorators(element) || _hasDecorators(other)) {
+          throw new ReferenceError("Duplicated methods (" + element.key + ") can't be decorated.");
+        }
+
+        other.descriptor = element.descriptor;
+      } else {
+        if (_hasDecorators(element)) {
+          if (_hasDecorators(other)) {
+            throw new ReferenceError("Decorators can't be placed on different accessors with for " + "the same property (" + element.key + ").");
+          }
+
+          other.decorators = element.decorators;
+        }
+
+        _coalesceGetterSetter(element, other);
+      }
+    } else {
+      newElements.push(element);
+    }
+  }
+
+  return newElements;
+}
+
+function _hasDecorators(element) {
+  return element.decorators && element.decorators.length;
+}
+
+function _isDataDescriptor(desc) {
+  return desc !== undefined && !(desc.value === undefined && desc.writable === undefined);
+}
+
+function _optionalCallableProperty(obj, name) {
+  var value = obj[name];
+
+  if (value !== undefined && typeof value !== "function") {
+    throw new TypeError("Expected '" + name + "' to be a function");
+  }
+
+  return value;
+}
+
+function _classPrivateMethodGet(receiver, privateSet, fn) {
+  if (!privateSet.has(receiver)) {
+    throw new TypeError("attempted to get private field on non-instance");
+  }
+
+  return fn;
+}
+
+function _classPrivateMethodSet() {
+  throw new TypeError("attempted to reassign private method");
+}
+
+function _wrapRegExp(re, groups) {
+  _wrapRegExp = function (re, groups) {
+    return new BabelRegExp(re, groups);
+  };
+
+  var _RegExp = _wrapNativeSuper(RegExp);
+
+  var _super = RegExp.prototype;
+
+  var _groups = new WeakMap();
+
+  function BabelRegExp(re, groups) {
+    var _this = _RegExp.call(this, re);
+
+    _groups.set(_this, groups);
+
+    return _this;
+  }
+
+  _inherits(BabelRegExp, _RegExp);
+
+  BabelRegExp.prototype.exec = function (str) {
+    var result = _super.exec.call(this, str);
+
+    if (result) result.groups = buildGroups(result, this);
+    return result;
+  };
+
+  BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
+    if (typeof substitution === "string") {
+      var groups = _groups.get(this);
+
+      return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
+        return "$" + groups[name];
+      }));
+    } else if (typeof substitution === "function") {
+      var _this = this;
+
+      return _super[Symbol.replace].call(this, str, function () {
+        var args = [];
+        args.push.apply(args, arguments);
+
+        if (typeof args[args.length - 1] !== "object") {
+          args.push(buildGroups(args, _this));
+        }
+
+        return substitution.apply(this, args);
+      });
+    } else {
+      return _super[Symbol.replace].call(this, str, substitution);
+    }
+  };
+
+  function buildGroups(result, re) {
+    var g = _groups.get(re);
+
+    return Object.keys(g).reduce(function (groups, name) {
+      groups[name] = result[g[name]];
+      return groups;
+    }, Object.create(null));
+  }
+
+  return _wrapRegExp.apply(this, arguments);
 }
 
 // Numbers represent type - 
@@ -203,6 +1603,10 @@ var glslBuiltInOther = {
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
+function commonjsRequire () {
+	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
+}
+
 function unwrapExports (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
@@ -263,6 +1667,7 @@ var estraverse = createCommonjsModule(function (module, exports) {
 /*jshint indent:4*/
 /*global exports:true*/
 (function clone(exports) {
+    'use strict';
 
     var Syntax,
         isArray,
@@ -273,6 +1678,8 @@ var estraverse = createCommonjsModule(function (module, exports) {
         BREAK,
         SKIP,
         REMOVE;
+
+    function ignoreJSHintError() { }
 
     isArray = Array.isArray;
     if (!isArray) {
@@ -296,6 +1703,17 @@ var estraverse = createCommonjsModule(function (module, exports) {
         return ret;
     }
 
+    function shallowCopy(obj) {
+        var ret = {}, key;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                ret[key] = obj[key];
+            }
+        }
+        return ret;
+    }
+    ignoreJSHintError(shallowCopy);
+
     // based on LLVM libc++ upper_bound / lower_bound
     // MIT License
 
@@ -317,6 +1735,26 @@ var estraverse = createCommonjsModule(function (module, exports) {
         }
         return i;
     }
+
+    function lowerBound(array, func) {
+        var diff, len, i, current;
+
+        len = array.length;
+        i = 0;
+
+        while (len) {
+            diff = len >>> 1;
+            current = i + diff;
+            if (func(array[current])) {
+                i = current + 1;
+                len -= diff + 1;
+            } else {
+                len = diff;
+            }
+        }
+        return i;
+    }
+    ignoreJSHintError(lowerBound);
 
     objectCreate = Object.create || (function () {
         function F() { }
@@ -1078,6 +2516,7 @@ var ast = createCommonjsModule(function (module) {
 */
 
 (function () {
+    'use strict';
 
     function isExpression(node) {
         if (node == null) { return false; }
@@ -1231,6 +2670,7 @@ var code = createCommonjsModule(function (module) {
 */
 
 (function () {
+    'use strict';
 
     var ES6Regex, ES5Regex, NON_ASCII_WHITESPACES, IDENTIFIER_START, IDENTIFIER_PART, ch;
 
@@ -1376,6 +2816,7 @@ var keyword = createCommonjsModule(function (module) {
 */
 
 (function () {
+    'use strict';
 
     var code$1 = code;
 
@@ -1553,6 +2994,7 @@ var utils = createCommonjsModule(function (module, exports) {
 
 
 (function () {
+    'use strict';
 
     exports.ast = ast;
     exports.code = code;
@@ -4810,6 +6252,7 @@ var escodegen = createCommonjsModule(function (module, exports) {
 
 /*global exports:true, require:true, global:true*/
 (function () {
+    'use strict';
 
     var Syntax,
         Precedence,
@@ -7387,7 +8830,15 @@ var escodegen_7 = escodegen.FORMAT_DEFAULTS;
 var esprima = createCommonjsModule(function (module, exports) {
 (function webpackUniversalModuleDefinition(root, factory) {
 /* istanbul ignore next */
-	module.exports = factory();
+	if('object' === 'object' && 'object' === 'object')
+		module.exports = factory();
+	else if(typeof undefined === 'function' && undefined.amd)
+		undefined([], factory);
+/* istanbul ignore next */
+	else if('object' === 'object')
+		exports["esprima"] = factory();
+	else
+		root["esprima"] = factory();
 })(commonjsGlobal, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -7435,6 +8886,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	/*
 	  Copyright JS Foundation and other contributors, https://js.foundation/
 
@@ -7556,6 +9009,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	var syntax_1 = __webpack_require__(2);
 	var CommentHandler = (function () {
@@ -7709,6 +9164,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 2 */
 /***/ function(module, exports) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Syntax = {
 	    AssignmentExpression: 'AssignmentExpression',
@@ -7783,6 +9240,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 /* istanbul ignore next */
 	var __extends = (this && this.__extends) || (function () {
 	    var extendStatics = Object.setPrototypeOf ||
@@ -8325,6 +9784,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 4 */
 /***/ function(module, exports) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	// See also tools/generate-unicode-regex.js.
 	var Regex = {
@@ -8383,6 +9844,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	var jsx_syntax_1 = __webpack_require__(6);
 	/* tslint:disable:max-classes-per-file */
@@ -8486,6 +9949,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 6 */
 /***/ function(module, exports) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.JSXSyntax = {
 	    JSXAttribute: 'JSXAttribute',
@@ -8505,6 +9970,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	var syntax_1 = __webpack_require__(2);
 	/* tslint:disable:max-classes-per-file */
@@ -9183,6 +10650,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	var assert_1 = __webpack_require__(9);
 	var error_handler_1 = __webpack_require__(10);
@@ -12330,6 +13799,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 9 */
 /***/ function(module, exports) {
+
+	"use strict";
 	// Ensure the condition is true, otherwise throw an error.
 	// This is only to have a better contract semantic, i.e. another safety net
 	// to catch a logic error. The condition shall be fulfilled in normal case.
@@ -12347,6 +13818,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 10 */
 /***/ function(module, exports) {
+
+	"use strict";
 	/* tslint:disable:max-classes-per-file */
 	Object.defineProperty(exports, "__esModule", { value: true });
 	var ErrorHandler = (function () {
@@ -12408,6 +13881,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 11 */
 /***/ function(module, exports) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	// Error messages should be identical to V8.
 	exports.Messages = {
@@ -12475,6 +13950,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	var assert_1 = __webpack_require__(9);
 	var character_1 = __webpack_require__(4);
@@ -13624,6 +15101,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 13 */
 /***/ function(module, exports) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.TokenName = {};
 	exports.TokenName[1 /* BooleanLiteral */] = 'Boolean';
@@ -13641,6 +15120,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 14 */
 /***/ function(module, exports) {
+
+	"use strict";
 	// Generated by generate-xhtml-entities.js. DO NOT MODIFY!
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.XHTMLEntities = {
@@ -13902,6 +15383,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 15 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	var error_handler_1 = __webpack_require__(10);
 	var scanner_1 = __webpack_require__(12);
@@ -14053,16 +15536,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ }
 /******/ ])
 });
+;
 });
 
 var esprima$1 = unwrapExports(esprima);
-var esprima_1 = esprima.parseScript;
-
-var esprima$2 = /*#__PURE__*/Object.freeze({
-  'default': esprima$1,
-  __moduleExports: esprima,
-  parseScript: esprima_1
-});
+var esprima_1 = esprima.parse;
 
 function buildGeoSource(geo) {
   return "\nfloat surfaceDistance(vec3 p) {\n    vec3 normal = vec3(0.0,1.0,0.0);\n    float d = 100.0;\n    vec3 op = p;\n".concat(geo, "\n    return d;\n}");
@@ -14117,19 +15595,25 @@ function replaceBinaryOp(syntaxTree) {
 }
 
 function sourceGenerator(userProvidedSrc) {
-  var tree = undefined(userProvidedSrc);
+  var tree = esprima_1(userProvidedSrc);
   replaceBinaryOp(tree);
   userProvidedSrc = escodegen_2(tree);
   var generatedJSFuncsSource = "";
   var geoSrc = "";
   var colorSrc = "";
   var varCount = 0;
+  var primCount = 0;
   var useLighting = true;
+  var debug = false;
 
   function appendSources(source) {
     geoSrc += "    " + source;
     colorSrc += "    " + source;
   }
+
+  function appendColorSource(source) {
+    colorSrc += "    " + source;
+  } // General Variable class
 
 
   function makeVar(source, type, dims, inline) {
@@ -14212,6 +15696,19 @@ function sourceGenerator(userProvidedSrc) {
     if (dims === 3) return new vec3(source, null, null, inline);
     if (dims === 4) return new vec4(source, null, null, null, inline);
   } // Modes enum
+
+
+  var modes = {
+    UNION: 10,
+    DIFFERENCE: 11,
+    INTERSECT: 12,
+    BLEND: 13,
+    MIXGEO: 14
+  };
+  var additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
+  var currentMode = modes.UNION;
+  var blendAmount = 0.0;
+  var mixAmount = 0.0;
   var time = new float("time", true);
   var x = new float("p.x", true);
   var y = new float("p.y", true);
@@ -14226,6 +15723,22 @@ function sourceGenerator(userProvidedSrc) {
     console.log(err, " char: " + geoSrc.length);
   }
 
+  function ensureScalar(funcName, val) {
+    var tp = _typeof(val);
+
+    if (typeof val !== 'number' && val.type !== 'float') {
+      compileError("'" + funcName + "'" + " accepts only a scalar. Was given: '" + val.type + "'");
+    }
+  }
+
+  function ensureGroupOp(funcName, a, b) {
+    if (typeof a !== 'string' && typeof b !== 'string') {
+      if (a.dims !== 1 && b.dims !== 1 && a.dims !== b.dims) {
+        compileError("'" + funcName + "'" + " dimension mismatch. Was given: '" + a.type + "' and '" + b.type + "'");
+      }
+    }
+  }
+
   function collapseToString(val) {
     if (typeof val === 'string') {
       return val;
@@ -14235,6 +15748,151 @@ function sourceGenerator(userProvidedSrc) {
       return val.toString();
     }
   } // Modes (prepend these with GEO or something to indicate they are geometry modes?)
+  // Also 'mix' name needs to be changed to avoid collision with built in
+
+
+  function union() {
+    currentMode = modes.UNION;
+  }
+
+  function difference() {
+    currentMode = modes.DIFFERENCE;
+  }
+
+  function intersect() {
+    currentMode = modes.INTERSECT;
+  }
+
+  function blend(amount) {
+    currentMode = modes.BLEND;
+    ensureScalar("blend", amount);
+    blendAmount = amount;
+  }
+
+  function mixGeo(amount) {
+    currentMode = modes.MIXGEO;
+    ensureScalar("mixGeo", amount);
+    mixAmount = amount;
+  }
+
+  function getMode() {
+    switch (currentMode) {
+      case modes.UNION:
+        return ["add"];
+        break;
+
+      case modes.DIFFERENCE:
+        return ["subtract"];
+        break;
+
+      case modes.INTERSECT:
+        return ["intersect"];
+        break;
+
+      case modes.BLEND:
+        return ["smoothAdd", blendAmount];
+        break;
+
+      case modes.MIXGEO:
+        return ["mix", mixAmount];
+        break;
+
+      default:
+        return ["add"];
+    }
+  }
+
+  function applyMode(prim) {
+    var cmode = getMode();
+    var primName = "prim_" + primCount;
+    primCount += 1;
+    appendSources("float " + primName + " = " + prim + ";\n");
+
+    if (additiveModes.includes(currentMode)) {
+      appendColorSource("if (" + primName + " < d) { color = selectedColor; }\n");
+    }
+
+    appendSources("d = " + cmode[0] + "( " + primName + ", d " + (cmode.length > 1 ? "," + collapseToString(cmode[1]) : "") + " );\n");
+  }
+
+  function tryMakeNum(v) {
+    if (typeof v === 'number') {
+      return new float(v);
+    } else {
+      return v;
+    }
+  } /// Math ///
+  // Group ops
+
+
+  function mult(a, b) {
+    if (typeof a === 'number' && typeof b === 'number') return a * b;
+    a = tryMakeNum(a);
+    b = tryMakeNum(b);
+
+    if (debug) {
+      console.log("multiplying...");
+      console.log("a: ", a);
+      console.log("b: ", b);
+    }
+
+    ensureGroupOp("mult", a, b);
+    var dims = Math.max(a.dims, b.dims);
+    return new makeVarWithDims("(" + collapseToString(a) + "*" + collapseToString(b) + ")", dims);
+  }
+
+  function add(a, b) {
+    if (typeof a === 'number' && typeof b === 'number') return a + b;
+    a = tryMakeNum(a);
+    b = tryMakeNum(b);
+
+    if (debug) {
+      console.log("adding...");
+      console.log("a: ", a);
+      console.log("b: ", b);
+    }
+
+    ensureGroupOp("add", a, b);
+    var dims = Math.max(a.dims, b.dims);
+    return new makeVarWithDims("(" + collapseToString(a) + "+" + collapseToString(b) + ")", dims);
+  }
+
+  function sub(a, b) {
+    if (typeof a === 'number' && typeof b === 'number') return a - b;
+    a = tryMakeNum(a);
+    b = tryMakeNum(b);
+
+    if (debug) {
+      console.log("subtracting...");
+      console.log("a: ", a);
+      console.log("b: ", b);
+    }
+
+    ensureGroupOp("sub", a, b);
+    var dims = Math.max(a.dims, b.dims);
+    return new makeVarWithDims("(" + collapseToString(a) + "-" + collapseToString(b) + ")", dims);
+  }
+
+  function divide(a, b) {
+    if (typeof a === 'number' && typeof b === 'number') return a / b;
+    a = tryMakeNum(a);
+    b = tryMakeNum(b);
+
+    if (debug) {
+      console.log("dividing...");
+      console.log("a: ", a);
+      console.log("b: ", b);
+    }
+
+    ensureGroupOp("divide", a, b);
+    var dims = Math.max(a.dims, b.dims);
+    return new makeVarWithDims("(" + collapseToString(a) + "/" + collapseToString(b) + ")", dims);
+  }
+
+  function applyDistance(dist) {
+    ensureScalar("applyDistance", dist);
+    applyMode(collapseToString(dist));
+  }
 
   var primitivesJS = ""; // generate js which generates glsl geometry
 
@@ -14383,6 +16041,109 @@ function sourceGenerator(userProvidedSrc) {
 
   generatedJSFuncsSource += builtInOneToOneJS; // Displacements
 
+  function reset() {
+    appendSources("p = op;\n");
+  }
+
+  function displace(xc, yc, zc) {
+    if (yc === undefined || zc === undefined) {
+      appendSources("p -= " + collapseToString(xc) + ";\n");
+    } else {
+      ensureScalar("displace", xc);
+      ensureScalar("displace", yc);
+      ensureScalar("displace", zc);
+      appendSources("p -= vec3( " + collapseToString(xc) + ", " + collapseToString(yc) + ", " + collapseToString(zc) + ");\n");
+    }
+  }
+
+  function expand(amount) {
+    ensureScalar("expand", amount);
+    appendSources("d -= " + collapseToString(amount) + ";\n");
+  }
+
+  function shell(depth) {
+    ensureScalar("shell", depth);
+    appendSources("d = shell( d," + collapseToString(depth) + ");\n");
+  }
+
+  function rotateX(angle) {
+    ensureScalar("rotateX", angle);
+    appendSources("p.yz = p.yz*rot2(" + collapseToString(angle) + ");\n");
+  }
+
+  function rotateY(angle) {
+    ensureScalar("rotateY", angle);
+    appendSources("p.xz = p.xz*rot2(" + collapseToString(angle) + ");\n");
+  }
+
+  function rotateZ(angle) {
+    ensureScalar("rotateZ", angle);
+    appendSources("p.xy = p.xy*rot2(" + collapseToString(angle) + ");\n");
+  }
+
+  function mirrorX() {
+    appendSources("p.x = abs(p.x);\n");
+  }
+
+  function mirrorY() {
+    appendSources("p.y = abs(p.y);\n");
+  }
+
+  function mirrorZ() {
+    appendSources("p.z = abs(p.z);\n");
+  }
+
+  function mirrorXYZ() {
+    appendSources("p = abs(p);\n");
+  } // Color/Lighting
+
+
+  function color(col, green, blue) {
+    if (green !== undefined) {
+      ensureScalar("color", col);
+      ensureScalar("color", green);
+      ensureScalar("color", blue);
+      appendColorSource("selectedColor = vec3(" + collapseToString(col) + ", " + collapseToString(green) + ", " + collapseToString(blue) + ");\n");
+    } else {
+      if (col.type !== 'vec3') compileError("color must be vec3");
+      appendColorSource("selectedColor = " + collapseToString(col) + ";\n");
+    }
+  }
+
+  function lightDirection(x, y, z) {
+    if (y === undefined || z === undefined) {
+      appendColorSource("lightDirection = " + collapseToString(x) + ";\n");
+    } else {
+      ensureScalar("lightDirection", x);
+      ensureScalar("lightDirection", y);
+      ensureScalar("lightDirection", z);
+      appendColorSource("lightDirection = vec3( " + collapseToString(x) + ", " + collapseToString(y) + ", " + collapseToString(z) + ");\n");
+    }
+  } // should this also be 'op'? 
+
+
+  function noLighting() {
+    useLighting = false;
+  } // replaced with a noop for now to prevent errors
+
+
+  function basicLighting() {}
+
+  function occlusion(amount) {
+    var amt = "1.0";
+
+    if (amount !== undefined) {
+      ensureScalar("occlusion", amount);
+      amt = collapseToString(amount);
+    }
+
+    appendColorSource("occ = mix(1.0, occlusion(op,normal), " + amt + ");\n");
+  }
+
+  function test() {
+    appendSources("//this is a test\n");
+  }
+
   eval(generatedJSFuncsSource + userProvidedSrc);
   var geoFinal = buildGeoSource(geoSrc);
   var colorFinal = buildColorSource(colorSrc, useLighting);
@@ -14393,9 +16154,11 @@ function sourceGenerator(userProvidedSrc) {
 }
 
 var defaultVertexSource = "\nvarying vec4 worldPos;\nvoid main()\n{\n    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\n    worldPos = modelMatrix*vec4(position,1.0);\n\n    gl_Position = projectionMatrix * mvPosition;\n}\n";
+var voxelVertexSource = "\nvarying vec4 worldPos;\nvoid main()\n{\n    worldPos = vec4(position, 1.0);\n    gl_Position = vec4(position,1.0);\n}\n";
 var defaultFragSourceJS = 'sphere(0.2);';
 var defaultFragSourceGLSL = "float surfaceDistance(vec3 p) {\n    float d = sphere(p, 0.3);\n\treturn d;\n}\n\nvec3 shade(vec3 p, vec3 normal) {\n    vec3 lightDirection = vec3(0.0, 1.0, 0.0);\n    float light = simpleLighting(p, normal, lightDirection);\n    vec3 color = vec3(1.0, 1.0, 1.0);\n\treturn color*light;\n}\n";
 var sculptureStarterCode = "\nuniform mat4 projectionMatrix;\nuniform float time;\nuniform float opacity;\nuniform vec3 sculptureCenter;\nuniform vec3 mouse;\nuniform float stepSize;\n\nvarying vec4 worldPos;\n\nfloat surfaceDistance(vec3 p);\n\nconst float PI = 3.14159265;\nconst float TAU = PI*2.0;\nconst float TWO_PI = TAU;\n\nconst float max_dist = 4.0;\nconst float intersection_threshold = 0.00007;\n\n// Trig functions normalized to the range 0.0-1.0\nfloat nsin(float x) {\n    return sin(x)*0.5+0.5;\n}\n\nfloat ncos(float x) {\n    return cos(x)*0.5+0.5;\n}\n\nfloat round(float x) {\n    return floor(x+0.5);\n}\n\nfloat softSquare(float x, int pw) {\n    return 1.0/(pow(tan(x),float(pw+1)*2.0)+1.0);\n}\n\n// Simple oscillators \n\nfloat osc(float freq, float amp, float base, float phase) {\n    return base+amp*sin(TWO_PI*(freq*time+phase));\n}\n\nfloat osc(float freq, float amp, float base) {\n    return osc(freq, amp, base, 0.0);\n}\n\nfloat osc(float freq, float amp) {\n    return osc(freq, amp, 1.0);\n}\n\nfloat osc(float freq) {\n    return osc(freq, 0.5);\n}\n\nfloat osc() {\n    return osc(1.0);\n}\n\n// Color Conversion\n// https://www.shadertoy.com/view/lsS3Wc\nvec3 hsv2rgb( in vec3 c )\n{\n    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );\n    return c.z * mix( vec3(1.0), rgb, c.y);\n}\n\nvec3 rgb2hsv( in vec3 c)\n{\n    const float eps = 0.0000001;\n    vec4 k = vec4(0.0, -1.0/3.0, 2.0/3.0, -1.0);\n    vec4 p = mix(vec4(c.zy, k.wz), vec4(c.yz, k.xy), (c.z<c.y) ? 1.0 : 0.0);\n    vec4 q = mix(vec4(p.xyw, c.x), vec4(c.x, p.yzx), (p.x<c.x) ? 1.0 : 0.0);\n    float d = q.x - min(q.w, q.y);\n    return vec3(abs(q.z + (q.w - q.y) / (6.0*d+eps)), d / (q.x+eps), q.x);\n}\n\n\n// Primitives\n\nfloat line(vec3 p, vec3 a, vec3 b) {\n\tvec3 pa = p-a;\n  \tvec3 ba = b-a;\n\tfloat t = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);\n  \treturn length(pa - ba*t);\n}\n\n//line with radius\nfloat line( vec3 p, vec3 a, vec3 b, float radius ){\n    vec3 pa = p - a, ba = b - a;\n    float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );\n    return length( pa - ba*h ) - radius;\n}\n\nfloat sphere( vec3 p, float size ){\n  return length(p)-size;\n}\n\nfloat uBox( vec3 p, vec3 b ){\n  return length(max(abs(p)-b,0.0));\n}\n\nfloat uRoundBox( vec3 p, vec3 b, float r ){\n  return length(max(abs(p)-b,0.0))-r;\n}\n\nfloat box( vec3 p, vec3 box ){\n  vec3 d = abs(p) - box;\n  return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));\n}\n\nfloat box( vec3 p, float bx, float by, float bz) {\n    vec3 box = vec3(bx,by,bz);\n    vec3 d = abs(p) - box;\n    return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));\n}\n\nfloat roundedBox( vec3 p, vec3 box , float r){\n  return length(max(abs(p)-box,0.0))-r;\n}\n\nfloat torus( vec3 p, vec2 t ){\n  vec2 q = vec2(length(p.xz)-t.x,p.y);\n  return length(q)-t.y;\n}\n\nfloat torus( vec3 p, float tx, float ty ){\n    vec2 q = vec2(length(p.xz)-tx,p.y);\n    return length(q)-ty;\n}\n\nfloat infCylinder( vec3 p, vec3 c )\n{\n  return length(p.xz-c.xy)-c.z;\n}\n\nfloat cylinder( vec3 p, vec2 h )\n{\n  vec2 d = abs(vec2(length(p.xz),p.y)) - h;\n  return min(max(d.x,d.y),0.0) + length(max(d,0.0));\n}\n\nfloat cone( vec3 p, vec2 c )\n{\n    // c must be normalized\n    float q = length(p.xy);\n    return dot(c,vec2(q,p.z));\n}\n\nfloat plane( vec3 p, vec4 n )\n{\n  // n must be normalized\n  return dot(p,n.xyz) + n.w;\n}\n\nfloat plane( vec3 p, float nx, float ny, float nz, float nw)\n{\n  // n must be normalized\n  return dot(p,normalize(vec3(nx,ny,nz))) + nw;\n}\n\nfloat hexPrism( vec3 p, vec2 h )\n{\n    vec3 q = abs(p);\n    return max(q.z-h.y,max((q.x*0.866025+q.y*0.5),q.y)-h.x);\n}\n\nfloat triPrism( vec3 p, vec2 h )\n{\n    vec3 q = abs(p);\n    return max(q.z-h.y,max(q.x*0.866025+p.y*0.5,-p.y)-h.x*0.5);\n}\n\nfloat capsule( vec3 p, vec3 a, vec3 b, float r )\n{\n    vec3 pa = p - a, ba = b - a;\n    float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );\n    return length( pa - ba*h ) - r;\n}\n\n\nfloat triangularPrism( vec3 p, vec2 h ) {\n    vec3 q = abs(p);\n    return max(q.z-h.y,max(q.x*0.866025+p.y*0.5,-p.y)-h.x*0.5);\n}\n\nfloat cappedCone( in vec3 p, in vec3 c )\n{\n    vec2 q = vec2( length(p.xz), p.y );\n    vec2 v = vec2( c.z*c.y/c.x, -c.z );\n    vec2 w = v - q;\n    vec2 vv = vec2( dot(v,v), v.x*v.x );\n    vec2 qv = vec2( dot(v,w), v.x*w.x );\n    vec2 d = max(qv,0.0)*qv/vv;\n    return sqrt( dot(w,w) - max(d.x,d.y) ) * sign(max(q.y*v.x-q.x*v.y,w.y));\n}\n\nfloat roundCone(vec3 p, vec3 a, vec3 b, float r1, float r2)\n{\n    // sampling independent computations (only depend on shape)\n    vec3  ba = b - a;\n    float l2 = dot(ba,ba);\n    float rr = r1 - r2;\n    float a2 = l2 - rr*rr;\n    float il2 = 1.0/l2;\n    \n    // sampling dependant computations\n    vec3 pa = p - a;\n    float y = dot(pa,ba);\n    float z = y - l2;\n    vec3 rv = pa*l2 - ba*y;\n    float x2 = dot(rv,rv);\n    float y2 = y*y*l2;\n    float z2 = z*z*l2;\n\n    // single square root!\n    float k = sign(rr)*rr*rr*x2;\n    if( sign(z)*a2*z2 > k ) return  sqrt(x2 + z2)        *il2 - r2;\n    if( sign(y)*a2*y2 < k ) return  sqrt(x2 + y2)        *il2 - r1;\n                            return (sqrt(x2*a2*il2)+y*rr)*il2 - r1;\n}\n\nfloat ellipsoid( in vec3 p, in vec3 r )\n{\n    return (length( p/r ) - 1.0) * min(min(r.x,r.y),r.z);\n}\n\nvec3 toSpherical(vec3 p) {\n    float phi = atan(p.x,p.z);\n    float r = length(p);\n    float theta = acos(-p.y/r);\n    return vec3(r,theta,phi);\n}\n\nvec3 fromSpherical(vec3 p) {\n    return vec3(p.x*sin(p.y)*cos(p.z), p.x*sin(p.y)*sin(p.z), p.x*cos(p.y));\n}\n\nfloat dot2( in vec3 v ) { return dot(v,v); }\n\nfloat uTriangle( vec3 p, vec3 a, vec3 b, vec3 c )\n{\n    vec3 ba = b - a; vec3 pa = p - a;\n    vec3 cb = c - b; vec3 pb = p - b;\n    vec3 ac = a - c; vec3 pc = p - c;\n    vec3 nor = cross( ba, ac );\n    return sqrt(\n    (sign(dot(cross(ba,nor),pa)) +\n     sign(dot(cross(cb,nor),pb)) +\n     sign(dot(cross(ac,nor),pc))<2.0)\n     ?\n     min( min(\n     dot2(ba*clamp(dot(ba,pa)/dot2(ba),0.0,1.0)-pa),\n     dot2(cb*clamp(dot(cb,pb)/dot2(cb),0.0,1.0)-pb) ),\n     dot2(ac*clamp(dot(ac,pc)/dot2(ac),0.0,1.0)-pc) )\n     :\n     dot(nor,pa)*dot(nor,pa)/dot2(nor) );\n}\n\nfloat add( float d1, float d2 )\n{\n    return min(d1,d2);\n}\n\nfloat add(float d1, float d2, float d3) {\n   return min(d1, min(d2,d3));\n}\n\nfloat add(float d1, float d2, float d3, float d4) {\n    return min(min(d1,d2),min(d3,d4));\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5) {\n    return min(min(min(d1,d2), min(d3,d4)),d5);\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5, float d6) {\n    return min(min(min(d1,d2),min(d3,d4)),min(d5,d6));\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5, float d6, float d7) {\n    return min(min(min(d1,d2),min(d3,d4)),min(min(d5,d6),d7));\n}\n\nfloat subtract( float d1, float d2 )\n{\n    return max(-d1,d2);\n}\n\nfloat intersect( float d1, float d2 )\n{\n    return max(d1,d2);\n}\n\nfloat shell(float d, float thickness) {\n    return abs(d)-thickness;\n}\n\nvec3 repeat3D(vec3 p, vec3 c )\n{\n    return mod(p,c)-0.5*c;\n}\n\nfloat repeat1D(inout float p, float size)\n{\n\tfloat halfSize = size * 0.5;\n\tfloat c = floor((p + halfSize) / size);\n  \tp = mod(p + halfSize, size)-halfSize;\n  \treturn c;\n}\n\nmat2 rot2(float a){\n    float c = cos(a); float s = sin(a);\n\treturn mat2(c, s, -s, c);\n}\n\n// polynomial smooth min (k = 0.1) (from IQ)\nfloat smoothAdd( float a, float b, float k )\n{\n    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );\n    return mix( b, a, h ) - k*h*(1.0-h);\n}\n\nfloat smoothSubtract(float a,float b, float k)\n{\n    return -smoothAdd(-a,-b,k);\n}\n\nvec2 _hash( vec2 p ) // replace this by something better\n{\n\tp = vec2( dot(p,vec2(127.1,311.7)),\n\t\t\t  dot(p,vec2(269.5,183.3)) );\n\treturn -1.0 + 2.0*fract(sin(p)*43758.5453123);\n}\n\nfloat noise( in vec2 p )\n{\n    const float K1 = 0.366025404; // (sqrt(3)-1)/2;\n    const float K2 = 0.211324865; // (3-sqrt(3))/6;\n\tvec2 i = floor( p + (p.x+p.y)*K1 );\n\t\n    vec2 a = p - i + (i.x+i.y)*K2;\n    vec2 o = step(a.yx,a.xy);    \n    vec2 b = a - o + K2;\n\tvec2 c = a - 1.0 + 2.0*K2;\n    vec3 h = max( 0.5-vec3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );\n\tvec3 n = h*h*h*h*vec3( dot(a,_hash(i+0.0)), dot(b,_hash(i+o)), dot(c,_hash(i+1.0)));\n    return dot( n, vec3(70.0) );\n}\n\nvec3 _hash33(vec3 p3)\n{\n    p3 = fract(p3 * vec3(.1031,.11369,.13787));\n    p3 += dot(p3, p3.yxz+19.19);\n    return -1.0 + 2.0 * fract(vec3((p3.x + p3.y)*p3.z, (p3.x+p3.z)*p3.y, (p3.y+p3.z)*p3.x));\n}\n\n// simplex noise from https://www.shadertoy.com/view/4sc3z2\nfloat noise(vec3 p)\n{\n    const float K1 = 0.333333333;\n    const float K2 = 0.166666667;\n    \n    vec3 i = floor(p + (p.x + p.y + p.z) * K1);\n    vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);\n    \n    // thx nikita: https://www.shadertoy.com/view/XsX3zB\n    vec3 e = step(vec3(0.0), d0 - d0.yzx);\n\tvec3 i1 = e * (1.0 - e.zxy);\n\tvec3 i2 = 1.0 - e.zxy * (1.0 - e);\n    \n    vec3 d1 = d0 - (i1 - 1.0 * K2);\n    vec3 d2 = d0 - (i2 - 2.0 * K2);\n    vec3 d3 = d0 - (1.0 - 3.0 * K2);\n    \n    vec4 h = max(0.6 - vec4(dot(d0, d0), dot(d1, d1), dot(d2, d2), dot(d3, d3)), 0.0);\n    vec4 n = h * h * h * h * vec4(dot(d0, _hash33(i)), dot(d1, _hash33(i + i1)), dot(d2, _hash33(i + i2)), dot(d3, _hash33(i + 1.0)));\n    \n    return dot(vec4(31.316), n);\n}\n\nfloat fractalNoise(vec3 p, float falloff, int iterations) {\n    float v = 0.0;\n    float amp = 1.0;\n    float invFalloff = 1.0/falloff;\n    for (int i=0; i<10; i++) {\n        v += noise(p)*amp;\n\tif (i>=iterations) break;\n        amp *= invFalloff;\n        p *= falloff;\n    }\n    return v;\n} \n\nfloat fractalNoise(vec3 p) {\n    return fractalNoise(p, 2.0, 5);\n}\n\n// Adapted from IQ's usage at https://www.shadertoy.com/view/lllXz4\n// Spherical Fibonnacci points, Benjamin Keinert, Matthias Innmann,\n// Michael Sanger and Marc Stamminger\n\nconst float PHI = 1.61803398875;\n\nvec4 sphericalDistribution( vec3 p, float n )\n{\n    p = normalize(p);\n    float m = 1.0 - 1.0/n;\n\n    float phi = min(atan(p.y, p.x), PI), cosTheta = p.z;\n\n    float k = max(2.0, floor( log(n * PI * sqrt(5.0) * (1.0 - cosTheta*cosTheta))/ log(PHI+1.0)));\n    float Fk = pow(PHI, k)/sqrt(5.0);\n    vec2 F = vec2( round(Fk), round(Fk * PHI) ); // k, k+1\n\n    vec2 ka = 2.0*F/n;\n    vec2 kb = 2.0*PI*( fract((F+1.0)*PHI) - (PHI-1.0) );\n\n    mat2 iB = mat2( ka.y, -ka.x,\n    kb.y, -kb.x ) / (ka.y*kb.x - ka.x*kb.y);\n\n    vec2 c = floor( iB * vec2(phi, cosTheta - m));\n    float d = 8.0;\n    float j = 0.0;\n    vec3 bestQ = vec3(0.0,0.0,8.0);\n    for( int s=0; s<4; s++ )\n    {\n        vec2 uv = vec2( float(s-2*(s/2)), float(s/2) );\n\n        float i = dot(F, uv + c); // all quantities are ingeters (can take a round() for extra safety)\n\n        float phi = 2.0*PI*fract(i*PHI);\n        float cosTheta = m - 2.0*i/n;\n        float sinTheta = sqrt(1.0 - cosTheta*cosTheta);\n\n        vec3 q = vec3( cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta );\n        float squaredDistance = dot(q-p, q-p);\n        if (squaredDistance < d)\n        {\n            d = squaredDistance;\n            j = i;\n            bestQ = q;\n        }\n    }\n    return vec4(bestQ,sqrt(d));\n}\n\n// Compute intersection of ray and SDF. You probably won't need to modify this.\nfloat intersect(vec3 ro, vec3 rd, float stepFraction) {\n\tfloat t = 0.;\n\tfor(int i = 0; i < 300; ++i) {\n\t\tfloat h = surfaceDistance(ro+rd*t);\n\t\tif(h < intersection_threshold || t > max_dist) break;\n\t\tt += h*stepFraction;\n\t}\n\treturn t;\n}\n\nvec3 getRayDirection() {\n\treturn normalize(worldPos.xyz-cameraPosition);\n}\n\nvec3 mouseIntersection() {\n    vec3 rayDirection = getRayDirection();\n    return mouse+rayDirection*intersect(mouse, rayDirection, 0.8);\n}\n\n// Calculate the normal of a SDF\nvec3 calcNormal( in vec3 pos )\n{\n    vec2 e = vec2(1.0,-1.0)*0.0005;\n    return normalize( e.xyy*surfaceDistance( pos + e.xyy ) + \n\t\t      e.yyx*surfaceDistance( pos + e.yyx ) + \n\t\t      e.yxy*surfaceDistance( pos + e.yxy ) + \n\t\t      e.xxx*surfaceDistance( pos + e.xxx ) );\n}\n\nfloat simpleLighting(vec3 p, vec3 normal, vec3 lightdir) {\n    // Simple phong-like shading\n    float value = clamp(dot(normal, normalize(lightdir)),0.0, 1.0);\n\treturn value * 0.3 + 0.7;\n}\n\nfloat specularLighting(vec3 p, vec3 normal, vec3 lightDirection, float shine) {\n    float lamb = clamp(dot(normal,normalize(lightDirection)),0.0,1.0);\n    float spec = pow(lamb, exp(10.0*shine));\n    lamb = 0.4*lamb + 0.4 + 0.2*spec;\n    return lamb;\n}\n\nfloat shadow(vec3 p, vec3 lightDirection, float amount) {\n    float t = intersect(p+0.001*lightDirection, lightDirection, stepSize);\n    return t < (max_dist - 0.1) ? 1.0-amount : 1.0;\n}\n\n// From https://www.shadertoy.com/view/XslSWl\nfloat occlusion(vec3 p,vec3 n) { \n    const int AO_SAMPLES = 8;\n    const float INV_AO_SAMPLES = 1.0/float(AO_SAMPLES);\n    const float R = 0.9;\n    const float D = 0.8;\n    float r = 0.0;\n    for(int i = 0; i < AO_SAMPLES; i++) {\n        float f = float(i)*INV_AO_SAMPLES;\n        float h = 0.05+f*R;\n        float d = surfaceDistance(p + n * h) - 0.003;\n        r += clamp(h*D-d,0.0,1.0) * (1.0-f);\n    }    \n    return clamp(1.0-r,0.0,1.0);\n}\n";
 var fragFooter = "\n// For advanced users //\nvoid main() {\n\tvec3 rayOrigin = worldPos.xyz-sculptureCenter;\n\tvec3 rayDirection = getRayDirection();\n\trayOrigin -= rayDirection*2.0;\n\tfloat t = intersect(rayOrigin, rayDirection, stepSize);\n\tif(t < 2.5) {\n\t\tvec3 p = (rayOrigin + rayDirection*t);\n\t\t//vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0);\n\t\tvec3 normal = calcNormal(p);\n\t\tvec3 c = shade(p, normal);\n\t\tgl_FragColor = vec4(c, opacity);\n\t\t\n\t} else {\n\t\tdiscard;\n\t}\n}\n";
+var voxelFooter = "\nvoid main() {\n\tvec3 p = worldPos.xyz - sculptureCenter;\n\tvec3 color = shade(p,calcNormal(p));\n\tfloat dist = surfaceDistance(p);\n\tgl_FragColor = vec4(/*color*/vec3(0.5,1.5,1000.0),dist);\n}\n";
 
 export { defaultFragSourceGLSL, defaultFragSourceJS, defaultVertexSource, fragFooter, sculptureStarterCode, sourceGenerator };

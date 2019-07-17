@@ -54,7 +54,7 @@ export default [
     input: 'index.js',
     //external: ['escodegen', 'esprima'],
     output: [
-      { file: pkg.main, format: 'cjs' },
+      { file: pkg.csj, format: 'cjs' },
       { file: pkg.module, format: 'es' }
     ],
     plugins: [
@@ -64,8 +64,8 @@ export default [
           // left-hand side can be an absolute path, a path
           // relative to the current directory, or the name
           // of a module in node_modules
-          'node_modules/esprima/dist/esprima.js': ['parseScript'],
-          //'node_modules/escodegen/escodegen.js': ['generate']
+          'node_modules/esprima/dist/esprima.js': ['parse'],
+          // 'node_modules/escodegen/escodegen.js': ['generate']
 
         },
         // include: ['node_modules/**'],
