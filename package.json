@@ -10,7 +10,7 @@
   "private": true,
   "scripts": {
     "build": "rollup -c --no-treeshake",
-    "dev": "rollup -c -w --no-treeshake",
+    "watch": "rollup -c -w --no-treeshake",
     "pretest": "npm run build"
   },
   "files": [
