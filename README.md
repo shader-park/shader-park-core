@@ -7,7 +7,7 @@ API usage:
   
 CLI usage:  
   
-```npm run convert -- my-sculpture.js```  
+```npm run convert my-sculpture.js```  
 or  
 ```yarn convert my-sculpture.js```  
 
