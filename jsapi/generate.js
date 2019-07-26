@@ -80,7 +80,7 @@ function replaceSliderInput(syntaxTree) {
 		let d = syntaxTree['declarations'][0];
 		console.log('d', d);
 		let name = d.id.name;
-		if (d.init.callee.name === 'slider') {
+		if (d.init.callee.name === 'input') {
 			d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
 		}
 	}
