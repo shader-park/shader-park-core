@@ -66,12 +66,33 @@ function replaceBinaryOp(syntaxTree) {
 	}
 }
 
+function replaceSliderInput(syntaxTree) {
+
+	if (typeof syntaxTree === 'object') {
+		for (let node in syntaxTree) {
+			if (syntaxTree.hasOwnProperty(node)) {
+				replaceSliderInput(syntaxTree[node]);
+			}
+		}
+	}
+
+	if (syntaxTree !== null && syntaxTree['type'] === 'VariableDeclaration') {
+		let d = syntaxTree['declarations'][0];
+		console.log('d', d);
+		let name = d.id.name;
+		if (d.init.callee.name === 'slider') {
+			d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
+		}
+	}
+}
 
 export function sourceGenerator(userProvidedSrc) {
 
 	let tree = esprima.parse(userProvidedSrc);
 	replaceBinaryOp(tree);
+	replaceSliderInput(tree);
 	userProvidedSrc = escodegen.generate(tree);
+	console.log('tree', tree);
 
 	let generatedJSFuncsSource = "";
 	let geoSrc = "";
@@ -80,6 +101,7 @@ export function sourceGenerator(userProvidedSrc) {
 	let primCount = 0;
 	let useLighting = true;
 	let debug = false;
+	let uniforms = [];
 
 	function appendSources(source) {
 		geoSrc += "    " + source;
@@ -411,6 +433,11 @@ export function sourceGenerator(userProvidedSrc) {
 	let builtInOtherJS = generateGLSLWrapper(glslBuiltInOther);
 	generatedJSFuncsSource += builtInOtherJS;
 
+	
+	// constants.forEach(constant => {
+	// 	generatedJSFuncsSource += `let ${constant};\n`
+	// });
+
 	let builtInOneToOneJS = "";
 	for (let funcName of glslBuiltInOneToOne) {
 		builtInOneToOneJS += 
@@ -534,13 +561,41 @@ export function sourceGenerator(userProvidedSrc) {
 		appendSources("//this is a test\n");
 	}
 
-	eval( generatedJSFuncsSource + userProvidedSrc );
+	function input(name, value=0.0, min = 0.0, max = 1.0) {
+		uniforms.push({name, type:'float', value, min, max});
+		return new float(name, true);
+	}
+	
+	/*
+	function input2(name, x, y) {
+		console.log('input2',name, x, y);
+		let uniform = {name, type: 'vec2'};
+		let out = x;
+		if(y === undefined) {
+			uniform.value = x;
+		} else {
+			out = new vec2(x, y, true);
+			uniform.value = out;
+		}
+		uniforms.push(uniform);
+		return out;
+	}
+	*/
+
+	let error = undefined;
+	try {
+		eval( generatedJSFuncsSource + userProvidedSrc );
+	} catch (e) {
+		error = e;
+	}
 
 	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
 
 	return {
 		geoGLSL: geoFinal,
-		colorGLSL: colorFinal
+		colorGLSL: colorFinal,
+		uniforms: uniforms,
+		error
 	};
 }
