@@ -75,11 +75,11 @@ function replaceSliderInput(syntaxTree) {
 			}
 		}
 	}
-	if (syntaxTree !== null && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
+	if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
+		
 		let d = syntaxTree['declarations'][0];
-		console.log('d', d);
 		let name = d.id.name;
-		if (d.init.callee.name === 'input') {
+		if (d.init.callee !== undefined && d.init.callee.name === 'input') {
 			d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
 		}
 	}
@@ -87,11 +87,14 @@ function replaceSliderInput(syntaxTree) {
 
 export function sourceGenerator(userProvidedSrc) {
 
+	let debug = false;
 	let tree = esprima.parse(userProvidedSrc);
 	replaceBinaryOp(tree);
 	// replaceSliderInput(tree);
 	userProvidedSrc = escodegen.generate(tree);
-	console.log('tree', tree);
+	if (debug) {
+		console.log('tree', tree);
+	}
 
 	let generatedJSFuncsSource = "";
 	let geoSrc = "";
@@ -99,7 +102,6 @@ export function sourceGenerator(userProvidedSrc) {
 	let varCount = 0;
 	let primCount = 0;
 	let useLighting = true;
-	let debug = false;
 	let uniforms = [];
 
 	function appendSources(source) {
