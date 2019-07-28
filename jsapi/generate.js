@@ -76,10 +76,10 @@ function replaceSliderInput(syntaxTree) {
 		}
 	}
 
-	if (syntaxTree !== null && syntaxTree['type'] === 'VariableDeclaration') {
+	if (syntaxTree !== undefined && syntaxTree !== null && syntaxTree['type'] === 'VariableDeclaration') {
 		let d = syntaxTree['declarations'][0];
 		let name = d.id.name;
-		if (d.init.callee.name === 'input') {
+		if (d.init.callee !== undefined && d.init.callee.name === 'input') {
 			d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
 		}
 	}
