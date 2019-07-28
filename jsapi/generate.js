@@ -75,8 +75,7 @@ function replaceSliderInput(syntaxTree) {
 			}
 		}
 	}
-
-	if (syntaxTree !== null && syntaxTree['type'] === 'VariableDeclaration') {
+	if (syntaxTree !== null && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
 		let d = syntaxTree['declarations'][0];
 		console.log('d', d);
 		let name = d.id.name;
@@ -90,7 +89,7 @@ export function sourceGenerator(userProvidedSrc) {
 
 	let tree = esprima.parse(userProvidedSrc);
 	replaceBinaryOp(tree);
-	replaceSliderInput(tree);
+	// replaceSliderInput(tree);
 	userProvidedSrc = escodegen.generate(tree);
 	console.log('tree', tree);
 
