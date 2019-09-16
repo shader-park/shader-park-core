@@ -15,7 +15,7 @@ float surfaceDistance(vec3 p) {
     float d = 100.0;
     vec3 op = p;
 ${geo}
-    return d;
+    return scope_0_d;
 }`;
 }
 
@@ -32,7 +32,7 @@ vec3 shade(vec3 p, vec3 normal) {
     vec3 selectedColor = vec3(1.0,1.0,1.0);
 ${col}
 ${lgt}
-    return color*light*occ;
+    return scope_0_color*light*occ;
 }`;
 }
 
@@ -101,8 +101,34 @@ export function sourceGenerator(userProvidedSrc) {
 	let colorSrc = "";
 	let varCount = 0;
 	let primCount = 0;
+        let stateCount = 0;
 	let useLighting = true;
 	let uniforms = [];
+	let stateStack = [];
+
+	function getCurrentState() {
+		return stateStack[stateStack.length-1];
+	}
+
+	function getCurrentMode() {
+		return getCurrentState().mode;
+	}
+
+	function getCurrentDist() {
+		return getCurrentState().id+"d";
+	}
+
+	function getCurrentPos() {
+		return getCurrentState().id+"p";
+	}
+
+	function getMainColor() {
+		return getCurrentState().id+"color";
+	}
+
+	function getCurrentColor() {
+		return getCurrentState().id+"currentColor";
+	}
 
 	function appendSources(source) {
 		geoSrc += "    " + source;
@@ -196,19 +222,22 @@ export function sourceGenerator(userProvidedSrc) {
 		MIXGEO: 14,
 	};
 	const additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
-	let currentMode = modes.UNION;
-	let blendAmount = 0.0;
-	let mixAmount = 0.0;
+	// make this part of the stateStack!
+	//let currentMode = modes.UNION;
+	//let blendAmount = 0.0;
+	//let mixAmount = 0.0;
 
 	let time = new float("time", true);
-	let x = new float("p.x", true);
-	let y = new float("p.y", true);
-	let z = new float("p.z", true);
-	let p = new vec3("p", null, null, true);
+	// get these manually now with 'getPosition()'
+	//let x = new float("p.x", true);
+	//let y = new float("p.y", true);
+	//let z = new float("p.z", true);
+	//let p = new vec3("p", null, null, true);
 	let mouse = new vec3("mouse", null, null, true);
 	let normal = new vec3("normal", null, null, true);
 
-	let currentColor = new vec3("color", null, null, true);
+	// was this ever used?
+	//let currentColor = new vec3("color", null, null, true);
 
 	function compileError(err) {
 		// todo: throw actual error (and color error?)
@@ -245,31 +274,31 @@ export function sourceGenerator(userProvidedSrc) {
 	// Also 'mix' name needs to be changed to avoid collision with built in
 
 	function union() {
-		currentMode = modes.UNION;
+		stateStack[stateStack.length-1].mode = modes.UNION;
 	}
 
 	function difference() {
-		currentMode = modes.DIFFERENCE;
+		stateStack[stateStack.length-1].mode = modes.DIFFERENCE;
 	}
 
 	function intersect() {
-		currentMode = modes.INTERSECT;
+		stateStack[stateStack.length-1].mode = modes.INTERSECT;
 	}
 
 	function blend(amount) {
-		currentMode = modes.BLEND;
+		stateStack[stateStack.length-1].mode = modes.BLEND;
 		ensureScalar("blend",amount);
-		blendAmount = amount;
+		stateStack[stateStack.length-1].blendAmount = amount;
 	}
 
 	function mixGeo(amount) {
-		currentMode = modes.MIXGEO;
+		stateStack[stateStack.length-1].mode = modes.MIXGEO;
 		ensureScalar("mixGeo",amount);
-		mixAmount = amount;
+		stateStack[stateStack.length-1].mixAmount = amount;
 	}
 
 	function getMode() {
-		switch (currentMode) {
+		switch (getCurrentState().mode) {
 			case modes.UNION:
 				return ["add"];
 				break;
@@ -280,27 +309,69 @@ export function sourceGenerator(userProvidedSrc) {
 				return ["intersect"];
 				break;
 			case modes.BLEND:
-				return ["smoothAdd",blendAmount];
+				return ["smoothAdd",getCurrentState().blendAmount];
 				break;
 			case modes.MIXGEO:
-				return ["mix",mixAmount];
+				return ["mix",getCurrentState().mixAmount];
 				break;
 			default:
 				return ["add"];
 		}
 	}
 
-	function applyMode(prim) {
+	function applyMode(prim, finalCol) {
 		let cmode = getMode();
 		let primName = "prim_" + primCount;
 		primCount += 1;
 		appendSources("float " + primName + " = " + prim + ";\n");
-		if (additiveModes.includes(currentMode)) {
-			appendColorSource("if (" + primName + " < d) { color = selectedColor; }\n" );
+		if (additiveModes.includes(getCurrentState().mode)) {
+			let selectedCC = finalCol !== undefined ? finalCol : getCurrentColor();
+			appendColorSource("if (" + primName + " < "+ getCurrentDist() + ") { " + getMainColor() + " = " + selectedCC + "; }\n" );
 		}
-		appendSources("d = "+ cmode[0] + "( " + primName + ", d " +
+		appendSources(getCurrentDist() + " = "+ cmode[0] + "( " + primName + ", " + getCurrentDist() +  " " +
 			(cmode.length > 1 ? "," + collapseToString(cmode[1]) : "") + " );\n");
 	}
+
+	function getPosition() {
+		return getCurrentState().p;
+	}
+
+	function pushState() {
+		stateStack.push({
+			id: "scope_" + stateCount + "_",
+			mode: modes.UNION,
+			blendAmount: 0.0,
+			mixAmount: 0.0,
+		});
+		appendSources("float " + getCurrentDist() + " = 100.0;\n");
+		let lastP = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"p" : "p";
+		let lastCol = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"currentColor" : "color";
+		appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
+		appendColorSource("vec3 " + getMainColor() + " = " + lastCol + ";\n");
+		appendColorSource("vec3 " + getCurrentColor() + " = " + lastCol + ";\n");
+		stateStack[stateStack.length-1].p = vec3(stateStack[stateStack.length-1].id+"p", null, null, true);
+                stateCount++;
+	}
+
+        function popState() {
+		let lastDist = getCurrentDist();
+		let lastColy = getMainColor();
+		stateStack.pop();
+		applyMode(lastDist, lastColy);
+        }
+	// !!! puts initial state on stack, this never comes off !!!
+	pushState();
+
+        function shape(func) {
+            let makeShape = function() {
+                pushState();
+                func.apply(this, arguments);
+                popState();
+            }
+            return makeShape;
+        }
+
+
 
 	function tryMakeNum(v) {
 		if (typeof v === 'number') {
@@ -392,7 +463,7 @@ export function sourceGenerator(userProvidedSrc) {
 			}
 			argIdxB += 1;
 		}
-		primitivesJS += "    applyMode(\"" + funcName + "(p, \" + ";
+		primitivesJS += "    applyMode(\"" + funcName + "(\"+getCurrentState().p+\", \" + ";
 		for (let argIdx = 0; argIdx<argList.length; argIdx++) {
 			primitivesJS += "collapseToString(arg_" + argIdx + ") + ";
 			if (argIdx < argList.length-1) primitivesJS += "\", \" + ";
@@ -455,17 +526,21 @@ export function sourceGenerator(userProvidedSrc) {
 	// Displacements
 
 	function reset() {
-		appendSources("p = op;\n");
+		if (stateStack.length > 1) {
+			appendSources(getCurrentPos()+" = " + stateStack[stateStack.length-2].id+"p;\n");
+		} else {
+			appendSources(getCurrentPos()+" = op;\n");
+		}
 	}
 
 	function displace(xc, yc, zc) {
 		if (yc === undefined || zc === undefined) {
-			appendSources("p -= " + collapseToString(xc) + ";\n");
+			appendSources(getCurrentPos()+" -= " + collapseToString(xc) + ";\n");
 		} else {
 			ensureScalar("displace",xc);
 			ensureScalar("displace",yc);
 			ensureScalar("displace",zc);
-			appendSources("p -= vec3( " + collapseToString(xc) + ", " 
+			appendSources(getCurrentPos()+" -= vec3( " + collapseToString(xc) + ", " 
 								 + collapseToString(yc) + ", " 
 								 + collapseToString(zc) + ");\n");
 		}
@@ -473,43 +548,43 @@ export function sourceGenerator(userProvidedSrc) {
 
 	function expand(amount) {
 		ensureScalar("expand",amount);
-		appendSources("d -= " + collapseToString(amount) + ";\n");
+		appendSources(getCurrentDist() + " -= " + collapseToString(amount) + ";\n");
 	}
 
 	function shell(depth) {
 		ensureScalar("shell",depth);
-		appendSources("d = shell( d," + collapseToString(depth) + ");\n");
+		appendSources(getCurrentDist() + " = shell( " + getCurrentDist() +  "," + collapseToString(depth) + ");\n");
 	}
 
 	function rotateX(angle) {
 		ensureScalar("rotateX",angle);
-		appendSources("p.yz = p.yz*rot2(" + collapseToString(angle) + ");\n");
+		appendSources(getCurrentPos()+".yz = " + getCurrentPos() + ".yz*rot2(" + collapseToString(angle) + ");\n");
 	}
 
 	function rotateY(angle) {
 		ensureScalar("rotateY",angle);
-		appendSources("p.xz = p.xz*rot2(" + collapseToString(angle) + ");\n");
+		appendSources(getCurrentPos()+".xz = " + getCurrentPos() + ".xz*rot2(" + collapseToString(angle) + ");\n");
 	}
 
 	function rotateZ(angle) {
 		ensureScalar("rotateZ",angle);
-		appendSources("p.xy = p.xy*rot2(" + collapseToString(angle) + ");\n");
+		appendSources(getCurrentPos()+".xy = " + getCurrentPos() + ".xy*rot2(" + collapseToString(angle) + ");\n");
 	}
 
 	function mirrorX() {
-		appendSources("p.x = abs(p.x);\n");
+		appendSources(getCurrentPos()+".x = abs(" + getCurrentPos() + ".x);\n");
 	}
 
 	function mirrorY() {
-		appendSources("p.y = abs(p.y);\n");
+		appendSources(getCurrentPos()+".y = abs(" + getCurrentPos() + ".y);\n");
 	}
 
 	function mirrorZ() {
-		appendSources("p.z = abs(p.z);\n");
+		appendSources(getCurrentPos()+".z = abs(" + getCurrentPos() + ".z);\n");
 	}
 
 	function mirrorXYZ() {
-		appendSources("p = abs(p);\n");
+		appendSources(getCurrentPos()+" = abs(" + getCurrentPos() + ");\n");
 	}
 
 	// Color/Lighting
@@ -519,13 +594,13 @@ export function sourceGenerator(userProvidedSrc) {
 			ensureScalar("color", col);
 			ensureScalar("color", green);
 			ensureScalar("color", blue);
-			appendColorSource("selectedColor = vec3(" + 
+			appendColorSource(getCurrentColor() + " = vec3(" + 
 				collapseToString(col) + ", " + 
 				collapseToString(green) + ", " +
 				collapseToString(blue) + ");\n");
 		} else {
 			if (col.type !== 'vec3') compileError("color must be vec3");
-			appendColorSource("selectedColor = " + collapseToString(col) + ";\n");
+			appendColorSource(getCurrentColor() + " = " + collapseToString(col) + ";\n");
 		}
 	}
 
