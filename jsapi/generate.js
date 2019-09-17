@@ -67,21 +67,24 @@ function replaceBinaryOp(syntaxTree) {
 }
 
 function replaceSliderInput(syntaxTree) {
-
-	if (typeof syntaxTree === 'object') {
-		for (let node in syntaxTree) {
-			if (syntaxTree.hasOwnProperty(node)) {
-				replaceSliderInput(syntaxTree[node]);
+	try {
+		if (syntaxTree && typeof syntaxTree === "object") {
+			for (let node in syntaxTree) {
+				if (syntaxTree.hasOwnProperty(node)) {
+					replaceSliderInput(syntaxTree[node]);
+				}
 			}
 		}
-	}
-	if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
-		
-		let d = syntaxTree['declarations'][0];
-		let name = d.id.name;
-		if (d.init.callee !== undefined && d.init.callee.name === 'input') {
-			d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
+		if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
+			
+			let d = syntaxTree['declarations'][0];
+			let name = d.id.name;
+			if (d.init.callee !== undefined && d.init.callee.name === 'input') {
+				d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
+			}
 		}
+	} catch (e) {
+		console.error(e);
 	}
 }
 
@@ -353,23 +356,24 @@ export function sourceGenerator(userProvidedSrc) {
                 stateCount++;
 	}
 
-        function popState() {
+	function popState() {
 		let lastDist = getCurrentDist();
 		let lastColy = getMainColor();
 		stateStack.pop();
 		applyMode(lastDist, lastColy);
-        }
+	}
 	// !!! puts initial state on stack, this never comes off !!!
 	pushState();
 
-        function shape(func) {
-            let makeShape = function() {
-                pushState();
-                func.apply(this, arguments);
-                popState();
-            }
-            return makeShape;
-        }
+	function shape(func) {
+		let makeShape = function() {
+			pushState();
+			let output = func.apply(this, arguments);
+			popState();
+			return output;
+		}
+		return makeShape;
+	}
 
 
 
