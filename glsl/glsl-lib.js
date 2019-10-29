@@ -1,26 +1,3 @@
-export const defaultVertexSource = `
-varying vec4 worldPos;
-varying vec2 vUv;
-void main()
-{
-    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-    worldPos = modelMatrix*vec4(position,1.0);
-    vUv = uv;
-    gl_Position = projectionMatrix * mvPosition;
-}
-`;
-
-export const voxelVertexSource = `
-varying vec4 worldPos;
-void main()
-{
-    worldPos = vec4(position, 1.0);
-    gl_Position = vec4(position,1.0);
-}
-`;
-
-export const defaultFragSourceJS = 'sphere(0.2);';
-
 export const defaultFragSourceGLSL = `float surfaceDistance(vec3 p) {
     float d = sphere(p, 0.3);
 	return d;
@@ -34,19 +11,27 @@ vec3 shade(vec3 p, vec3 normal) {
 }
 `;
 
-export const sculptureStarterCode = `
+export const defaultVertexSource = `
+varying vec4 worldPos;
+varying vec2 vUv;
+void main()
+{
+    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    worldPos = modelMatrix*vec4(position,1.0);
+    vUv = uv;
+    gl_Position = projectionMatrix * mvPosition;
+}
+`;
+
+export const threeHeader = `
 uniform mat4 projectionMatrix;
-uniform float time;
-uniform float opacity;
-uniform vec3 sculptureCenter;
-uniform vec3 mouse;
-uniform float stepSize;
 uniform sampler2D msdf;
-vec3 msdfTexture;
 
 varying vec2 vUv;
 varying vec4 worldPos;
+`;
 
+export const sculptureStarterCode = `
 float surfaceDistance(vec3 p);
 
 const float PI = 3.14159265;
@@ -551,7 +536,7 @@ float occlusion(vec3 p,vec3 n) {
 export const fragFooter = `
 // For advanced users //
 void main() {
-    msdfTexture = texture2D(msdf, vUv).rgb;
+    vec3 msdfTexture = texture2D(msdf, vUv).rgb;
 	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
 	vec3 rayDirection = getRayDirection();
 	rayOrigin -= rayDirection*2.0;
@@ -566,14 +551,5 @@ void main() {
 	} else {
 		discard;
 	}
-}
-`;
-
-export const voxelFooter = `
-void main() {
-	vec3 p = worldPos.xyz - sculptureCenter;
-	vec3 color = shade(p,calcNormal(p));
-	float dist = surfaceDistance(p);
-	gl_FragColor = vec4(/*color*/vec3(0.5,1.5,1000.0),dist);
 }
 `;

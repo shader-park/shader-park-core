@@ -3,7 +3,7 @@ import {
 	mathFunctions, 
 	glslBuiltInOneToOne, 
 	glslBuiltInOther
-} from './glsl-built-in.js';
+} from '../glsl/bindings.js';
 
 import * as escodegen from 'escodegen';
 import * as esprima from 'esprima';
@@ -88,7 +88,26 @@ function replaceSliderInput(syntaxTree) {
 	}
 }
 
-export function sourceGenerator(userProvidedSrc) {
+export function uniformsToGLSL(uniforms) {
+	let uniformsHeader = '';
+	for (let i=0; i<uniforms.length; i++) {
+		let uniform = uniforms[i];
+		uniformsHeader += `uniform ${uniform.type} ${uniform.name};\n`;
+	}
+	return uniformsHeader;
+}
+
+export function baseUniforms() {
+	return [
+		{name:'time', type: 'float', value: 0.0},
+		{name:'opacity', type: 'float', value: 1.0},
+		{name:'sculptureCenter', type: 'vec3', value: [0,0,0]},
+		{name:'mouse', type: 'vec3', value: [0.5,0.5,0.5]},
+		{name:'stepSize', type: 'float', value: 0.85}
+	];
+}
+
+export function sculptToGLSL(userProvidedSrc) {
 
 	let debug = false;
 	let tree = esprima.parse(userProvidedSrc);
@@ -106,8 +125,8 @@ export function sourceGenerator(userProvidedSrc) {
 	let primCount = 0;
         let stateCount = 0;
 	let useLighting = true;
-	let uniforms = [];
 	let stateStack = [];
+	let uniforms = baseUniforms();
 
 	function getCurrentState() {
 		return stateStack[stateStack.length-1];
@@ -225,22 +244,10 @@ export function sourceGenerator(userProvidedSrc) {
 		MIXGEO: 14,
 	};
 	const additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
-	// make this part of the stateStack!
-	//let currentMode = modes.UNION;
-	//let blendAmount = 0.0;
-	//let mixAmount = 0.0;
 
 	let time = new float("time", true);
-	// get these manually now with 'getPosition()'
-	//let x = new float("p.x", true);
-	//let y = new float("p.y", true);
-	//let z = new float("p.z", true);
-	//let p = new vec3("p", null, null, true);
 	let mouse = new vec3("mouse", null, null, true);
 	let normal = new vec3("normal", null, null, true);
-
-	// was this ever used?
-	//let currentColor = new vec3("color", null, null, true);
 
 	function compileError(err) {
 		// todo: throw actual error (and color error?)
@@ -374,8 +381,6 @@ export function sourceGenerator(userProvidedSrc) {
 		}
 		return makeShape;
 	}
-
-
 
 	function tryMakeNum(v) {
 		if (typeof v === 'number') {
@@ -673,9 +678,9 @@ export function sourceGenerator(userProvidedSrc) {
 	let colorFinal = buildColorSource(colorSrc, useLighting);
 
 	return {
+		uniforms: uniforms,
 		geoGLSL: geoFinal,
 		colorGLSL: colorFinal,
-		uniforms: uniforms,
-		error
+		error: error
 	};
 }

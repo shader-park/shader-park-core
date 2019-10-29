@@ -11,4 +11,4 @@ const fileName = pieces[pieces.length-1].split('.')[0];
 
 //factor out and make version for each target
 
-fs.writeFileSync('./out/' + fileName + '.glsl', converters.sculptToThreejs(src));
+fs.writeFileSync('./out/' + fileName + '.glsl', converters.sculptToThreeJSShaderSource(src).frag);
