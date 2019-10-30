@@ -8,6 +8,11 @@ import {
 } from './targets/threeJS.js'
 
 import {
+    glslToOfflineRenderer,
+    sculptToOfflineRenderer
+} from './targets/offlineRenderer.js'
+
+import {
     defaultFragSourceGLSL
 } from './glsl/glsl-lib.js'
 
@@ -20,5 +25,7 @@ export {
     glslToThreeJSMesh,
     sculptToThreeJSShaderSource,
     sculptToThreeJSMaterial,
-    sculptToThreeJSMesh
+    sculptToThreeJSMesh,
+    glslToOfflineRenderer,
+    sculptToOfflineRenderer
 }

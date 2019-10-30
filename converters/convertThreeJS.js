@@ -1,5 +1,5 @@
 const fs = require('fs');
-const converters = require('./dist/sculpture-park-core.cjs.js');
+const converters = require('../dist/sculpture-park-core.cjs.js');
 
 const fileToRead = process.argv[2];
 

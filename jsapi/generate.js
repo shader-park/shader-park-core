@@ -647,6 +647,9 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function input(name, value=0.0, min = 0.0, max = 1.0) {
+		if (typeof value !== 'number' || typeof min !== 'number' || typeof max !== 'number') {
+			compileError('input value, min, and max must be constant numbers');
+		}
 		uniforms.push({name, type:'float', value, min, max});
 		return new float(name, true);
 	}

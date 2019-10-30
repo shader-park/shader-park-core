@@ -12,7 +12,8 @@
     "build": "rollup -c --no-treeshake",
     "watch": "rollup -c -w --no-treeshake",
     "pretest": "npm run build",
-    "convert": "node convert.js"
+    "toThreeJS": "node converters/convertThreeJS.js",
+    "toOffline": "node converters/convertOfflineRenderer.js"
   },
   "files": [
     "dist"
