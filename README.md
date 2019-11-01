@@ -7,9 +7,9 @@ API usage:
   
 CLI usage:  
   
-```npm run convert my-sculpture.js```  
+```npm run toThreeJS my-sculpture.js```  
 or  
-```yarn convert my-sculpture.js```  
+```yarn toOffline my-sculpture.js```  
 
 For development with SP website:  
   
