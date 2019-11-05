@@ -26,13 +26,13 @@ export function glslToThreeJSShaderSource(source) {
     }
 }
 
-export function glslToThreeJSMaterial(source) {
+export function glslToThreeJSMaterial(source, payload) {
     let src = glslToThreeJSShaderSource(source);
-    return makeMaterial(src.uniforms, src.vert, src.frag);
+    return makeMaterial(src.uniforms, src.vert, src.frag, payload);
 }
 
-export function glslToThreeJSMesh(source) {
-    return makeBasicMesh(glslToThreeJSMaterial(source));
+export function glslToThreeJSMesh(source, payload) {
+    return makeBasicMesh(glslToThreeJSMaterial(source, payload));
 }
 
 export function sculptToThreeJSShaderSource(source) {
@@ -48,18 +48,20 @@ export function sculptToThreeJSShaderSource(source) {
     };
 }
 
-export function sculptToThreeJSMaterial(source) {
+export function sculptToThreeJSMaterial(source, payload) {
     let src = sculptToThreeJSShaderSource(source);
-    return makeMaterial(src.uniforms, src.vert, src.frag);
+    return makeMaterial(src.uniforms, src.vert, src.frag, payload);
 }
 
-export function sculptToThreeJSMesh(source) {
-    return makeBasicMesh(sculptToThreeJSMaterial(source));
+export function sculptToThreeJSMesh(source, payload) {
+
+    return makeBasicMesh(sculptToThreeJSMaterial(source, payload));
 }
 
-function uniformDescriptionToThreeJSFormat(unifs) {
+function uniformDescriptionToThreeJSFormat(unifs, payload) {
+    console.log('uniforms', unifs, 'yee', payload)
     let finalUniforms = {
-        msdf: { value: this.MSDFTexture || new THREE.Texture() }
+        msdf: { value: payload.msdfTexture || new THREE.Texture() }
     }
     
     unifs.forEach(uniform => {
@@ -75,11 +77,11 @@ function uniformDescriptionToThreeJSFormat(unifs) {
 } 
 
 // could use a scale parameter
-function makeMaterial(unifs, vert, frag) {
+function makeMaterial(unifs, vert, frag, payload) {
     const material = new THREE.ShaderMaterial({
-        uniforms: uniformDescriptionToThreeJSFormat(unifs),
-        vertexShader: src.vert,
-        fragmentShader: src.frag,
+        uniforms: uniformDescriptionToThreeJSFormat(unifs, payload),
+        vertexShader: vert,
+        fragmentShader: frag,
         transparent: true,
         side: THREE.BackSide
     });
