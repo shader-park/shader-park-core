@@ -575,6 +575,19 @@ export function sculptToGLSL(userProvidedSrc) {
 		}
 	}
 
+	function setPosition(xc, yc, zc) {
+		if (yc === undefined || zc === undefined) {
+			appendSources(getCurrentPos()+" = " + collapseToString(xc) + ";\n");
+		} else {
+			ensureScalar("setPosition",xc);
+			ensureScalar("setPosition",yc);
+			ensureScalar("setPosition",zc);
+			appendSources(getCurrentPos()+" = vec3( " + collapseToString(xc) + ", " 
+								 + collapseToString(yc) + ", " 
+								 + collapseToString(zc) + ");\n");
+		}
+	}
+
 	function expand(amount) {
 		ensureScalar("expand",amount);
 		appendSources(getCurrentDist() + " -= " + collapseToString(amount) + ";\n");
