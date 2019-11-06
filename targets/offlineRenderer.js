@@ -1,4 +1,4 @@
-import {sculptToGLSL, baseUniforms} from '../jsapi/generate.js'
+import {sculptToGLSL, baseUniforms} from '../generators/sculpt.js'
 import { sculptureStarterCode } from '../glsl/glsl-lib.js';
 
 function uniformToCpp(uniforms) {

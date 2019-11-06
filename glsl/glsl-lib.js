@@ -166,6 +166,11 @@ float cylinder( vec3 p, vec2 h )
   return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
 
+float cylinder( vec3 p, float hx, float hy)
+{
+    return cylinder(p, vec2(hx,hy));
+}
+
 float cone( vec3 p, vec2 c )
 {
     // c must be normalized

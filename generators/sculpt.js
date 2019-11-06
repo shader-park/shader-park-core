@@ -1,3 +1,7 @@
+/**
+ * Converts sculpt lang to JS which generates GLSL
+ */
+
 import {
 	geometryFunctions, 
 	mathFunctions, 

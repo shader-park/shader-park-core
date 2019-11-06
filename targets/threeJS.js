@@ -1,4 +1,4 @@
-import {sculptToGLSL, baseUniforms, uniformsToGLSL} from '../jsapi/generate.js'
+import {sculptToGLSL, baseUniforms, uniformsToGLSL} from '../generators/sculpt.js'
 import {
     defaultVertexSource, 
     threeHeader,
