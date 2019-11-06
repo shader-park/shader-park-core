@@ -534,11 +534,6 @@ export function sculptToGLSL(userProvidedSrc) {
 	let builtInOtherJS = generateGLSLWrapper(glslBuiltInOther);
 	generatedJSFuncsSource += builtInOtherJS;
 
-	
-	// constants.forEach(constant => {
-	// 	generatedJSFuncsSource += `let ${constant};\n`
-	// });
-
 	let builtInOneToOneJS = "";
 	for (let funcName of glslBuiltInOneToOne) {
 		builtInOneToOneJS += 
