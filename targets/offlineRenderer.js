@@ -48,6 +48,11 @@ export function sculptToOfflineRenderer(source) {
     const src = sculptToGLSL(source);
 
     //console.log(filteredStarter);
-    return cppHeader + glslToGLM(sculptureStarterCode + src.geoGLSL + src.colorGLSL) + cppFooter;
+    return cppHeader + glslToGLM(
+        'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + 'f;\n' 
+        + sculptureStarterCode 
+        + src.geoGLSL 
+        + src.colorGLSL) 
+        + cppFooter;
 }
 

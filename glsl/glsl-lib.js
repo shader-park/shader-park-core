@@ -482,7 +482,7 @@ float intersect(vec3 ro, vec3 rd, float stepFraction) {
 	for(int i = 0; i < 300; ++i) {
 		float h = surfaceDistance(ro+rd*t);
 		if(h < intersection_threshold || t > max_dist) break;
-		t += h*stepFraction;
+		t += h*STEP_SIZE_CONSTANT;
 	}
 	return t;
 }

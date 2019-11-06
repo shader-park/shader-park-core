@@ -127,10 +127,26 @@ export function sculptToGLSL(userProvidedSrc) {
 	let colorSrc = "";
 	let varCount = 0;
 	let primCount = 0;
-        let stateCount = 0;
+	let stateCount = 0;
 	let useLighting = true;
 	let stateStack = [];
 	let uniforms = baseUniforms();
+
+	let stepSizeConstant = 0.85;
+	// set step size directly
+	function setStepSize(val) {
+		if (typeof val !== 'number') {
+			compileError("setStepSize accepts only a constant number. Was given: '" + val.type + "'");
+		}
+		stepSizeConstant = val;
+	}
+	// set step size on a scale 0-100
+	function setGeometryQuality(val) {
+		if (typeof val !== 'number') {
+			compileError("setGeometryQuality accepts only a constant number between 0 and 100. Was given: '" + val.type + "'");
+		}
+		stepSizeConstant = 1-0.01*val*0.995;
+	}
 
 	function getCurrentState() {
 		return stateStack[stateStack.length-1];
@@ -686,6 +702,7 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	return {
 		uniforms: uniforms,
+		stepSizeConstant: stepSizeConstant,
 		geoGLSL: geoFinal,
 		colorGLSL: colorFinal,
 		error: error

@@ -40,9 +40,20 @@ export function sculptToThreeJSShaderSource(source) {
     if (src.error) {
         console.log(src.error);
     }
+    let frg = 
+          threeHeader 
+        + uniformsToGLSL(src.uniforms) 
+        + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
+        + sculptureStarterCode 
+        + src.geoGLSL 
+        + '\n' 
+        + src.colorGLSL 
+        + '\n' 
+        + fragFooter;
+
     return {
         uniforms: src.uniforms,
-        frag: threeHeader + uniformsToGLSL(src.uniforms) + sculptureStarterCode + src.geoGLSL + '\n' + src.colorGLSL + '\n' + fragFooter,
+        frag: frg,
         vert: defaultVertexSource,
         error: src.error
     };
@@ -54,7 +65,6 @@ export function sculptToThreeJSMaterial(source, payload) {
 }
 
 export function sculptToThreeJSMesh(source, payload) {
-
     return makeBasicMesh(sculptToThreeJSMaterial(source, payload));
 }
 
