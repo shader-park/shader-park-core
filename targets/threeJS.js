@@ -21,7 +21,7 @@ import * as THREE from 'three';
 export function glslToThreeJSShaderSource(source) {
     return {
         uniforms: baseUniforms(),
-        frag: threeHeader + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + fragFooter,
+        frag: threeHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + fragFooter,
         vert: defaultVertexSource
     }
 }
