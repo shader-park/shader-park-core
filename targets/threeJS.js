@@ -61,7 +61,9 @@ export function sculptToThreeJSShaderSource(source) {
 
 export function sculptToThreeJSMaterial(source, payload) {
     let src = sculptToThreeJSShaderSource(source);
-    return makeMaterial(src.uniforms, src.vert, src.frag, payload);
+    let material = makeMaterial(src.uniforms, src.vert, src.frag, payload);
+    material.uniformDescriptions = src.uniforms;
+    return material;
 }
 
 export function sculptToThreeJSMesh(source, payload) {
