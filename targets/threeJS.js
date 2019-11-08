@@ -71,7 +71,6 @@ export function sculptToThreeJSMesh(source, payload) {
 }
 
 function uniformDescriptionToThreeJSFormat(unifs, payload) {
-    console.log('uniforms', unifs, 'yee', payload)
     let finalUniforms = {
         msdf: { value: payload.msdfTexture || new THREE.Texture() }
     }
