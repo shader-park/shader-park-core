@@ -1,9 +1,13 @@
+/**
+ * Converts sculpt lang to JS which generates GLSL
+ */
+
 import {
 	geometryFunctions, 
 	mathFunctions, 
 	glslBuiltInOneToOne, 
 	glslBuiltInOther
-} from './glsl-built-in.js';
+} from '../glsl/bindings.js';
 
 import * as escodegen from 'escodegen';
 import * as esprima from 'esprima';
@@ -88,7 +92,26 @@ function replaceSliderInput(syntaxTree) {
 	}
 }
 
-export function sourceGenerator(userProvidedSrc) {
+export function uniformsToGLSL(uniforms) {
+	let uniformsHeader = '';
+	for (let i=0; i<uniforms.length; i++) {
+		let uniform = uniforms[i];
+		uniformsHeader += `uniform ${uniform.type} ${uniform.name};\n`;
+	}
+	return uniformsHeader;
+}
+
+export function baseUniforms() {
+	return [
+		{name:'time', type: 'float', value: 0.0},
+		{name:'opacity', type: 'float', value: 1.0},
+		{name:'sculptureCenter', type: 'vec3', value: [0,0,0]},
+		{name:'mouse', type: 'vec3', value: [0.5,0.5,0.5]},
+		{name:'stepSize', type: 'float', value: 0.85}
+	];
+}
+
+export function sculptToGLSL(userProvidedSrc) {
 
 	let debug = false;
 	let tree = esprima.parse(userProvidedSrc);
@@ -104,10 +127,26 @@ export function sourceGenerator(userProvidedSrc) {
 	let colorSrc = "";
 	let varCount = 0;
 	let primCount = 0;
-        let stateCount = 0;
+	let stateCount = 0;
 	let useLighting = true;
-	let uniforms = [];
 	let stateStack = [];
+	let uniforms = baseUniforms();
+
+	let stepSizeConstant = 0.85;
+	// set step size directly
+	function setStepSize(val) {
+		if (typeof val !== 'number') {
+			compileError("setStepSize accepts only a constant number. Was given: '" + val.type + "'");
+		}
+		stepSizeConstant = val;
+	}
+	// set step size on a scale 0-100
+	function setGeometryQuality(val) {
+		if (typeof val !== 'number') {
+			compileError("setGeometryQuality accepts only a constant number between 0 and 100. Was given: '" + val.type + "'");
+		}
+		stepSizeConstant = 1-0.01*val*0.995;
+	}
 
 	function getCurrentState() {
 		return stateStack[stateStack.length-1];
@@ -225,22 +264,10 @@ export function sourceGenerator(userProvidedSrc) {
 		MIXGEO: 14,
 	};
 	const additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
-	// make this part of the stateStack!
-	//let currentMode = modes.UNION;
-	//let blendAmount = 0.0;
-	//let mixAmount = 0.0;
 
 	let time = new float("time", true);
-	// get these manually now with 'getPosition()'
-	//let x = new float("p.x", true);
-	//let y = new float("p.y", true);
-	//let z = new float("p.z", true);
-	//let p = new vec3("p", null, null, true);
 	let mouse = new vec3("mouse", null, null, true);
 	let normal = new vec3("normal", null, null, true);
-
-	// was this ever used?
-	//let currentColor = new vec3("color", null, null, true);
 
 	function compileError(err) {
 		// todo: throw actual error (and color error?)
@@ -375,8 +402,6 @@ export function sourceGenerator(userProvidedSrc) {
 		return makeShape;
 	}
 
-
-
 	function tryMakeNum(v) {
 		if (typeof v === 'number') {
 			return new float(v);
@@ -509,11 +534,6 @@ export function sourceGenerator(userProvidedSrc) {
 	let builtInOtherJS = generateGLSLWrapper(glslBuiltInOther);
 	generatedJSFuncsSource += builtInOtherJS;
 
-	
-	// constants.forEach(constant => {
-	// 	generatedJSFuncsSource += `let ${constant};\n`
-	// });
-
 	let builtInOneToOneJS = "";
 	for (let funcName of glslBuiltInOneToOne) {
 		builtInOneToOneJS += 
@@ -545,6 +565,19 @@ export function sourceGenerator(userProvidedSrc) {
 			ensureScalar("displace",yc);
 			ensureScalar("displace",zc);
 			appendSources(getCurrentPos()+" -= vec3( " + collapseToString(xc) + ", " 
+								 + collapseToString(yc) + ", " 
+								 + collapseToString(zc) + ");\n");
+		}
+	}
+
+	function setPosition(xc, yc, zc) {
+		if (yc === undefined || zc === undefined) {
+			appendSources(getCurrentPos()+" = " + collapseToString(xc) + ";\n");
+		} else {
+			ensureScalar("setPosition",xc);
+			ensureScalar("setPosition",yc);
+			ensureScalar("setPosition",zc);
+			appendSources(getCurrentPos()+" = vec3( " + collapseToString(xc) + ", " 
 								 + collapseToString(yc) + ", " 
 								 + collapseToString(zc) + ");\n");
 		}
@@ -642,6 +675,9 @@ export function sourceGenerator(userProvidedSrc) {
 	}
 
 	function input(name, value=0.0, min = 0.0, max = 1.0) {
+		if (typeof value !== 'number' || typeof min !== 'number' || typeof max !== 'number') {
+			compileError('input value, min, and max must be constant numbers');
+		}
 		uniforms.push({name, type:'float', value, min, max});
 		return new float(name, true);
 	}
@@ -673,9 +709,10 @@ export function sourceGenerator(userProvidedSrc) {
 	let colorFinal = buildColorSource(colorSrc, useLighting);
 
 	return {
+		uniforms: uniforms,
+		stepSizeConstant: stepSizeConstant,
 		geoGLSL: geoFinal,
 		colorGLSL: colorFinal,
-		uniforms: uniforms,
-		error
+		error: error
 	};
 }

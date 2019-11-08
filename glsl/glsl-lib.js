@@ -1,26 +1,3 @@
-export const defaultVertexSource = `
-varying vec4 worldPos;
-varying vec2 vUv;
-void main()
-{
-    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-    worldPos = modelMatrix*vec4(position,1.0);
-    vUv = uv;
-    gl_Position = projectionMatrix * mvPosition;
-}
-`;
-
-export const voxelVertexSource = `
-varying vec4 worldPos;
-void main()
-{
-    worldPos = vec4(position, 1.0);
-    gl_Position = vec4(position,1.0);
-}
-`;
-
-export const defaultFragSourceJS = 'sphere(0.2);';
-
 export const defaultFragSourceGLSL = `float surfaceDistance(vec3 p) {
     float d = sphere(p, 0.3);
 	return d;
@@ -34,19 +11,28 @@ vec3 shade(vec3 p, vec3 normal) {
 }
 `;
 
-export const sculptureStarterCode = `
+export const defaultVertexSource = `
+varying vec4 worldPos;
+varying vec2 vUv;
+void main()
+{
+    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    worldPos = modelMatrix*vec4(position,1.0);
+    vUv = uv;
+    gl_Position = projectionMatrix * mvPosition;
+}
+`;
+
+export const threeHeader = `
+#define GLSL_NEED_ROUND
 uniform mat4 projectionMatrix;
-uniform float time;
-uniform float opacity;
-uniform vec3 sculptureCenter;
-uniform vec3 mouse;
-uniform float stepSize;
 uniform sampler2D msdf;
-vec3 msdfTexture;
 
 varying vec2 vUv;
 varying vec4 worldPos;
+`;
 
+export const sculptureStarterCode = `
 float surfaceDistance(vec3 p);
 
 const float PI = 3.14159265;
@@ -65,9 +51,11 @@ float ncos(float x) {
     return cos(x)*0.5+0.5;
 }
 
+#ifdef GLSL_NEED_ROUND
 float round(float x) {
     return floor(x+0.5);
 }
+#endif
 
 float softSquare(float x, int pw) {
     return 1.0/(pow(tan(x),float(pw+1)*2.0)+1.0);
@@ -97,13 +85,13 @@ float osc() {
 
 // Color Conversion
 // https://www.shadertoy.com/view/lsS3Wc
-vec3 hsv2rgb( in vec3 c )
+vec3 hsv2rgb( vec3 c )
 {
     vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
     return c.z * mix( vec3(1.0), rgb, c.y);
 }
 
-vec3 rgb2hsv( in vec3 c)
+vec3 rgb2hsv( vec3 c)
 {
     const float eps = 0.0000001;
     vec4 k = vec4(0.0, -1.0/3.0, 2.0/3.0, -1.0);
@@ -119,7 +107,7 @@ vec3 rgb2hsv( in vec3 c)
 float line(vec3 p, vec3 a, vec3 b) {
 	vec3 pa = p-a;
   	vec3 ba = b-a;
-	float t = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
+	float t = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
   	return length(pa - ba*t);
 }
 
@@ -178,6 +166,11 @@ float cylinder( vec3 p, vec2 h )
   return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
 
+float cylinder( vec3 p, float hx, float hy)
+{
+    return cylinder(p, vec2(hx,hy));
+}
+
 float cone( vec3 p, vec2 c )
 {
     // c must be normalized
@@ -222,7 +215,7 @@ float triangularPrism( vec3 p, vec2 h ) {
     return max(q.z-h.y,max(q.x*0.866025+p.y*0.5,-p.y)-h.x*0.5);
 }
 
-float cappedCone( in vec3 p, in vec3 c )
+float cappedCone( vec3 p, vec3 c )
 {
     vec2 q = vec2( length(p.xz), p.y );
     vec2 v = vec2( c.z*c.y/c.x, -c.z );
@@ -258,7 +251,7 @@ float roundCone(vec3 p, vec3 a, vec3 b, float r1, float r2)
                             return (sqrt(x2*a2*il2)+y*rr)*il2 - r1;
 }
 
-float ellipsoid( in vec3 p, in vec3 r )
+float ellipsoid( vec3 p, vec3 r )
 {
     return (length( p/r ) - 1.0) * min(min(r.x,r.y),r.z);
 }
@@ -274,7 +267,7 @@ vec3 fromSpherical(vec3 p) {
     return vec3(p.x*sin(p.y)*cos(p.z), p.x*sin(p.y)*sin(p.z), p.x*cos(p.y));
 }
 
-float dot2( in vec3 v ) { return dot(v,v); }
+float dot2( vec3 v ) { return dot(v,v); }
 
 float uTriangle( vec3 p, vec3 a, vec3 b, vec3 c )
 {
@@ -339,7 +332,7 @@ vec3 repeat3D(vec3 p, vec3 c )
     return mod(p,c)-0.5*c;
 }
 
-float repeat1D(inout float p, float size)
+float repeat1D(float p, float size)
 {
 	float halfSize = size * 0.5;
 	float c = floor((p + halfSize) / size);
@@ -371,7 +364,7 @@ vec2 _hash( vec2 p ) // replace this by something better
 	return -1.0 + 2.0*fract(sin(p)*43758.5453123);
 }
 
-float noise( in vec2 p )
+float noise( vec2 p )
 {
     const float K1 = 0.366025404; // (sqrt(3)-1)/2;
     const float K2 = 0.211324865; // (3-sqrt(3))/6;
@@ -485,11 +478,11 @@ vec4 sphericalDistribution( vec3 p, float n )
 
 // Compute intersection of ray and SDF. You probably won't need to modify this.
 float intersect(vec3 ro, vec3 rd, float stepFraction) {
-	float t = 0.;
+	float t = 0.0;
 	for(int i = 0; i < 300; ++i) {
 		float h = surfaceDistance(ro+rd*t);
 		if(h < intersection_threshold || t > max_dist) break;
-		t += h*stepFraction;
+		t += h*STEP_SIZE_CONSTANT;
 	}
 	return t;
 }
@@ -504,7 +497,7 @@ vec3 mouseIntersection() {
 }
 
 // Calculate the normal of a SDF
-vec3 calcNormal( in vec3 pos )
+vec3 calcNormal( vec3 pos )
 {
     vec2 e = vec2(1.0,-1.0)*0.0005;
     return normalize( e.xyy*surfaceDistance( pos + e.xyy ) + 
@@ -551,7 +544,7 @@ float occlusion(vec3 p,vec3 n) {
 export const fragFooter = `
 // For advanced users //
 void main() {
-    msdfTexture = texture2D(msdf, vUv).rgb;
+    vec3 msdfTexture = texture2D(msdf, vUv).rgb;
 	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
 	vec3 rayDirection = getRayDirection();
 	rayOrigin -= rayDirection*2.0;
@@ -566,14 +559,5 @@ void main() {
 	} else {
 		discard;
 	}
-}
-`;
-
-export const voxelFooter = `
-void main() {
-	vec3 p = worldPos.xyz - sculptureCenter;
-	vec3 color = shade(p,calcNormal(p));
-	float dist = surfaceDistance(p);
-	gl_FragColor = vec4(/*color*/vec3(0.5,1.5,1000.0),dist);
 }
 `;

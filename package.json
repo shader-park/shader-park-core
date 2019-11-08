@@ -12,7 +12,8 @@
     "build": "rollup -c --no-treeshake",
     "watch": "rollup -c -w --no-treeshake",
     "pretest": "npm run build",
-    "convert": "node convert.js"
+    "toThreeJS": "node converters/convertThreeJS.js",
+    "toOffline": "node converters/convertOfflineRenderer.js"
   },
   "files": [
     "dist"
@@ -42,7 +43,8 @@
   "homepage": "https://github.com/bnanner/sculpture-park-core#readme",
   "dependencies": {
     "escodegen": "^1.11.1",
-    "esprima": "^4.0.1"
+    "esprima": "^4.0.1",
+    "three": "^0.103.0"
   },
   "devDependencies": {
     "@babel/core": "^7.5.4",

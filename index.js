@@ -1,31 +1,31 @@
-import {sourceGenerator} from './jsapi/generate.js'
 import {
-    defaultVertexSource, 
-    defaultFragSourceJS, 
-    defaultFragSourceGLSL, 
-    sculptureStarterCode, 
-    fragFooter
-} from './jsapi/default-shader.js'
+    glslToThreeJSShaderSource,
+    glslToThreeJSMaterial,
+    glslToThreeJSMesh,
+    sculptToThreeJSShaderSource,
+    sculptToThreeJSMaterial,
+    sculptToThreeJSMesh
+} from './targets/threeJS.js'
 
-function glslToThreejs(source) {
+import {
+    glslToOfflineRenderer,
+    sculptToOfflineRenderer
+} from './targets/offlineRenderer.js'
 
-}
+import {
+    defaultFragSourceGLSL
+} from './glsl/glsl-lib.js'
 
-function sculptToThreejs(source) {
-    const src = sourceGenerator(source);
-    return sculptureStarterCode + src.geoGLSL + '\n' + src.colorGLSL + '\n' + fragFooter;
-}
-
-function sculptToUnity(source) {
-
-}
+/// Generate code for various targets
 
 export {
-    sculptToThreejs,
-    sourceGenerator,
-    defaultVertexSource,
-    defaultFragSourceJS,
     defaultFragSourceGLSL,
-    sculptureStarterCode,
-    fragFooter
+    glslToThreeJSShaderSource,
+    glslToThreeJSMaterial,
+    glslToThreeJSMesh,
+    sculptToThreeJSShaderSource,
+    sculptToThreeJSMaterial,
+    sculptToThreeJSMesh,
+    glslToOfflineRenderer,
+    sculptToOfflineRenderer
 }
