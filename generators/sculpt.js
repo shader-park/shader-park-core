@@ -116,7 +116,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	let debug = false;
 	let tree = esprima.parse(userProvidedSrc);
 	replaceBinaryOp(tree);
-	// replaceSliderInput(tree);
+	replaceSliderInput(tree);
 	userProvidedSrc = escodegen.generate(tree);
 	if (debug) {
 		console.log('tree', tree);
