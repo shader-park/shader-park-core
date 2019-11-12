@@ -15,7 +15,8 @@ import * as esprima from 'esprima';
 function buildGeoSource(geo) {
 	return `
 float surfaceDistance(vec3 p) {
-    vec3 normal = vec3(0.0,1.0,0.0);
+	vec3 normal = vec3(0.0,1.0,0.0);
+	vec3 mouseIntersect = vec3(0.0,1.0,0.0);
     float d = 100.0;
     vec3 op = p;
 ${geo}
@@ -30,6 +31,7 @@ vec3 shade(vec3 p, vec3 normal) {
     float d = 100.0;
     vec3 op = p;
 	vec3 lightDirection = vec3(0.0, 1.0, 0.0);
+	vec3 mouseIntersect = vec3(0.0,1.0,0.0);
 	float light = 1.0;
     float occ = 1.0;
     vec3 color = vec3(1.0,1.0,1.0);
@@ -209,6 +211,9 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function vec2(source, y, inline) {
+		if (y === undefined ) {
+			y = source;
+		}
 		if (typeof source !== 'string') {
 			source = "vec2(" + collapseToString(source) + ", " 
 							 + collapseToString(y) + ")";
@@ -220,10 +225,16 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function vec3(source, y, z, inline) {
+		if (y === undefined) {
+			y = source;
+			z = source;
+		}
 		if (typeof source !== 'string') {
+			
 			source = "vec3(" + collapseToString(source) + ", " 
 							 + collapseToString(y) + ", " 
 							 + collapseToString(z) + ")";
+			
 		}
 		let self = new makeVar(source, 'vec3', 3, inline);
 		self.x = new makeVarWithDims(self.name + ".x", 1, true);//self.name + ".x";
@@ -233,6 +244,11 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function vec4(source, y, z, w, inline) {
+		if (y === undefined && z === undefined) {
+			y = source;
+			z = source;
+			w = source;
+		}
 		if (typeof source !== 'string') {
 			source = "vec4(" + collapseToString(source) + ", " 
 							 + collapseToString(y) + ", " 
@@ -268,6 +284,11 @@ export function sculptToGLSL(userProvidedSrc) {
 	let time = new float("time", true);
 	let mouse = new vec3("mouse", null, null, true);
 	let normal = new vec3("normal", null, null, true);
+
+	function mouseIntersection() {
+		appendColorSource("mouseIntersect = mouseIntersection();\n");
+		return new vec3("mouseIntersect", null, null, true);
+	}
 
 	function compileError(err) {
 		// todo: throw actual error (and color error?)
