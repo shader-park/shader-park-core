@@ -55,7 +55,9 @@ export function sculptToThreeJSShaderSource(source) {
         uniforms: src.uniforms,
         frag: frg,
         vert: defaultVertexSource,
-        error: src.error
+        error: src.error,
+        geoGLSL: src.geoGLSL,
+        colorGLSL: src.colorGLSL
     };
 }
 
