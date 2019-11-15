@@ -73,13 +73,16 @@ export function sculptToThreeJSMesh(source, payload) {
 }
 
 function uniformDescriptionToThreeJSFormat(unifs, payload) {
-    let finalUniforms = {
-        msdf: { value: payload.msdfTexture || new THREE.Texture() }
+    
+    let finalUniforms = {};
+    
+    if (payload !== undefined && payload.msdfTexture !== undefined) {
+        finalUniforms["msdf"] = { value: payload.msdfTexture || new THREE.Texture() };
     }
     
     unifs.forEach(uniform => {
         if (typeof uniform.value === 'number') {
-            finalUniforms[uniform.name] = {value: uniform.value}
+            finalUniforms[uniform.name] = {value: uniform.value};
         } else if (uniform.value.length === 2) {
             finalUniforms[uniform.name] = {value: new THREE.Vector2(uniform.value[0], uniform.value[1])};
         } else if (uniform.value.length === 3) {
