@@ -383,7 +383,7 @@ export function sculptToGLSL(userProvidedSrc) {
 			(cmode.length > 1 ? "," + collapseToString(cmode[1]) : "") + " );\n");
 	}
 
-	function getPosition() {
+	function getSpace() {
 		return getCurrentState().p;
 	}
 
@@ -591,13 +591,13 @@ export function sculptToGLSL(userProvidedSrc) {
 		}
 	}
 
-	function setPosition(xc, yc, zc) {
+	function setSpace(xc, yc, zc) {
 		if (yc === undefined || zc === undefined) {
 			appendSources(getCurrentPos()+" = " + collapseToString(xc) + ";\n");
 		} else {
-			ensureScalar("setPosition",xc);
-			ensureScalar("setPosition",yc);
-			ensureScalar("setPosition",zc);
+			ensureScalar("setSpace",xc);
+			ensureScalar("setSpace",yc);
+			ensureScalar("setSpace",zc);
 			appendSources(getCurrentPos()+" = vec3( " + collapseToString(xc) + ", " 
 								 + collapseToString(yc) + ", " 
 								 + collapseToString(zc) + ");\n");
