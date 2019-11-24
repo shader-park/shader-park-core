@@ -494,8 +494,8 @@ export function sculptToGLSL(userProvidedSrc) {
 		return new makeVarWithDims("(" + collapseToString(a) + "/" + collapseToString(b) + ")", dims);
 	}
 	
-	function applyDistance(dist) {
-		ensureScalar("applyDistance", dist);
+	function applySDF(dist) {
+		ensureScalar("applySDF", dist);
 		applyMode(collapseToString(dist));
 	}
 
