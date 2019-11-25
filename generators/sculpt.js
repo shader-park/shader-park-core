@@ -32,13 +32,27 @@ vec3 shade(vec3 p, vec3 normal) {
     vec3 op = p;
 	vec3 lightDirection = vec3(0.0, 1.0, 0.0);
 	vec3 mouseIntersect = vec3(0.0,1.0,0.0);
+	#ifdef USE_PBR
+	Material material = Material(vec3(1.0),0.5,0.7,1.0);
+	Material selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);
+	#else
 	float light = 1.0;
-    float occ = 1.0;
+	float occ = 1.0;
     vec3 color = vec3(1.0,1.0,1.0);
-    vec3 selectedColor = vec3(1.0,1.0,1.0);
+	vec3 selectedColor = vec3(1.0,1.0,1.0);
+	#endif
 ${col}
+	#ifdef USE_PBR
+	return pbrLighting(
+		worldPos.xyz,
+		normal,
+		lightDirection,
+		scope_0_material
+		);
+	#else
 ${lgt}
-    return scope_0_color*light*occ;
+	return scope_0_color*light*occ;
+	#endif
 }`;
 }
 
@@ -169,12 +183,12 @@ export function sculptToGLSL(userProvidedSrc) {
 		return getCurrentState().id+"p";
 	}
 
-	function getMainColor() {
-		return getCurrentState().id+"color";
+	function getMainMaterial() {
+		return getCurrentState().id+"material";
 	}
 
-	function getCurrentColor() {
-		return getCurrentState().id+"currentColor";
+	function getCurrentMaterial() {
+		return getCurrentState().id+"currentMaterial";
 	}
 
 	function appendSources(source) {
@@ -379,8 +393,8 @@ export function sculptToGLSL(userProvidedSrc) {
 		primCount += 1;
 		appendSources("float " + primName + " = " + prim + ";\n");
 		if (additiveModes.includes(getCurrentState().mode)) {
-			let selectedCC = finalCol !== undefined ? finalCol : getCurrentColor();
-			appendColorSource("if (" + primName + " < "+ getCurrentDist() + ") { " + getMainColor() + " = " + selectedCC + "; }\n" );
+			let selectedCC = finalCol !== undefined ? finalCol : getCurrentMaterial();
+			appendColorSource("if (" + primName + " < "+ getCurrentDist() + ") { " + getMainMaterial() + " = " + selectedCC + "; }\n" );
 		}
 		appendSources(getCurrentDist() + " = "+ cmode[0] + "( " + primName + ", " + getCurrentDist() +  " " +
 			(cmode.length > 1 ? "," + collapseToString(cmode[1]) : "") + " );\n");
@@ -399,19 +413,19 @@ export function sculptToGLSL(userProvidedSrc) {
 		});
 		appendSources("float " + getCurrentDist() + " = 100.0;\n");
 		let lastP = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"p" : "p";
-		let lastCol = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"currentColor" : "color";
+		let lastMat = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"currentMaterial" : "material";
 		appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
-		appendColorSource("vec3 " + getMainColor() + " = " + lastCol + ";\n");
-		appendColorSource("vec3 " + getCurrentColor() + " = " + lastCol + ";\n");
+		appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
+		appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
 		stateStack[stateStack.length-1].p = vec3(stateStack[stateStack.length-1].id+"p", null, null, true);
                 stateCount++;
 	}
 
 	function popState() {
 		let lastDist = getCurrentDist();
-		let lastColy = getMainColor();
+		let lastMaty = getMainMaterial();
 		stateStack.pop();
-		applyMode(lastDist, lastColy);
+		applyMode(lastDist, lastMaty);
 	}
 	// !!! puts initial state on stack, this never comes off !!!
 	pushState();
@@ -655,14 +669,26 @@ export function sculptToGLSL(userProvidedSrc) {
 			ensureScalar("color", col);
 			ensureScalar("color", green);
 			ensureScalar("color", blue);
-			appendColorSource(getCurrentColor() + " = vec3(" + 
+			appendColorSource(getCurrentMaterial() + ".albedo = vec3(" + 
 				collapseToString(col) + ", " + 
 				collapseToString(green) + ", " +
 				collapseToString(blue) + ");\n");
 		} else {
-			if (col.type !== 'vec3') compileError("color must be vec3");
-			appendColorSource(getCurrentColor() + " = " + collapseToString(col) + ";\n");
+			if (col.type !== 'vec3') compileError("albedo must be vec3");
+			appendColorSource(getCurrentMaterial() + ".albedo = " + collapseToString(col) + ";\n");
 		}
+	}
+
+	function metal(val) {
+		ensureScalar("metal", val);
+		appendColorSource(getCurrentMaterial() + ".metallic = " + 
+			collapseToString(val) + ";\n");
+	}
+
+	function shine(val) {
+		ensureScalar("shine", val);
+		appendColorSource(getCurrentMaterial() + ".roughness = 1.0-" + 
+			collapseToString(val) + ";\n");
 	}
 
 	function lightDirection(x, y, z) {
@@ -691,7 +717,7 @@ export function sculptToGLSL(userProvidedSrc) {
 			ensureScalar("occlusion", amount);
 			amt = collapseToString(amount);
 		} 
-		appendColorSource("occ = mix(1.0, occlusion(op,normal), " + amt + ");\n");
+		appendColorSource(getCurrentMaterial() + ".ao = mix(1.0, occlusion(op,normal), " + amt + ");\n");
 	}
 
 	function test() {

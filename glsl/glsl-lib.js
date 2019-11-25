@@ -32,6 +32,9 @@ varying vec2 vUv;
 varying vec4 worldPos;
 `;
 
+export const usePBRHeader = '#define USE_PBR\n';
+export const useHemisphereLight = '#define HEMISPHERE_LIGHT\n'
+
 export const sculptureStarterCode = `
 float surfaceDistance(vec3 p);
 
@@ -41,6 +44,13 @@ const float TWO_PI = TAU;
 
 const float max_dist = 4.0;
 const float intersection_threshold = 0.00007;
+
+struct Material {
+    vec3 albedo;
+    float metallic;
+    float roughness;
+    float ao;
+};
 
 // Trig functions normalized to the range 0.0-1.0
 float nsin(float x) {
@@ -208,7 +218,6 @@ float capsule( vec3 p, vec3 a, vec3 b, float r )
     float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
     return length( pa - ba*h ) - r;
 }
-
 
 float triangularPrism( vec3 p, vec2 h ) {
     vec3 q = abs(p);
@@ -506,6 +515,101 @@ vec3 calcNormal( vec3 pos )
 		      e.xxx*surfaceDistance( pos + e.xxx ) );
 }
 
+// from https://learnopengl.com/PBR/Lighting
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}  
+
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a      = roughness*roughness;
+    float a2     = a*a;
+    float NdotH  = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+	
+    float num   = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+	
+    return num / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float num   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+	
+    return num / denom;
+}
+
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2  = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1  = GeometrySchlickGGX(NdotL, roughness);
+	
+    return ggx1 * ggx2;
+}
+
+// adapted from https://learnopengl.com/PBR/Lighting
+vec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat) {
+
+    vec3 V = -getRayDirection();
+    vec3 F0 = vec3(0.04); 
+    F0 = mix(F0, mat.albedo, mat.metallic);
+	
+    // reflectance equation
+    vec3 Lo = vec3(0.0);
+
+    // calculate per-light radiance
+    vec3 L = normalize(lightdir);
+    vec3 H = normalize(V + L);        
+    
+    // cook-torrance brdf
+    float NDF = DistributionGGX(N, H, mat.roughness);        
+    float G   = GeometrySmith(N, V, L, mat.roughness);      
+    vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);    
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - mat.metallic;	  
+    
+    vec3 numerator    = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+    vec3 specular     = numerator / max(denominator, 0.001);  
+    
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(N, L), 0.0);                
+    Lo += (kD * mat.albedo / PI + specular) * NdotL;  
+  
+    float hemi = 1.0;
+    #ifdef HEMISPHERE_LIGHT
+    // ground is black, taken into account by ambient light
+    hemi = NdotL*1.25;
+    #endif
+
+    vec3 ambient = (vec3(1.2+hemi) * mat.albedo) * mat.ao;
+    vec3 color = ambient + Lo*1.7;
+    
+    /// this section adds edge glow as if there were a white env map ///
+    /// there should probably be a way to disable it //
+    float lt = 1.0-max(dot(N,V),0.0);
+    lt = pow(lt,6.0);
+    vec3 background = vec3(1.0,1.0,1.0);
+    color += 16.0*lt*(0.2+mat.albedo)*mat.metallic*background*(1.3-mat.roughness);
+    ///
+    
+    color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0/2.2));
+   
+    return color;
+}
+
 float simpleLighting(vec3 p, vec3 normal, vec3 lightdir) {
     // Simple phong-like shading
     float value = clamp(dot(normal, normalize(lightdir)),0.0, 1.0);
@@ -553,8 +657,8 @@ void main() {
 		vec3 p = (rayOrigin + rayDirection*t);
 		//vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0);
 		vec3 normal = calcNormal(p);
-		vec3 c = shade(p, normal);
-		gl_FragColor = vec4(c, opacity);
+        vec3 col = shade(p, normal);
+		gl_FragColor = vec4(col, opacity);
 		
 	} else {
 		discard;

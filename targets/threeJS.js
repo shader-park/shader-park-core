@@ -2,8 +2,10 @@ import {sculptToGLSL, baseUniforms, uniformsToGLSL} from '../generators/sculpt.j
 import {
     defaultVertexSource, 
     threeHeader,
+    usePBRHeader,
+    useHemisphereLight,
     sculptureStarterCode, 
-    fragFooter
+    fragFooter,
 } from '../glsl/glsl-lib.js'
 
 import * as THREE from 'three';
@@ -41,7 +43,9 @@ export function sculptToThreeJSShaderSource(source) {
         console.log(src.error);
     }
     let frg = 
-          threeHeader 
+          threeHeader
+        + usePBRHeader
+        + useHemisphereLight
         + uniformsToGLSL(src.uniforms) 
         + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
         + sculptureStarterCode 
