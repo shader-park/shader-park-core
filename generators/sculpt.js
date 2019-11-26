@@ -403,6 +403,10 @@ export function sculptToGLSL(userProvidedSrc) {
 	function getSpace() {
 		return getCurrentState().p;
 	}
+	
+	function getSpherical() {
+		return toSpherical(getSpace());	
+	}
 
 	function pushState() {
 		stateStack.push({
