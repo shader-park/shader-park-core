@@ -16,6 +16,11 @@ import {
     defaultFragSourceGLSL
 } from './glsl/glsl-lib.js'
 
+import {
+    glslToTouchDesignerShaderSource, 
+    sculptToTouchDesignerShaderSource
+} from './targets/touchDesigner.js'
+
 /// Generate code for various targets
 
 export {
@@ -27,5 +32,7 @@ export {
     sculptToThreeJSMaterial,
     sculptToThreeJSMesh,
     glslToOfflineRenderer,
-    sculptToOfflineRenderer
+    sculptToOfflineRenderer,
+    glslToTouchDesignerShaderSource,
+    sculptToTouchDesignerShaderSource
 }
