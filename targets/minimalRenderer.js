@@ -8,6 +8,8 @@ import {
 
 /**
  * for fast and efficient use on the web
+ * input - sculpt code
+ * output - a fully self-contained lightweight html file which renders the sculpture
  **/
 export function sculptToMinimalRenderer(source) {
 
