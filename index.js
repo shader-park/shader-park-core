@@ -13,13 +13,17 @@ import {
 } from './targets/offlineRenderer.js'
 
 import {
-    defaultFragSourceGLSL
-} from './glsl/glsl-lib.js'
+    sculptToMinimalRenderer
+} from './targets/minimalRenderer.js'
 
 import {
     glslToTouchDesignerShaderSource, 
     sculptToTouchDesignerShaderSource
 } from './targets/touchDesigner.js'
+
+import {
+    defaultFragSourceGLSL
+} from './glsl/glsl-lib.js'
 
 /// Generate code for various targets
 
@@ -34,5 +38,6 @@ export {
     glslToOfflineRenderer,
     sculptToOfflineRenderer,
     glslToTouchDesignerShaderSource,
-    sculptToTouchDesignerShaderSource
+    sculptToTouchDesignerShaderSource,
+    sculptToMinimalRenderer
 }

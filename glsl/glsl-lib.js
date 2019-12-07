@@ -657,7 +657,6 @@ float occlusion(vec3 p,vec3 n) {
 export const fragFooter = `
 // For advanced users //
 void main() {
-    vec3 msdfTexture = texture2D(msdf, vUv).rgb;
 	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
 	vec3 rayDirection = getRayDirection();
 	rayOrigin -= rayDirection*2.0;
