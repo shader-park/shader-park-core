@@ -65,6 +65,15 @@ float ncos(float x) {
 float round(float x) {
     return floor(x+0.5);
 }
+vec2 round(vec2 x) {
+    return floor(x+0.5);
+}
+vec3 round(vec3 x) {
+    return floor(x+0.5);
+}
+vec4 round(vec4 x) {
+    return floor(x+0.5);
+}
 #endif
 
 float softSquare(float x, int pw) {

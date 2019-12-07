@@ -624,15 +624,11 @@ export function sculptToGLSL(userProvidedSrc) {
 								 + collapseToString(zc) + ");\n");
 		}
 	}
-
-	function expand(amount) {
-		ensureScalar("expand",amount);
-		appendSources(getCurrentDist() + " -= " + collapseToString(amount) + ";\n");
-	}
-
-	function shell(depth) {
-		ensureScalar("shell",depth);
-		appendSources(getCurrentDist() + " = shell( " + getCurrentDist() +  "," + collapseToString(depth) + ");\n");
+	
+	function repeat(spacing, repetitions) {
+		let spc = collapseToString(spacing);
+		let reps = collapseToString(repetitions);
+		appendSources(getCurrentPos()+" = " + getCurrentPos() + "-" + spc +"*clamp(round(" + getCurrentPos() + "/" + spc + "),-" + reps + " ," + reps + ");\n");
 	}
 
 	function rotateX(angle) {
@@ -664,6 +660,28 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	function mirrorXYZ() {
 		appendSources(getCurrentPos()+" = abs(" + getCurrentPos() + ");\n");
+	}
+
+	function flipX() {
+		appendSources(getCurrentPos()+".x = -" + getCurrentPos() + ".x;\n");
+	}
+
+	function flipY() {
+		appendSources(getCurrentPos()+".y = -" + getCurrentPos() + ".y;\n");
+	}
+
+	function flipZ() {
+		appendSources(getCurrentPos()+".z = -" + getCurrentPos() + ".z;\n");
+	}
+
+	function expand(amount) {
+		ensureScalar("expand",amount);
+		appendSources(getCurrentDist() + " -= " + collapseToString(amount) + ";\n");
+	}
+
+	function shell(depth) {
+		ensureScalar("shell",depth);
+		appendSources(getCurrentDist() + " = shell( " + getCurrentDist() +  "," + collapseToString(depth) + ");\n");
 	}
 
 	// Color/Lighting
