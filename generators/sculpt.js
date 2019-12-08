@@ -512,9 +512,14 @@ export function sculptToGLSL(userProvidedSrc) {
 		return new makeVarWithDims("(" + collapseToString(a) + "/" + collapseToString(b) + ")", dims);
 	}
 	
-	function applySDF(dist) {
-		ensureScalar("applySDF", dist);
+	function setSDF(dist) {
+		ensureScalar("setSDF", dist);
 		applyMode(collapseToString(dist));
+	}
+	
+	function getSDF() {
+		ensureScalar("getSDF", dist);
+		return float(getCurrentDist(), true);
 	}
 
     let primitivesJS = "";
