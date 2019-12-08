@@ -518,7 +518,6 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 	
 	function getSDF() {
-		ensureScalar("getSDF", dist);
 		return float(getCurrentDist(), true);
 	}
 
