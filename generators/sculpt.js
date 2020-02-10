@@ -25,7 +25,7 @@ ${geo}
 }
 
 function buildColorSource(col, useLighting) {
-	let lgt = useLighting ? '    light = simpleLighting(p, normal, lightDirection);' : '';
+	let lgt = useLighting ? '' : '    return scope_0_material.albedo;';
 	return `
 vec3 shade(vec3 p, vec3 normal) {
     float d = 100.0;
@@ -42,6 +42,7 @@ vec3 shade(vec3 p, vec3 normal) {
 	vec3 selectedColor = vec3(1.0,1.0,1.0);
 	#endif
 ${col}
+${lgt}
 	#ifdef USE_PBR
 	return pbrLighting(
 		worldPos.xyz,
@@ -50,8 +51,7 @@ ${col}
 		scope_0_material
 		);
 	#else
-${lgt}
-	return scope_0_color*light*occ;
+	return scope_0_material.albedo*simpleLighting(p, normal, lightDirection);*occ;
 	#endif
 }`;
 }
@@ -305,6 +305,10 @@ export function sculptToGLSL(userProvidedSrc) {
 	function mouseIntersection() {
 		appendColorSource("mouseIntersect = mouseIntersection();\n");
 		return new vec3("mouseIntersect", null, null, true);
+	}
+
+	function getRayDirection() {
+		return new vec3("getRayDirection()", null, null, false);
 	}
 
 	function compileError(err) {
