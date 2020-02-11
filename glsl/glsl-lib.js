@@ -659,7 +659,7 @@ export const fragFooter = `
 void main() {
 	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
 	vec3 rayDirection = getRayDirection();
-	rayOrigin -= rayDirection*2.0;
+	rayOrigin -= rayDirection*2.5;
 	float t = intersect(rayOrigin, rayDirection, stepSize);
 	if(t < 2.5) {
 		vec3 p = (rayOrigin + rayDirection*t);

@@ -111,5 +111,5 @@ function makeMaterial(unifs, vert, frag, payload) {
 
 // There should be more options supported like size and shape
 function makeBasicMesh(material) {
-    return new THREE.Mesh(new THREE.BoxBufferGeometry(1.0, 1.0, 1.0), material);
+    return new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2, 2), material);
 }
