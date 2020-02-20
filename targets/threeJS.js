@@ -8,7 +8,7 @@ import {
     fragFooter,
 } from '../glsl/glsl-lib.js'
 
-import * as THREE from 'three';
+import { Texture, Vector2, Vector3, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide} from 'three';
 
 /**
  *  Three targets are provided for both GLSL and Sculpt/JS api.
@@ -81,16 +81,16 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
     let finalUniforms = {};
     
     if (payload !== undefined && payload.msdfTexture !== undefined) {
-        finalUniforms["msdf"] = { value: payload.msdfTexture || new THREE.Texture() };
+        finalUniforms["msdf"] = { value: payload.msdfTexture || new Texture() };
     }
     
     unifs.forEach(uniform => {
         if (typeof uniform.value === 'number') {
             finalUniforms[uniform.name] = {value: uniform.value};
         } else if (uniform.value.length === 2) {
-            finalUniforms[uniform.name] = {value: new THREE.Vector2(uniform.value[0], uniform.value[1])};
+            finalUniforms[uniform.name] = {value: new Vector2(uniform.value[0], uniform.value[1])};
         } else if (uniform.value.length === 3) {
-            finalUniforms[uniform.name] = {value: new THREE.Vector3(uniform.value[0], uniform.value[1], uniform.value[2])};
+            finalUniforms[uniform.name] = {value: new Vector3(uniform.value[0], uniform.value[1], uniform.value[2])};
         }
     });
     return finalUniforms;
@@ -98,12 +98,12 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
 
 // could use a scale parameter
 function makeMaterial(unifs, vert, frag, payload) {
-    const material = new THREE.ShaderMaterial({
+    const material = new ShaderMaterial({
         uniforms: uniformDescriptionToThreeJSFormat(unifs, payload),
         vertexShader: vert,
         fragmentShader: frag,
         transparent: true,
-        side: THREE.BackSide
+        side: BackSide
     });
     material.extensions.fragDepth = false;
     return material;
@@ -111,5 +111,5 @@ function makeMaterial(unifs, vert, frag, payload) {
 
 // There should be more options supported like size and shape
 function makeBasicMesh(material) {
-    return new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2, 2), material);
+    return new Mesh(new BoxBufferGeometry(2, 2, 2), material);
 }
