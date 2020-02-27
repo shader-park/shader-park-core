@@ -66817,11 +66817,87 @@ vec4 envMapTexelToLinear(vec4 color) {
    * output - a fully self-contained lightweight html file which renders the sculpture
    **/
 
-  function sculptToMinimalGlitchRenderer(source) {
+  function sculptToMinimalGlitchRenderer(canvas, source) {
     var minimalHeader = "\nprecision highp float;\n#define GLSL_NEED_ROUND\nuniform float w_width;\nuniform float w_height;\nuniform mat4 projectionMatrix;\n#define cameraPosition vec3(0.0,0.0,-1.0)\n#define vUv vec2(0.0)\n#define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)\n";
     var generatedGLSL = sculptToGLSL(source);
     var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + generatedGLSL.stepSizeConstant + ';\n' + sculptureStarterCode + generatedGLSL.geoGLSL + '\n' + generatedGLSL.colorGLSL + '\n' + fragFooter;
-    return "\n        <canvas style=\"width: 100%; height:100%; margin : 0px; padding : 0px; border : 0px; background-color : white;\" id=\"sp-canvas\"></canvas>\n        <script>\n            var canvas = document.getElementById('sp-canvas');\n            function resizeCanvas() {\n                var devicePixelRatio = window.devicePixelRatio || 1;\n                var width = window.innerWidth*devicePixelRatio;\n                var height = window.innerHeight*devicePixelRatio;\n                if (canvas.width != width ||\n                    canvas.height != height) {\n                    canvas.width = width;\n                    canvas.height = height;\n                }\n            }\n            resizeCanvas();\n            window.addEventListener('resize', resizeCanvas);\n            gl = canvas.getContext('webgl');\n            var vertices = [\n            -1.0,1.0,0.0,\n            -1.0,-1.0,0.0,\n            1.0,-1.0,0.0,\n            1.0,1.0,0.0 \n            ];\n            indices = [3,2,1,3,1,0];\n            var vertex_buffer = gl.createBuffer();\n            gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);\n            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);\n            gl.bindBuffer(gl.ARRAY_BUFFER, null);\n            var Index_Buffer = gl.createBuffer();\n            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Index_Buffer);\n            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);\n            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);\n            var vertCode =\n                'attribute vec3 coordinates;' +\n                'void main(void) {' +\n                    ' gl_Position = vec4(coordinates, 1.0);' +\n                '}';\n            var vertShader = gl.createShader(gl.VERTEX_SHADER);\n            gl.shaderSource(vertShader, vertCode);\n            gl.compileShader(vertShader);\n            var fragCode = `".concat(fullFrag, "`;\n            var fragShader = gl.createShader(gl.FRAGMENT_SHADER);\n            gl.shaderSource(fragShader, fragCode);\n            gl.compileShader(fragShader);\n            var compiled = gl.getShaderParameter(fragShader, gl.COMPILE_STATUS);\n            console.log('Shader compiled successfully: ' + compiled);\n            var compilationLog = gl.getShaderInfoLog(fragShader);\n            console.log('Shader compiler log: ' + compilationLog);\n            var shaderProgram = gl.createProgram();\n            gl.attachShader(shaderProgram, vertShader);\n            gl.attachShader(shaderProgram, fragShader);\n            gl.linkProgram(shaderProgram);\n            gl.useProgram(shaderProgram);\n            gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);\n            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Index_Buffer); \n            var coord = gl.getAttribLocation(shaderProgram, \"coordinates\");\n            gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);\n            gl.enableVertexAttribArray(coord);\n            gl.clearColor(1.0, 1.0, 1.0, 0.9);\n            gl.enable(gl.DEPTH_TEST);\n            var oTime = Date.now();\n            var loc = gl.getUniformLocation(shaderProgram, \"time\");\n            var wloc = gl.getUniformLocation(shaderProgram, \"w_width\");\n            var hloc = gl.getUniformLocation(shaderProgram, \"w_height\");\n            var opac = gl.getUniformLocation(shaderProgram, \"opacity\");\n            var mouseloc = gl.getUniformLocation(shaderProgram, \"mouse\");\n            gl.uniform1f(opac,1.0);\n            canvas.addEventListener(\"mousemove\", function(e) {\n                var devicePixelRatio = window.devicePixelRatio || 1;\n                var canvasX = (e.pageX - canvas.offsetLeft) * devicePixelRatio;\n                var canvasY = (e.pageY - canvas.offsetTop) * devicePixelRatio;\n                gl.uniform3f(mouseloc, 2.0*canvasX/canvas.width-1.0, 2.0*(1.0-canvasY/canvas.height)-1.0, -0.5);\n            }, false);\n            function updateDraw() {\n                gl.uniform1f(loc, (Date.now()-oTime)*0.001);\n                var devicePixelRatio = window.devicePixelRatio || 1;\n                var wwidth = window.innerWidth*devicePixelRatio;\n                var wheight = window.innerHeight*devicePixelRatio;\n                gl.uniform1f(wloc, wwidth);\n                gl.uniform1f(hloc, wheight);\n                gl.clear(gl.COLOR_BUFFER_BIT);\n                gl.viewport(0,0,canvas.width,canvas.height);\n                gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT,0);\n                window.requestAnimationFrame(updateDraw);\n            }\n            updateDraw();\n        </script>");
+
+    function resizeCanvas() {
+      var devicePixelRatio = window.devicePixelRatio || 1;
+      var width = window.innerWidth * devicePixelRatio;
+      var height = window.innerHeight * devicePixelRatio;
+
+      if (canvas.width != width || canvas.height != height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    var gl = canvas.getContext('webgl');
+    var vertices = [-1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0, 1.0, 0.0];
+    var indices = [3, 2, 1, 3, 1, 0];
+    var vertex_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    var Index_Buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Index_Buffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    var vertCode = 'attribute vec3 coordinates;' + 'void main(void) {' + ' gl_Position = vec4(coordinates, 1.0);' + '}';
+    var vertShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertShader, vertCode);
+    gl.compileShader(vertShader);
+    var fragCode = fullFrag;
+    var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragShader, fragCode);
+    gl.compileShader(fragShader);
+    var compiled = gl.getShaderParameter(fragShader, gl.COMPILE_STATUS);
+    console.log('Shader compiled successfully: ' + compiled);
+    var compilationLog = gl.getShaderInfoLog(fragShader);
+    console.log('Shader compiler log: ' + compilationLog);
+    var shaderProgram = gl.createProgram();
+    gl.attachShader(shaderProgram, vertShader);
+    gl.attachShader(shaderProgram, fragShader);
+    gl.linkProgram(shaderProgram);
+    gl.useProgram(shaderProgram);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Index_Buffer);
+    var coord = gl.getAttribLocation(shaderProgram, "coordinates");
+    gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(coord);
+    gl.clearColor(1.0, 1.0, 1.0, 0.9);
+    gl.enable(gl.DEPTH_TEST);
+    var oTime = Date.now();
+    var loc = gl.getUniformLocation(shaderProgram, "time");
+    var wloc = gl.getUniformLocation(shaderProgram, "w_width");
+    var hloc = gl.getUniformLocation(shaderProgram, "w_height");
+    var opac = gl.getUniformLocation(shaderProgram, "opacity");
+    var mouseloc = gl.getUniformLocation(shaderProgram, "mouse");
+    gl.uniform1f(opac, 1.0);
+    canvas.addEventListener("mousemove", function (e) {
+      var devicePixelRatio = window.devicePixelRatio || 1;
+      var canvasX = (e.pageX - canvas.offsetLeft) * devicePixelRatio;
+      var canvasY = (e.pageY - canvas.offsetTop) * devicePixelRatio;
+      gl.uniform3f(mouseloc, 2.0 * canvasX / canvas.width - 1.0, 2.0 * (1.0 - canvasY / canvas.height) - 1.0, -0.5);
+    }, false);
+
+    function updateDraw() {
+      gl.uniform1f(loc, (Date.now() - oTime) * 0.001);
+      var devicePixelRatio = window.devicePixelRatio || 1;
+      var wwidth = window.innerWidth * devicePixelRatio;
+      var wheight = window.innerHeight * devicePixelRatio;
+      gl.uniform1f(wloc, wwidth);
+      gl.uniform1f(hloc, wheight);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+      window.requestAnimationFrame(updateDraw);
+    }
+
+    updateDraw();
   }
 
   /**
