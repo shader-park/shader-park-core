@@ -15854,7 +15854,8 @@ function sculptToGLSL(userProvidedSrc) {
 
   function compileError(err) {
     // todo: throw actual error (and color error?)
-    console.log(err, " char: " + geoSrc.length);
+    console.error(err, " char: " + geoSrc.length);
+    throw err;
   }
 
   function ensureScalar(funcName, val) {
@@ -16408,13 +16409,7 @@ function sculptToGLSL(userProvidedSrc) {
 
 
   var error = undefined;
-
-  try {
-    eval(generatedJSFuncsSource + userProvidedSrc);
-  } catch (e) {
-    error = e;
-  }
-
+  eval(generatedJSFuncsSource + userProvidedSrc);
   var geoFinal = buildGeoSource(geoSrc);
   var colorFinal = buildColorSource(colorSrc, useLighting);
   return {

@@ -10,7 +10,7 @@ or
 ### For development with SP website:  
   
 ```sp-core$ npm link```   
-```sp-website$ npm link sculpture-park-core```     
+```sp-website$ npm link shader-park-core```     
 
 ### API usage:  
   The simple cli tools in the converters directory are simple examples of how the API can be used. (TODO, put more examples in readme, and examples folder)

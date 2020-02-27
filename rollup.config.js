@@ -8,7 +8,7 @@ export default [
   // browser-friendly UMD build
   {
     input: 'index.js',
-    output: { name: 'sculpture-park-core',
+    output: { name: 'shader-park-core',
       file: pkg.browser,
       format: 'umd'
     },

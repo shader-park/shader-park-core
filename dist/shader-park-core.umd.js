@@ -1,7 +1,7 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (global = global || self, factory(global['sculpture-park-core'] = {}));
+  (global = global || self, factory(global['shader-park-core'] = {}));
 }(this, function (exports) { 'use strict';
 
   function _typeof(obj) {
@@ -15856,7 +15856,8 @@
 
     function compileError(err) {
       // todo: throw actual error (and color error?)
-      console.log(err, " char: " + geoSrc.length);
+      console.error(err, " char: " + geoSrc.length);
+      throw err;
     }
 
     function ensureScalar(funcName, val) {
@@ -16410,13 +16411,7 @@
 
 
     var error = undefined;
-
-    try {
-      eval(generatedJSFuncsSource + userProvidedSrc);
-    } catch (e) {
-      error = e;
-    }
-
+    eval(generatedJSFuncsSource + userProvidedSrc);
     var geoFinal = buildGeoSource(geoSrc);
     var colorFinal = buildColorSource(colorSrc, useLighting);
     return {
