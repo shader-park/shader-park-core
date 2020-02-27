@@ -15,6 +15,9 @@ import {
 import {
     sculptToMinimalRenderer
 } from './targets/minimalRenderer.js'
+import {
+    sculptToMinimalGlitchRenderer
+} from './targets/glitchMinimalRenderer.js'
 
 import {
     glslToTouchDesignerShaderSource, 
@@ -39,5 +42,6 @@ export {
     sculptToOfflineRenderer,
     glslToTouchDesignerShaderSource,
     sculptToTouchDesignerShaderSource,
-    sculptToMinimalRenderer
+    sculptToMinimalRenderer,
+    sculptToMinimalGlitchRenderer
 }
