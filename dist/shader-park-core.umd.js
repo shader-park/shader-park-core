@@ -66818,6 +66818,13 @@ vec4 envMapTexelToLinear(vec4 color) {
    **/
 
   function sculptToMinimalGlitchRenderer(canvas, source) {
+    if (typeof source === "function") {
+      source = source.toString();
+      source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
+    } else if (!(typeof source === "string")) {
+      throw "sculptToMinimalGlitchRenderer requires the source code to be a function, or a string";
+    }
+
     var minimalHeader = "\nprecision highp float;\n#define GLSL_NEED_ROUND\nuniform float w_width;\nuniform float w_height;\nuniform mat4 projectionMatrix;\n#define cameraPosition vec3(0.0,0.0,-1.0)\n#define vUv vec2(0.0)\n#define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)\n";
     var generatedGLSL = sculptToGLSL(source);
     var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + generatedGLSL.stepSizeConstant + ';\n' + sculptureStarterCode + generatedGLSL.geoGLSL + '\n' + generatedGLSL.colorGLSL + '\n' + fragFooter;
