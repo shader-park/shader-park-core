@@ -12,6 +12,12 @@ import {
  * output - a fully self-contained lightweight html file which renders the sculpture
  **/
 export function sculptToMinimalGlitchRenderer(canvas, source) {
+    if (typeof source === "function") {
+        source = source.toString();
+        source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
+    } else if (!(typeof source === "string")) {
+        throw "sculptToMinimalGlitchRenderer requires the source code to be a function, or a string"
+    } 
 
     const minimalHeader = `
 precision highp float;
