@@ -13,12 +13,12 @@ vec3 shade(vec3 p, vec3 normal) {
 
 export const defaultVertexSource = `
 varying vec4 worldPos;
-varying vec2 vUv;
+//varying vec2 vUv;
 void main()
 {
     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
     worldPos = modelMatrix*vec4(position,1.0);
-    vUv = uv;
+    //vUv = uv;
     gl_Position = projectionMatrix * mvPosition;
 }
 `;
@@ -28,7 +28,7 @@ export const threeHeader = `
 uniform mat4 projectionMatrix;
 uniform sampler2D msdf;
 
-varying vec2 vUv;
+//varying vec2 vUv;
 varying vec4 worldPos;
 `;
 
