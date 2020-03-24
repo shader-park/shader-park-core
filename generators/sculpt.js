@@ -267,16 +267,8 @@ export function sculptToGLSL(userProvidedSrc) {
 `;
 	}
 	generatedJSFuncsSource += builtInOneToOneJS;
-
-
-
-
-
-
-
-
-
-
+	////////////////////////////////////////////////////////////
+	//End Auto Generated Code
 
 	// set step size directly
 	function setStepSize(val) {
@@ -362,28 +354,12 @@ export function sculptToGLSL(userProvidedSrc) {
 							 + collapseToString(y) + ")";
 		}
 		let self = new makeVar(source, 'vec2', 2, inline);
-		self.x = new makeVarWithDims(self.name + ".x", 1, true); //self.name + ".x";
-		// let currX = new makeVarWithDims(self.name + ".x", 1, true); //self.name + ".x";
-		// Object.defineProperty(self, 'x', {
-		// 	get: function () {
-		// 		return currX;
-		// 	},
-		// 	set: function(val) {
-		// 		appendSources(`${self.name}.x = ${val};\n`);
-		// 	}
-		// });
-		self.y = new makeVarWithDims(self.name + ".y", 1, true); //self.name + ".y";
-		// Start to overload 
-		// Object.defineProperty(self, 'xy', { get: ()=> Object.assign({}, this) });
-		// Object.defineProperty(self, 'yx', { 
-		// 	get: function() {
-		// 		let obj =  Object.assign({}, self);
-		// 		let temp = Object.assign({}, obj.x);
-		// 		obj.x = obj.y;
-		// 		obj.y = temp;
-		// 		return obj;
-		// 	} 
-		// });
+
+		let currX = new makeVarWithDims(self.name + ".x", 1, true); 
+		let currY = new makeVarWithDims(self.name + ".y", 1, true);
+		let objs = { 'x': currX, 'y': currY};
+		applyVectorAssignmentOverload(self, objs);
+
 		return self;
 	}
 
@@ -400,9 +376,11 @@ export function sculptToGLSL(userProvidedSrc) {
 			
 		}
 		let self = new makeVar(source, 'vec3', 3, inline);
-		self.x = new makeVarWithDims(self.name + ".x", 1, true);//self.name + ".x";
-		self.y = new makeVarWithDims(self.name + ".y", 1, true);//self.name + ".y";
-		self.z = new makeVarWithDims(self.name + ".z", 1, true);//self.name + ".z";
+		let currX = new makeVarWithDims(self.name + ".x", 1, true);
+		let currY = new makeVarWithDims(self.name + ".y", 1, true);
+		let currZ = new makeVarWithDims(self.name + ".z", 1, true);
+		let objs = {'x': currX, 'y': currY, 'z': currZ};
+		applyVectorAssignmentOverload(self, objs);
 		return self;
 	}
 
@@ -419,11 +397,23 @@ export function sculptToGLSL(userProvidedSrc) {
 							 + collapseToString(w) + ")";
 		}
 		let self = new makeVar(source, 'vec4', 4, inline);
-		self.x = new makeVarWithDims(self.name + ".x", 1, true);//self.name + ".x";
-		self.y = new makeVarWithDims(self.name + ".y", 1, true);//self.name + ".y";
-		self.z = new makeVarWithDims(self.name + ".z", 1, true);//self.name + ".z";
-		self.w = new makeVarWithDims(self.name + ".w", 1, true);//self.name + ".w";
+		let currX = new makeVarWithDims(self.name + ".x", 1, true);
+		let currY = new makeVarWithDims(self.name + ".y", 1, true);
+		let currZ = new makeVarWithDims(self.name + ".z", 1, true);
+		let currW = new makeVarWithDims(self.name + ".w", 1, true);
+		let objs = { 'x': currX, 'y': currY, 'z': currZ, 'w': currW };
+		applyVectorAssignmentOverload(self, objs);
 		return self;
+	}
+
+	// allows the user to re-assign a vector's components
+	function applyVectorAssignmentOverload(self, objs) {
+		Object.entries(objs).forEach(([key, func]) => {
+			Object.defineProperty(self, key, {
+				get: () => func,
+				set: (val) => appendSources(`${self.name}.${key} = ${val};\n`)
+			});
+		});
 	}
 
 	function makeVarWithDims(source, dims, inline) {
