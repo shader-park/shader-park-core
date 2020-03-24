@@ -86,6 +86,48 @@ function replaceBinaryOp(syntaxTree) {
 	}
 }
 
+function replaceOperatorOverload(syntaxTree) {
+	try {
+		if (syntaxTree && typeof syntaxTree === "object") {
+			for (let node in syntaxTree) {
+				if (syntaxTree.hasOwnProperty(node)) {
+					replaceOperatorOverload(syntaxTree[node]);
+				}
+			}
+		}
+		if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree 
+			&& syntaxTree.type === 'ExpressionStatement'
+			&& 'expression' in syntaxTree
+			&& syntaxTree.expression.type === 'AssignmentExpression') {
+			
+			let op = syntaxTree.expression.operator;
+			if (op === '+=' || op === '-=' || op === '/=' || op === '*=' || op === '%=') {
+				syntaxTree.expression.operator = "=";
+
+				syntaxTree.expression.right = {
+					type: 'BinaryExpression',
+					left: syntaxTree.expression.left,
+					right: syntaxTree.expression.right
+				}
+
+				if(op === '+=') {
+					syntaxTree.expression.right.operator =  '+';
+				} else if(op === '-=') {
+					syntaxTree.expression.right.operator = '-';
+				} else if (op === '/=') {
+					syntaxTree.expression.right.operator = '/';
+				} else if (op === '*=') {
+					syntaxTree.expression.right.operator = '*';
+				} else if (op === '%=') {
+					syntaxTree.expression.right.operator = '%';
+				}
+			}
+		}
+	} catch (e) {
+		console.error(e);
+	}
+}
+
 function replaceSliderInput(syntaxTree) {
 	try {
 		if (syntaxTree && typeof syntaxTree === "object") {
@@ -99,7 +141,7 @@ function replaceSliderInput(syntaxTree) {
 			
 			let d = syntaxTree['declarations'][0];
 			let name = d.id.name;
-			if (d.init.callee !== undefined && d.init.callee.name === 'input') {
+			if (d && d.init && d.init.callee !== undefined && d.init.callee.name === 'input') {
 				d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
 			}
 		}
@@ -134,6 +176,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	
 	let debug = false;
 	let tree = esprima.parse(userProvidedSrc);
+	replaceOperatorOverload(tree);
 	replaceBinaryOp(tree);
 	replaceSliderInput(tree);
 	userProvidedSrc = escodegen.generate(tree);
@@ -152,6 +195,89 @@ export function sculptToGLSL(userProvidedSrc) {
 	let uniforms = baseUniforms();
 
 	let stepSizeConstant = 0.85;
+
+	////////////////////////////////////////////////////////////
+	// Generates JS from headers referenced in the bindings.js
+	let primitivesJS = "";
+	for (let [funcName, body] of Object.entries(geometryFunctions)) {
+		let argList = body['args'];
+		primitivesJS += "function " + funcName + "(";
+		for (let argIdx = 0; argIdx < argList.length; argIdx++) {
+			if (argIdx !== 0) primitivesJS += ", ";
+			primitivesJS += "arg_" + argIdx;
+		}
+		primitivesJS += ") {\n";
+		let argIdxB = 0;
+		for (let argDim of argList) {
+			if (argDim === 1) {
+				primitivesJS += "    ensureScalar(\"" + funcName + "\", arg_" + argIdxB + ");\n";
+			}
+			argIdxB += 1;
+		}
+		primitivesJS += "    applyMode(\"" + funcName + "(\"+getCurrentState().p+\", \" + ";
+		for (let argIdx = 0; argIdx < argList.length; argIdx++) {
+			primitivesJS += "collapseToString(arg_" + argIdx + ") + ";
+			if (argIdx < argList.length - 1) primitivesJS += "\", \" + ";
+		}
+		primitivesJS += "\")\");\n}\n\n";
+	}
+	generatedJSFuncsSource += primitivesJS;
+
+	function generateGLSLWrapper(funcJSON) {
+		let wrapperSrc = "";
+		for (let [funcName, body] of Object.entries(funcJSON)) {
+			let argList = body['args'];
+			let returnType = body['ret'];
+			wrapperSrc += "function " + funcName + "(";
+			for (let argIdx = 0; argIdx < argList.length; argIdx++) {
+				if (argIdx !== 0) wrapperSrc += ", ";
+				wrapperSrc += "arg_" + argIdx;
+			}
+			wrapperSrc += ") {\n";
+			let argIdxB = 0;
+			for (let arg of argList) {
+				wrapperSrc += "    arg_" + argIdxB + " = tryMakeNum(arg_" + argIdxB + ");\n";
+				argIdxB += 1;
+			}
+			// debug here
+			wrapperSrc += "    return new makeVarWithDims(\"" + funcName + "(\" + ";
+			for (let argIdx = 0; argIdx < argList.length; argIdx++) {
+				wrapperSrc += "arg_" + argIdx + " + ";
+				if (argIdx < argList.length - 1) wrapperSrc += "\", \" + ";
+			}
+			wrapperSrc += "\")\", " + returnType + ");\n}\n";
+		}
+		return wrapperSrc;
+	}
+
+	let mathFunctionsJS = generateGLSLWrapper(mathFunctions);
+	generatedJSFuncsSource += mathFunctionsJS;
+
+	let builtInOtherJS = generateGLSLWrapper(glslBuiltInOther);
+	generatedJSFuncsSource += builtInOtherJS;
+
+	let builtInOneToOneJS = "";
+	for (let funcName of glslBuiltInOneToOne) {
+		builtInOneToOneJS +=
+`function ${funcName}(x) {
+    x = tryMakeNum(x);
+	// debug here
+	return new makeVarWithDims("${funcName}(" + x + ")", x.dims);
+}
+`;
+	}
+	generatedJSFuncsSource += builtInOneToOneJS;
+
+
+
+
+
+
+
+
+
+
+
 	// set step size directly
 	function setStepSize(val) {
 		if (typeof val !== 'number') {
@@ -237,7 +363,27 @@ export function sculptToGLSL(userProvidedSrc) {
 		}
 		let self = new makeVar(source, 'vec2', 2, inline);
 		self.x = new makeVarWithDims(self.name + ".x", 1, true); //self.name + ".x";
+		// let currX = new makeVarWithDims(self.name + ".x", 1, true); //self.name + ".x";
+		// Object.defineProperty(self, 'x', {
+		// 	get: function () {
+		// 		return currX;
+		// 	},
+		// 	set: function(val) {
+		// 		appendSources(`${self.name}.x = ${val};\n`);
+		// 	}
+		// });
 		self.y = new makeVarWithDims(self.name + ".y", 1, true); //self.name + ".y";
+		// Start to overload 
+		// Object.defineProperty(self, 'xy', { get: ()=> Object.assign({}, this) });
+		// Object.defineProperty(self, 'yx', { 
+		// 	get: function() {
+		// 		let obj =  Object.assign({}, self);
+		// 		let temp = Object.assign({}, obj.x);
+		// 		obj.x = obj.y;
+		// 		obj.y = temp;
+		// 		return obj;
+		// 	} 
+		// });
 		return self;
 	}
 
@@ -525,78 +671,6 @@ export function sculptToGLSL(userProvidedSrc) {
 	function getSDF() {
 		return float(getCurrentDist(), true);
 	}
-
-    let primitivesJS = "";
-	// generate js which generates glsl geometry
-    for (let [funcName, body] of Object.entries(geometryFunctions)) {
-		let argList = body['args'];
-		primitivesJS += "function " + funcName + "(";
-		for (let argIdx = 0;argIdx<argList.length; argIdx++) {
-			if (argIdx !== 0) primitivesJS += ", ";
-			primitivesJS += "arg_" + argIdx;
-		}
-		primitivesJS += ") {\n";
-		let argIdxB = 0;
-		for (let argDim of argList) {
-			if (argDim === 1) {
-				primitivesJS += "    ensureScalar(\"" + funcName + "\", arg_" + argIdxB + ");\n"; 
-			}
-			argIdxB += 1;
-		}
-		primitivesJS += "    applyMode(\"" + funcName + "(\"+getCurrentState().p+\", \" + ";
-		for (let argIdx = 0; argIdx<argList.length; argIdx++) {
-			primitivesJS += "collapseToString(arg_" + argIdx + ") + ";
-			if (argIdx < argList.length-1) primitivesJS += "\", \" + ";
-		}
-		primitivesJS += "\")\");\n}\n\n";
-	} 
-	generatedJSFuncsSource += primitivesJS;
-
-	function generateGLSLWrapper(funcJSON) {
-		let wrapperSrc = "";
-		for (let [funcName, body] of Object.entries(funcJSON)) {
-			let argList = body['args'];
-			let returnType = body['ret'];
-			wrapperSrc += "function " + funcName + "(";
-			for (let argIdx = 0; argIdx<argList.length; argIdx++) {
-				if (argIdx !== 0) wrapperSrc += ", ";
-				wrapperSrc += "arg_" + argIdx;
-			}
-			wrapperSrc += ") {\n";
-			let argIdxB = 0;
-			for (let arg of argList) {
-				wrapperSrc += "    arg_" + argIdxB + " = tryMakeNum(arg_" + argIdxB + ");\n";
-				argIdxB += 1;
-			}
-			// debug here
-			wrapperSrc += "    return new makeVarWithDims(\"" + funcName + "(\" + ";
-			for (let argIdx = 0; argIdx<argList.length; argIdx++) {
-				wrapperSrc += "arg_" + argIdx + " + ";
-				if (argIdx < argList.length-1) wrapperSrc += "\", \" + ";
-			}
-			wrapperSrc += "\")\", " + returnType + ");\n}\n";
-		}
-		return wrapperSrc;
-	}
-	
-	let mathFunctionsJS = generateGLSLWrapper(mathFunctions);
-	generatedJSFuncsSource += mathFunctionsJS;
-
-	let builtInOtherJS = generateGLSLWrapper(glslBuiltInOther);
-	generatedJSFuncsSource += builtInOtherJS;
-
-	let builtInOneToOneJS = "";
-	for (let funcName of glslBuiltInOneToOne) {
-		builtInOneToOneJS += 
-`function ${funcName}(x) {
-    x = tryMakeNum(x);
-	// debug here
-	return new makeVarWithDims("${funcName}(" + x + ")", x.dims);
-}
-
-`;	
-	}
-	generatedJSFuncsSource += builtInOneToOneJS;
 
 	// Displacements
 
