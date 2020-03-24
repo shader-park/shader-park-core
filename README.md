@@ -1,6 +1,22 @@
 
 Compiles sculpt to threejs/glsl, sculpt-renderer/glsl, unity/hlsl  
-  
+ 
+ 
+### Setup:
+```npm install```
+or
+```yarn install```
+
+### Build:
+```npm build```
+or
+```yarn build```
+
+### Watch:
+```npm watch```
+or
+```yarn watch```
+
 ### CLI usage:  
   
 ```npm run toThreeJS my-sculpture.js```  
@@ -8,9 +24,15 @@ or
 ```yarn toOffline my-sculpture.js```  
 
 ### For development with SP website:  
-  
-```sp-core$ npm link```   
-```sp-website$ npm link shader-park-core```     
+In shader-park-core repo run
+```npm link```
+or
+```yarn link```
+
+In shader-park-website repo run
+```npm link shader-park-core```
+or
+```yarn link shader-park-core```
 
 ### API usage:  
   The simple cli tools in the converters directory are simple examples of how the API can be used. (TODO, put more examples in readme, and examples folder)
