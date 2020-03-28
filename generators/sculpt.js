@@ -56,7 +56,22 @@ ${lgt}
 }`;
 }
 
-// Converts binary math operators to our own version
+let _operators = {
+	'*': (a, b) => a * b,
+	'/': (a, b) => a / b,
+	'-': (a, b) => a - b,
+	'+': (a, b) => a + b,
+	'==': (a, b) => a == b,
+	'!=': (a, b) => a != b,
+	'===': (a, b) => a === b,
+	'!==': (a, b) => a !== b,
+	'>': (a, b) => a > b,
+	'>=': (a, b) => a >= b,
+	'<': (a, b) => a < b,
+	'<=': (a, b) => a <= b,
+}
+
+// Converts binary math _operators to our own version
 function replaceBinaryOp(syntaxTree) {
 
 	if (typeof syntaxTree === 'object') {
@@ -66,87 +81,97 @@ function replaceBinaryOp(syntaxTree) {
 			}
 		}
 	}
+	if(!syntaxTree) {
+		console.log('no syntax tree')
+		return;
+	}
 
-	if (syntaxTree !== null && syntaxTree['type'] === 'BinaryExpression') {
-		let op = syntaxTree['operator'];
-		if (op === '*' || op === '/' || op === '-' || op === '+') {
-			if (op === '*' ) {
-				syntaxTree['callee'] = {type:'Identifier', name:'mult'};
-			} else if (op === '/') {
-				syntaxTree['callee'] = {type:'Identifier', name:'divide'};
-			} else if (op === '-') {
-				syntaxTree['callee'] = {type:'Identifier', name:'sub'};
-			} else if (op === '+') {
-				syntaxTree['callee'] = {type:'Identifier', name:'add'};
+	// if (syntaxTree.type === 'UnaryExpression') {
+	// 	let op = syntaxTree.operator;
+	// 	if(op === '!') {
+	// 		syntaxTree.callee = { type: 'Identifier', name: 'not' };
+	// 		syntaxTree.type = 'CallExpression';
+	// 		syntaxTree.arguments = [syntaxTree.argument];
+	// 		delete syntaxTree.operator;
+	// 	}
+	// }
+
+	if ( syntaxTree['type'] === 'BinaryExpression') {
+		let op = syntaxTree.operator;
+
+		console.log('hit Binary Expression')
+		if(op in _operators) {
+			let symbol = op
+			// let operation = _operators[op];
+			console.log(op, 'is in ', _operators);
+			if(op === '===') {
+				symbol = '==';
+			} else if(op === '!==') {
+				symbol = '!=';
 			}
+
+			syntaxTree['callee'] = { type: 'Identifier', name: 'binaryOp' };
 			syntaxTree['type'] = 'CallExpression';
-			syntaxTree['arguments'] = [syntaxTree['left'], syntaxTree['right']];
+			syntaxTree['arguments'] = [syntaxTree.left, syntaxTree.right, symbol];
 			syntaxTree['operator'] = undefined;
+			console.log('set syntax tree');
 		}
 	}
 }
 
 function replaceOperatorOverload(syntaxTree) {
-	try {
-		if (syntaxTree && typeof syntaxTree === "object") {
-			for (let node in syntaxTree) {
-				if (syntaxTree.hasOwnProperty(node)) {
-					replaceOperatorOverload(syntaxTree[node]);
-				}
+	if (syntaxTree && typeof syntaxTree === "object") {
+		for (let node in syntaxTree) {
+			if (syntaxTree.hasOwnProperty(node)) {
+				replaceOperatorOverload(syntaxTree[node]);
 			}
 		}
-		if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree 
-			&& syntaxTree.type === 'ExpressionStatement'
-			&& 'expression' in syntaxTree
-			&& syntaxTree.expression.type === 'AssignmentExpression') {
-			
-			let op = syntaxTree.expression.operator;
-			if (op === '+=' || op === '-=' || op === '/=' || op === '*=' || op === '%=') {
-				syntaxTree.expression.operator = "=";
+	}
+	if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree 
+		&& syntaxTree.type === 'ExpressionStatement'
+		&& 'expression' in syntaxTree
+		&& syntaxTree.expression.type === 'AssignmentExpression') {
+		
+		let op = syntaxTree.expression.operator;
+		if (op === '+=' || op === '-=' || op === '/=' || op === '*=' || op === '%=') {
+			syntaxTree.expression.operator = "=";
 
-				syntaxTree.expression.right = {
-					type: 'BinaryExpression',
-					left: syntaxTree.expression.left,
-					right: syntaxTree.expression.right
-				}
+			syntaxTree.expression.right = {
+				type: 'BinaryExpression',
+				left: syntaxTree.expression.left,
+				right: syntaxTree.expression.right
+			}
 
-				if(op === '+=') {
-					syntaxTree.expression.right.operator =  '+';
-				} else if(op === '-=') {
-					syntaxTree.expression.right.operator = '-';
-				} else if (op === '/=') {
-					syntaxTree.expression.right.operator = '/';
-				} else if (op === '*=') {
-					syntaxTree.expression.right.operator = '*';
-				} else if (op === '%=') {
-					syntaxTree.expression.right.operator = '%';
-				}
+			if(op === '+=') {
+				syntaxTree.expression.right.operator =  '+';
+			} else if(op === '-=') {
+				syntaxTree.expression.right.operator = '-';
+			} else if (op === '/=') {
+				syntaxTree.expression.right.operator = '/';
+			} else if (op === '*=') {
+				syntaxTree.expression.right.operator = '*';
+			} else if (op === '%=') {
+				syntaxTree.expression.right.operator = '%';
 			}
 		}
-	} catch (e) {
-		console.error(e);
 	}
 }
 
 function replaceSliderInput(syntaxTree) {
-	try {
-		if (syntaxTree && typeof syntaxTree === "object") {
-			for (let node in syntaxTree) {
-				if (syntaxTree.hasOwnProperty(node)) {
-					replaceSliderInput(syntaxTree[node]);
-				}
+	if (syntaxTree && typeof syntaxTree === "object") {
+		for (let node in syntaxTree) {
+			if (syntaxTree.hasOwnProperty(node)) {
+				replaceSliderInput(syntaxTree[node]);
 			}
 		}
-		if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
-			
-			let d = syntaxTree['declarations'][0];
-			let name = d.id.name;
-			if (d && d.init && d.init.callee !== undefined && d.init.callee.name === 'input') {
-				d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
-			}
+	}
+	if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
+		
+		let d = syntaxTree['declarations'][0];
+		let name = d.id.name;
+		if (d && d.init && d.init.callee !== undefined && d.init.callee.name === 'input') {
+			d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
 		}
-	} catch (e) {
-		console.error(e);
 	}
 }
 
@@ -177,9 +202,16 @@ export function sculptToGLSL(userProvidedSrc) {
 	let debug = false;
 	let tree = esprima.parse(userProvidedSrc);
 	replaceOperatorOverload(tree);
-	replaceBinaryOp(tree);
+	// replaceBinaryOp(tree);
 	replaceSliderInput(tree);
-	userProvidedSrc = escodegen.generate(tree);
+	console.log('tree', tree)
+	try {
+		userProvidedSrc = escodegen.generate(tree);
+	} catch (e) {
+		console.log('errors')
+		console.log(e)
+	}
+	console.log('userProvidedSrc', userProvidedSrc)
 	if (debug) {
 		console.log('tree', tree);
 	}
@@ -401,7 +433,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		let currY = new makeVarWithDims(self.name + ".y", 1, true);
 		let currZ = new makeVarWithDims(self.name + ".z", 1, true);
 		let currW = new makeVarWithDims(self.name + ".w", 1, true);
-		let objs = { 'x': currX, 'y': currY, 'z': currZ, 'w': currW };
+	let objs = { 'x': currX, 'y': currY, 'z': currZ, 'w': currW };
 		applyVectorAssignmentOverload(self, objs);
 		return self;
 	}
@@ -596,6 +628,31 @@ export function sculptToGLSL(userProvidedSrc) {
 	/// Math ///
 
 	// Group ops
+
+	function binaryOp(left, right, symbol) {
+		console.log('hit binaryOP')
+		let expression = _operators[symbol];
+		
+		if (typeof left === 'number' && typeof right === 'number') return expression(left, right);
+		console.log('Called expression')
+		left = tryMakeNum(left);
+		right = tryMakeNum(right);
+		console.log('made left and right')
+		// if (debug) {
+		console.log(`left: ${left} ${symbol} ${right}`);
+		// }
+		
+		if ( symbol === '==' || symbol === '!=' ||
+			symbol === '>' || symbol === '>=' || symbol === '<' || symbol === '<=') {
+			return new makeVar(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, 'bool', 1, inline);
+		} else {
+			ensureGroupOp(symbol, left, right);
+			// called for *, -, +, /
+			let dims = Math.max(left.dims, right.dims);
+			return new makeVarWithDims(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, dims);
+		}
+		
+	}
 
 	function mult(a,b) {
 		if (typeof a === 'number' && typeof b === 'number') return (a*b);
@@ -847,7 +904,6 @@ export function sculptToGLSL(userProvidedSrc) {
 	eval( generatedJSFuncsSource + userProvidedSrc );
 	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
-
 	return {
 		uniforms: uniforms,
 		stepSizeConstant: stepSizeConstant,
