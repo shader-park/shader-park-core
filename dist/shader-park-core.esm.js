@@ -15549,8 +15549,47 @@ function buildGeoSource(geo) {
 function buildColorSource(col, useLighting) {
   var lgt = useLighting ? '' : '    return scope_0_material.albedo;';
   return "\nvec3 shade(vec3 p, vec3 normal) {\n    float d = 100.0;\n    vec3 op = p;\n\tvec3 lightDirection = vec3(0.0, 1.0, 0.0);\n\tvec3 mouseIntersect = vec3(0.0,1.0,0.0);\n\t#ifdef USE_PBR\n\tMaterial material = Material(vec3(1.0),0.5,0.7,1.0);\n\tMaterial selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);\n\t#else\n\tfloat light = 1.0;\n\tfloat occ = 1.0;\n    vec3 color = vec3(1.0,1.0,1.0);\n\tvec3 selectedColor = vec3(1.0,1.0,1.0);\n\t#endif\n".concat(col, "\n").concat(lgt, "\n\t#ifdef USE_PBR\n\treturn pbrLighting(\n\t\tworldPos.xyz,\n\t\tnormal,\n\t\tlightDirection,\n\t\tscope_0_material\n\t\t);\n\t#else\n\treturn scope_0_material.albedo*simpleLighting(p, normal, lightDirection);*occ;\n\t#endif\n}");
-} // Converts binary math operators to our own version
+}
 
+var _operators = {
+  '*': function _(a, b) {
+    return a * b;
+  },
+  '/': function _(a, b) {
+    return a / b;
+  },
+  '-': function _(a, b) {
+    return a - b;
+  },
+  '+': function _(a, b) {
+    return a + b;
+  },
+  '==': function _(a, b) {
+    return a == b;
+  },
+  '!=': function _(a, b) {
+    return a != b;
+  },
+  '===': function _(a, b) {
+    return a === b;
+  },
+  '!==': function _(a, b) {
+    return a !== b;
+  },
+  '>': function _(a, b) {
+    return a > b;
+  },
+  '>=': function _(a, b) {
+    return a >= b;
+  },
+  '<': function _(a, b) {
+    return a < b;
+  },
+  '<=': function _(a, b) {
+    return a <= b;
+  } // Converts binary math _operators to our own version
+
+};
 
 function replaceBinaryOp(syntaxTree) {
   if (_typeof(syntaxTree) === 'object') {
@@ -15561,102 +15600,100 @@ function replaceBinaryOp(syntaxTree) {
     }
   }
 
-  if (syntaxTree !== null && syntaxTree['type'] === 'BinaryExpression') {
-    var op = syntaxTree['operator'];
+  if (!syntaxTree) {
+    console.log('no syntax tree');
+    return;
+  } // if (syntaxTree.type === 'UnaryExpression') {
+  // 	let op = syntaxTree.operator;
+  // 	if(op === '!') {
+  // 		syntaxTree.callee = { type: 'Identifier', name: 'not' };
+  // 		syntaxTree.type = 'CallExpression';
+  // 		syntaxTree.arguments = [syntaxTree.argument];
+  // 		delete syntaxTree.operator;
+  // 	}
+  // }
 
-    if (op === '*' || op === '/' || op === '-' || op === '+') {
-      if (op === '*') {
-        syntaxTree['callee'] = {
-          type: 'Identifier',
-          name: 'mult'
-        };
-      } else if (op === '/') {
-        syntaxTree['callee'] = {
-          type: 'Identifier',
-          name: 'divide'
-        };
-      } else if (op === '-') {
-        syntaxTree['callee'] = {
-          type: 'Identifier',
-          name: 'sub'
-        };
-      } else if (op === '+') {
-        syntaxTree['callee'] = {
-          type: 'Identifier',
-          name: 'add'
-        };
+
+  if (syntaxTree['type'] === 'BinaryExpression') {
+    var op = syntaxTree.operator;
+
+    if (op in _operators) {
+      if (op === '===') {
+        op = '==';
+      } else if (op === '!==') {
+        op = '!=';
       }
 
+      syntaxTree['callee'] = {
+        type: 'Identifier',
+        name: 'binaryOp'
+      };
       syntaxTree['type'] = 'CallExpression';
-      syntaxTree['arguments'] = [syntaxTree['left'], syntaxTree['right']];
+      syntaxTree['arguments'] = [syntaxTree.left, syntaxTree.right, {
+        'type': 'Literal',
+        'value': op,
+        'raw': "'".concat(op, "'")
+      }];
       syntaxTree['operator'] = undefined;
     }
   }
 }
 
 function replaceOperatorOverload(syntaxTree) {
-  try {
-    if (syntaxTree && _typeof(syntaxTree) === "object") {
-      for (var node in syntaxTree) {
-        if (syntaxTree.hasOwnProperty(node)) {
-          replaceOperatorOverload(syntaxTree[node]);
-        }
+  if (syntaxTree && _typeof(syntaxTree) === "object") {
+    for (var node in syntaxTree) {
+      if (syntaxTree.hasOwnProperty(node)) {
+        replaceOperatorOverload(syntaxTree[node]);
       }
     }
+  }
 
-    if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree.type === 'ExpressionStatement' && 'expression' in syntaxTree && syntaxTree.expression.type === 'AssignmentExpression') {
-      var op = syntaxTree.expression.operator;
+  if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree.type === 'ExpressionStatement' && 'expression' in syntaxTree && syntaxTree.expression.type === 'AssignmentExpression') {
+    var op = syntaxTree.expression.operator;
 
-      if (op === '+=' || op === '-=' || op === '/=' || op === '*=' || op === '%=') {
-        syntaxTree.expression.operator = "=";
-        syntaxTree.expression.right = {
-          type: 'BinaryExpression',
-          left: syntaxTree.expression.left,
-          right: syntaxTree.expression.right
-        };
+    if (op === '+=' || op === '-=' || op === '/=' || op === '*=' || op === '%=') {
+      syntaxTree.expression.operator = "=";
+      syntaxTree.expression.right = {
+        type: 'BinaryExpression',
+        left: syntaxTree.expression.left,
+        right: syntaxTree.expression.right
+      };
 
-        if (op === '+=') {
-          syntaxTree.expression.right.operator = '+';
-        } else if (op === '-=') {
-          syntaxTree.expression.right.operator = '-';
-        } else if (op === '/=') {
-          syntaxTree.expression.right.operator = '/';
-        } else if (op === '*=') {
-          syntaxTree.expression.right.operator = '*';
-        } else if (op === '%=') {
-          syntaxTree.expression.right.operator = '%';
-        }
+      if (op === '+=') {
+        syntaxTree.expression.right.operator = '+';
+      } else if (op === '-=') {
+        syntaxTree.expression.right.operator = '-';
+      } else if (op === '/=') {
+        syntaxTree.expression.right.operator = '/';
+      } else if (op === '*=') {
+        syntaxTree.expression.right.operator = '*';
+      } else if (op === '%=') {
+        syntaxTree.expression.right.operator = '%';
       }
     }
-  } catch (e) {
-    console.error(e);
   }
 }
 
 function replaceSliderInput(syntaxTree) {
-  try {
-    if (syntaxTree && _typeof(syntaxTree) === "object") {
-      for (var node in syntaxTree) {
-        if (syntaxTree.hasOwnProperty(node)) {
-          replaceSliderInput(syntaxTree[node]);
-        }
+  if (syntaxTree && _typeof(syntaxTree) === "object") {
+    for (var node in syntaxTree) {
+      if (syntaxTree.hasOwnProperty(node)) {
+        replaceSliderInput(syntaxTree[node]);
       }
     }
+  }
 
-    if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
-      var d = syntaxTree['declarations'][0];
-      var name = d.id.name;
+  if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
+    var d = syntaxTree['declarations'][0];
+    var name = d.id.name;
 
-      if (d && d.init && d.init.callee !== undefined && d.init.callee.name === 'input') {
-        d.init.arguments.unshift({
-          type: "Literal",
-          value: name,
-          raw: name
-        });
-      }
+    if (d && d.init && d.init.callee !== undefined && d.init.callee.name === 'input') {
+      d.init.arguments.unshift({
+        type: "Literal",
+        value: name,
+        raw: name
+      });
     }
-  } catch (e) {
-    console.error(e);
   }
 }
 
@@ -15702,7 +15739,16 @@ function sculptToGLSL(userProvidedSrc) {
   replaceOperatorOverload(tree);
   replaceBinaryOp(tree);
   replaceSliderInput(tree);
-  userProvidedSrc = escodegen_2(tree);
+  console.log('tree', tree);
+
+  try {
+    userProvidedSrc = escodegen_2(tree);
+  } catch (e) {
+    console.log('errors');
+    console.log(e);
+  }
+
+  console.log('userProvidedSrc', userProvidedSrc);
 
   if (debug) {
     console.log('tree', tree);
@@ -15921,6 +15967,7 @@ function sculptToGLSL(userProvidedSrc) {
 
 
   function makeVar(source, type, dims, inline) {
+    console.log('make var', source, type, dims, inline);
     this.type = type;
     this.dims = dims;
 
@@ -16168,10 +16215,6 @@ function sculptToGLSL(userProvidedSrc) {
     return getCurrentState().p;
   }
 
-  function getSpherical() {
-    return toSpherical(getSpace());
-  }
-
   function pushState() {
     stateStack.push({
       id: "scope_" + stateCount + "_",
@@ -16219,6 +16262,33 @@ function sculptToGLSL(userProvidedSrc) {
   } /// Math ///
   // Group ops
 
+
+  function binaryOp(left, right, symbol) {
+    // console.log('hit binaryOP', symbol, symbol.value)
+    var expression = _operators[symbol];
+    console.log('expression', expression);
+    if (typeof left === 'number' && typeof right === 'number') return expression(left, right);
+    console.log('Called expression');
+    left = tryMakeNum(left);
+    right = tryMakeNum(right);
+    console.log('made left and right'); // if (debug) {
+
+    console.log("left: ".concat(left, " ").concat(symbol, " ").concat(right)); // }
+
+    console.log('SYMBOL', symbol, _typeof(symbol));
+
+    if (symbol === '==' || symbol === '!=' || symbol === '>' || symbol === '>=' || symbol === '<' || symbol === '<=') {
+      ensureScalar(symbol, left);
+      ensureScalar(symbol, right);
+      console.log('comparison worked');
+      return new makeVar("(".concat(collapseToString(left), " ").concat(symbol, " ").concat(collapseToString(right), ")"), 'bool', 1);
+    } else {
+      ensureGroupOp(symbol, left, right); // called for *, -, +, /
+
+      var dims = Math.max(left.dims, right.dims);
+      return new makeVarWithDims("(".concat(collapseToString(left), " ").concat(symbol, " ").concat(collapseToString(right), ")"), dims);
+    }
+  }
 
   function mult(a, b) {
     if (typeof a === 'number' && typeof b === 'number') return a * b;
@@ -16476,8 +16546,18 @@ function sculptToGLSL(userProvidedSrc) {
 
 
   var error = undefined;
-  eval(generatedJSFuncsSource + userProvidedSrc);
+
+  function getSpherical() {
+    toSpherical(getSpace());
+  } // Define any code that needs to reference auto generated from bindings.js code here
+
+
+  var postGeneratedFunctions = [getSpherical].map(function (el) {
+    return el.toString();
+  }).join('\n');
+  eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
   var geoFinal = buildGeoSource(geoSrc);
+  console.log(geoFinal);
   var colorFinal = buildColorSource(colorSrc, useLighting);
   return {
     uniforms: uniforms,
