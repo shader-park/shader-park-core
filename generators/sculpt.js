@@ -98,23 +98,16 @@ function replaceBinaryOp(syntaxTree) {
 
 	if ( syntaxTree['type'] === 'BinaryExpression') {
 		let op = syntaxTree.operator;
-
-		console.log('hit Binary Expression')
 		if(op in _operators) {
-			let symbol = op
-			// let operation = _operators[op];
-			console.log(op, 'is in ', _operators);
 			if(op === '===') {
-				symbol = '==';
+				op = '==';
 			} else if(op === '!==') {
-				symbol = '!=';
+				op = '!=';
 			}
-
 			syntaxTree['callee'] = { type: 'Identifier', name: 'binaryOp' };
 			syntaxTree['type'] = 'CallExpression';
-			syntaxTree['arguments'] = [syntaxTree.left, syntaxTree.right, symbol];
+			syntaxTree['arguments'] = [syntaxTree.left, syntaxTree.right, { 'type': 'Literal', 'value': op, 'raw': `'${op}'`}];
 			syntaxTree['operator'] = undefined;
-			console.log('set syntax tree');
 		}
 	}
 }
@@ -202,7 +195,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	let debug = false;
 	let tree = esprima.parse(userProvidedSrc);
 	replaceOperatorOverload(tree);
-	// replaceBinaryOp(tree);
+	replaceBinaryOp(tree);
 	replaceSliderInput(tree);
 	console.log('tree', tree)
 	try {
@@ -352,6 +345,7 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	// General Variable class
 	function makeVar(source, type, dims, inline) {
+		console.log('make var',source, type, dims, inline)
 		this.type = type;
 		this.dims = dims;
 		if (inline) {
@@ -576,10 +570,6 @@ export function sculptToGLSL(userProvidedSrc) {
 	function getSpace() {
 		return getCurrentState().p;
 	}
-	
-	function getSpherical() {
-		return toSpherical(getSpace());	
-	}
 
 	function pushState() {
 		stateStack.push({
@@ -630,9 +620,9 @@ export function sculptToGLSL(userProvidedSrc) {
 	// Group ops
 
 	function binaryOp(left, right, symbol) {
-		console.log('hit binaryOP')
+		// console.log('hit binaryOP', symbol, symbol.value)
 		let expression = _operators[symbol];
-		
+		console.log('expression',expression)
 		if (typeof left === 'number' && typeof right === 'number') return expression(left, right);
 		console.log('Called expression')
 		left = tryMakeNum(left);
@@ -641,10 +631,13 @@ export function sculptToGLSL(userProvidedSrc) {
 		// if (debug) {
 		console.log(`left: ${left} ${symbol} ${right}`);
 		// }
-		
+		console.log('SYMBOL', symbol, typeof symbol);
 		if ( symbol === '==' || symbol === '!=' ||
 			symbol === '>' || symbol === '>=' || symbol === '<' || symbol === '<=') {
-			return new makeVar(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, 'bool', 1, inline);
+			ensureScalar(symbol, left);
+			ensureScalar(symbol, right);
+			console.log('comparison worked',)
+			return new makeVar(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, 'bool', 1);
 		} else {
 			ensureGroupOp(symbol, left, right);
 			// called for *, -, +, /
@@ -901,8 +894,19 @@ export function sculptToGLSL(userProvidedSrc) {
 	*/
 
 	let error = undefined;
-	eval( generatedJSFuncsSource + userProvidedSrc );
+	function getSpherical() {
+		toSpherical(getSpace());
+	} 
+	// Define any code that needs to reference auto generated from bindings.js code here
+	let postGeneratedFunctions = [
+		getSpherical,
+	].map(el => el.toString()).join('\n');
+	
+
+	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
+	
 	let geoFinal = buildGeoSource(geoSrc);
+	console.log(geoFinal);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
 	return {
 		uniforms: uniforms,
