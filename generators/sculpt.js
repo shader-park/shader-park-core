@@ -86,15 +86,15 @@ function replaceBinaryOp(syntaxTree) {
 		return;
 	}
 
-	// if (syntaxTree.type === 'UnaryExpression') {
-	// 	let op = syntaxTree.operator;
-	// 	if(op === '!') {
-	// 		syntaxTree.callee = { type: 'Identifier', name: 'not' };
-	// 		syntaxTree.type = 'CallExpression';
-	// 		syntaxTree.arguments = [syntaxTree.argument];
-	// 		delete syntaxTree.operator;
-	// 	}
-	// }
+	if (syntaxTree.type === 'UnaryExpression') {
+		let op = syntaxTree.operator;
+		if(op === '!') {
+			syntaxTree.callee = { type: 'Identifier', name: '_not' };
+			syntaxTree.type = 'CallExpression';
+			syntaxTree.arguments = [syntaxTree.argument];
+			delete syntaxTree.operator;
+		}
+	}
 
 	if ( syntaxTree['type'] === 'BinaryExpression') {
 		let op = syntaxTree.operator;
@@ -104,10 +104,10 @@ function replaceBinaryOp(syntaxTree) {
 			} else if(op === '!==') {
 				op = '!=';
 			}
-			syntaxTree['callee'] = { type: 'Identifier', name: 'binaryOp' };
-			syntaxTree['type'] = 'CallExpression';
-			syntaxTree['arguments'] = [syntaxTree.left, syntaxTree.right, { 'type': 'Literal', 'value': op, 'raw': `'${op}'`}];
-			syntaxTree['operator'] = undefined;
+			syntaxTree.callee = { type: 'Identifier', name: '_binaryOp' };
+			syntaxTree.type = 'CallExpression';
+			syntaxTree.arguments = [syntaxTree.left, syntaxTree.right, { 'type': 'Literal', 'value': op, 'raw': `'${op}'`}];
+			delete syntaxTree.operator;
 		}
 	}
 }
@@ -345,24 +345,25 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	// General Variable class
 	function makeVar(source, type, dims, inline) {
-		console.log('make var',source, type, dims, inline)
-		this.type = type;
-		this.dims = dims;
-		if (inline) {
-			this.name = source;
-		} else {
-			let vname = "v_" + varCount;
-			appendSources(this.type + " " + vname + " = " + source + ";\n");
+		console.log('make var', source, type, dims, inline)
+		let name = source;
+		if (!inline) {
+			name = "v_" + varCount;
+			appendSources(`${type} ${name} = ${source}; \n`);
 			varCount += 1;
-			this.name = vname;
 		}
-		this.toString = function() {
-			return this.name;
-		}
-		return this;
+		return { type, dims, name, toString: () => name }
 	}
 
 	// Need to handle cases like - vec3(v.x, 0.1, mult(0.1, time))
+
+	function _bool(source, inline) {
+		console.log('inside Bool', source);
+		source = collapseToString(source);
+		console.log('collapsed', source);
+		//flag the bool with 0 dimensions, so we can type check
+		return new makeVar(source, 'bool', 0, inline);
+	}
 
 	function float(source, inline) {
 		//if (typeof source !== 'string') {
@@ -479,18 +480,22 @@ export function sculptToGLSL(userProvidedSrc) {
 		throw err;
 	}
 
+	function ensureBoolean(funcName, val) {
+		if (typeof val !== 'boolean' && val.type !== 'bool') {
+			compileError(`${funcName} accepts only a boolean. Was given: ${val.type}`);
+		}
+	}
+
 	function ensureScalar(funcName, val) {
-		let tp = typeof val;
 		if (typeof val !== 'number' && val.type !== 'float') {
-			compileError("'"+funcName+"'" + " accepts only a scalar. Was given: '" + val.type + "'");
+			compileError(`${funcName} accepts only a scalar. Was given: ${val.type}`);
 		}
 	}
 
 	function ensureGroupOp(funcName, a, b) {
 		if (typeof a !== 'string' && typeof b !== 'string') {
 			if (a.dims !== 1 && b.dims !== 1 && a.dims !== b.dims) {
-				compileError("'" + funcName + "'" + 
-					" dimension mismatch. Was given: '" + a.type + "' and '" + b.type + "'");
+				compileError(`${funcName} dimension mismatch. Was given: ${a.type} and ${b.type}`);
 			}
 		}
 	}
@@ -607,19 +612,32 @@ export function sculptToGLSL(userProvidedSrc) {
 		return makeShape;
 	}
 
+	//converts the provided arg into a glsl variable
 	function tryMakeNum(v) {
 		if (typeof v === 'number') {
 			return new float(v);
-		} else {
-			return v;
+		} 
+		return v;
+	}
+
+	function tryMakeBool(v) {
+		if (typeof v === 'boolean') {
+			return new _bool(v);
 		}
+		return v;
+	}
+
+	//implements ! operator
+	function _not(arg) {
+		if (typeof arg === 'boolean') return !arg;
+		arg = tryMakeBool(arg);
+		ensureBoolean('!', arg);
+		return _bool('!' + arg.name, true);
 	}
 
 	/// Math ///
-
 	// Group ops
-
-	function binaryOp(left, right, symbol) {
+	function _binaryOp(left, right, symbol) {
 		// console.log('hit binaryOP', symbol, symbol.value)
 		let expression = _operators[symbol];
 		console.log('expression',expression)
@@ -627,17 +645,15 @@ export function sculptToGLSL(userProvidedSrc) {
 		console.log('Called expression')
 		left = tryMakeNum(left);
 		right = tryMakeNum(right);
-		console.log('made left and right')
-		// if (debug) {
-		console.log(`left: ${left} ${symbol} ${right}`);
-		// }
+
 		console.log('SYMBOL', symbol, typeof symbol);
 		if ( symbol === '==' || symbol === '!=' ||
 			symbol === '>' || symbol === '>=' || symbol === '<' || symbol === '<=') {
 			ensureScalar(symbol, left);
 			ensureScalar(symbol, right);
 			console.log('comparison worked',)
-			return new makeVar(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, 'bool', 1);
+			return _bool(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`);
+			//return new makeVar(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, 'bool', 1);
 		} else {
 			ensureGroupOp(symbol, left, right);
 			// called for *, -, +, /

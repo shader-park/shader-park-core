@@ -15736,38 +15736,43 @@ function replaceBinaryOp(syntaxTree) {
   if (!syntaxTree) {
     console.log('no syntax tree');
     return;
-  } // if (syntaxTree.type === 'UnaryExpression') {
-  // 	let op = syntaxTree.operator;
-  // 	if(op === '!') {
-  // 		syntaxTree.callee = { type: 'Identifier', name: 'not' };
-  // 		syntaxTree.type = 'CallExpression';
-  // 		syntaxTree.arguments = [syntaxTree.argument];
-  // 		delete syntaxTree.operator;
-  // 	}
-  // }
+  }
 
-
-  if (syntaxTree['type'] === 'BinaryExpression') {
+  if (syntaxTree.type === 'UnaryExpression') {
     var op = syntaxTree.operator;
 
-    if (op in _operators) {
-      if (op === '===') {
-        op = '==';
-      } else if (op === '!==') {
-        op = '!=';
+    if (op === '!') {
+      syntaxTree.callee = {
+        type: 'Identifier',
+        name: '_not'
+      };
+      syntaxTree.type = 'CallExpression';
+      syntaxTree.arguments = [syntaxTree.argument];
+      delete syntaxTree.operator;
+    }
+  }
+
+  if (syntaxTree['type'] === 'BinaryExpression') {
+    var _op = syntaxTree.operator;
+
+    if (_op in _operators) {
+      if (_op === '===') {
+        _op = '==';
+      } else if (_op === '!==') {
+        _op = '!=';
       }
 
-      syntaxTree['callee'] = {
+      syntaxTree.callee = {
         type: 'Identifier',
-        name: 'binaryOp'
+        name: '_binaryOp'
       };
-      syntaxTree['type'] = 'CallExpression';
-      syntaxTree['arguments'] = [syntaxTree.left, syntaxTree.right, {
+      syntaxTree.type = 'CallExpression';
+      syntaxTree.arguments = [syntaxTree.left, syntaxTree.right, {
         'type': 'Literal',
-        'value': op,
-        'raw': "'".concat(op, "'")
+        'value': _op,
+        'raw': "'".concat(_op, "'")
       }];
-      syntaxTree['operator'] = undefined;
+      delete syntaxTree.operator;
     }
   }
 }
@@ -16074,25 +16079,32 @@ function sculptToGLSL(userProvidedSrc) {
 
   function makeVar(source, type, dims, inline) {
     console.log('make var', source, type, dims, inline);
-    this.type = type;
-    this.dims = dims;
+    var name = source;
 
-    if (inline) {
-      this.name = source;
-    } else {
-      var vname = "v_" + varCount;
-      appendSources(this.type + " " + vname + " = " + source + ";\n");
+    if (!inline) {
+      name = "v_" + varCount;
+      appendSources("".concat(type, " ").concat(name, " = ").concat(source, "; \n"));
       varCount += 1;
-      this.name = vname;
     }
 
-    this.toString = function () {
-      return this.name;
+    return {
+      type: type,
+      dims: dims,
+      name: name,
+      toString: function toString() {
+        return name;
+      }
     };
-
-    return this;
   } // Need to handle cases like - vec3(v.x, 0.1, mult(0.1, time))
 
+
+  function _bool(source, inline) {
+    console.log('inside Bool', source);
+    source = collapseToString(source);
+    console.log('collapsed', source); //flag the bool with 0 dimensions, so we can type check
+
+    return new makeVar(source, 'bool', 0, inline);
+  }
 
   function float(source, inline) {
     //if (typeof source !== 'string') {
@@ -16224,18 +16236,22 @@ function sculptToGLSL(userProvidedSrc) {
     throw err;
   }
 
-  function ensureScalar(funcName, val) {
-    var tp = _typeof(val);
+  function ensureBoolean(funcName, val) {
+    if (typeof val !== 'boolean' && val.type !== 'bool') {
+      compileError("".concat(funcName, " accepts only a boolean. Was given: ").concat(val.type));
+    }
+  }
 
+  function ensureScalar(funcName, val) {
     if (typeof val !== 'number' && val.type !== 'float') {
-      compileError("'" + funcName + "'" + " accepts only a scalar. Was given: '" + val.type + "'");
+      compileError("".concat(funcName, " accepts only a scalar. Was given: ").concat(val.type));
     }
   }
 
   function ensureGroupOp(funcName, a, b) {
     if (typeof a !== 'string' && typeof b !== 'string') {
       if (a.dims !== 1 && b.dims !== 1 && a.dims !== b.dims) {
-        compileError("'" + funcName + "'" + " dimension mismatch. Was given: '" + a.type + "' and '" + b.type + "'");
+        compileError("".concat(funcName, " dimension mismatch. Was given: ").concat(a.type, " and ").concat(b.type));
       }
     }
   }
@@ -16357,19 +16373,36 @@ function sculptToGLSL(userProvidedSrc) {
     };
 
     return makeShape;
-  }
+  } //converts the provided arg into a glsl variable
+
 
   function tryMakeNum(v) {
     if (typeof v === 'number') {
       return new float(v);
-    } else {
-      return v;
     }
+
+    return v;
+  }
+
+  function tryMakeBool(v) {
+    if (typeof v === 'boolean') {
+      return new _bool(v);
+    }
+
+    return v;
+  } //implements ! operator
+
+
+  function _not(arg) {
+    if (typeof arg === 'boolean') return !arg;
+    arg = tryMakeBool(arg);
+    ensureBoolean('!', arg);
+    return _bool('!' + arg.name, true);
   } /// Math ///
   // Group ops
 
 
-  function binaryOp(left, right, symbol) {
+  function _binaryOp(left, right, symbol) {
     // console.log('hit binaryOP', symbol, symbol.value)
     var expression = _operators[symbol];
     console.log('expression', expression);
@@ -16377,17 +16410,13 @@ function sculptToGLSL(userProvidedSrc) {
     console.log('Called expression');
     left = tryMakeNum(left);
     right = tryMakeNum(right);
-    console.log('made left and right'); // if (debug) {
-
-    console.log("left: ".concat(left, " ").concat(symbol, " ").concat(right)); // }
-
     console.log('SYMBOL', symbol, _typeof(symbol));
 
     if (symbol === '==' || symbol === '!=' || symbol === '>' || symbol === '>=' || symbol === '<' || symbol === '<=') {
       ensureScalar(symbol, left);
       ensureScalar(symbol, right);
       console.log('comparison worked');
-      return new makeVar("(".concat(collapseToString(left), " ").concat(symbol, " ").concat(collapseToString(right), ")"), 'bool', 1);
+      return _bool("(".concat(collapseToString(left), " ").concat(symbol, " ").concat(collapseToString(right), ")")); //return new makeVar(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, 'bool', 1);
     } else {
       ensureGroupOp(symbol, left, right); // called for *, -, +, /
 
