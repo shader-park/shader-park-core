@@ -71,6 +71,63 @@ let _operators = {
 	'<=': (a, b) => a <= b,
 }
 
+
+
+function replaceIf(syntaxTree) {
+	if (typeof syntaxTree === 'object') {
+		for (let node in syntaxTree) {
+			if (syntaxTree.hasOwnProperty(node)) {
+				replaceIf(syntaxTree[node]);
+			}
+		}
+	}
+	if (!syntaxTree) {
+		console.log('no syntax tree')
+		return;
+	}
+
+	if (syntaxTree.type === 'IfStatement') {
+		let trueCondition = syntaxTree.consequent;
+		let falseCondition = syntaxTree.alternate;
+
+		let lambda1 = {
+			"type": "FunctionExpression",
+			"id": null,
+			"params": [],
+			"body": trueCondition,
+			"generator": false,
+			"expression": false,
+			"async": false
+		};
+		
+		let args = [syntaxTree.test, lambda1];
+		
+		if (falseCondition) {
+			let lambda2 = Object.assign({}, lambda1);
+			lambda2.body = falseCondition;
+			args.push(lambda2);
+		}
+		
+		delete syntaxTree.test;
+		delete syntaxTree.alternate;
+		delete syntaxTree.consequent;
+
+		let newSyntaxTree =  {
+			"type": "ExpressionStatement",
+			"expression": {
+				"type": "CallExpression",
+				"callee": { type: 'Identifier', name: '_if' },
+				"arguments": args,
+			}
+		}
+		Object.entries(newSyntaxTree).forEach(([key, val]) => syntaxTree[key] = val);
+		// Object.assign(syntaxTree, newSyntaxTree);
+		console.log('updated Syntax tree', syntaxTree);
+	}
+
+
+}
+
 // Converts binary math _operators to our own version
 function replaceBinaryOp(syntaxTree) {
 
@@ -108,6 +165,8 @@ function replaceBinaryOp(syntaxTree) {
 			syntaxTree.type = 'CallExpression';
 			syntaxTree.arguments = [syntaxTree.left, syntaxTree.right, { 'type': 'Literal', 'value': op, 'raw': `'${op}'`}];
 			delete syntaxTree.operator;
+			delete syntaxTree.left;
+			delete syntaxTree.right;
 		}
 	}
 }
@@ -197,6 +256,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	replaceOperatorOverload(tree);
 	replaceBinaryOp(tree);
 	replaceSliderInput(tree);
+	replaceIf(tree);
 	console.log('tree', tree)
 	try {
 		userProvidedSrc = escodegen.generate(tree);

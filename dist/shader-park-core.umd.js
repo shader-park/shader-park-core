@@ -15724,7 +15724,68 @@
     '<=': function _(a, b) {
       return a <= b;
     }
-  }; // Converts binary math _operators to our own version
+  };
+
+  function replaceIf(syntaxTree) {
+    if (_typeof(syntaxTree) === 'object') {
+      for (var node in syntaxTree) {
+        if (syntaxTree.hasOwnProperty(node)) {
+          replaceIf(syntaxTree[node]);
+        }
+      }
+    }
+
+    if (!syntaxTree) {
+      console.log('no syntax tree');
+      return;
+    }
+
+    if (syntaxTree.type === 'IfStatement') {
+      var trueCondition = syntaxTree.consequent;
+      var falseCondition = syntaxTree.alternate;
+      var lambda1 = {
+        "type": "FunctionExpression",
+        "id": null,
+        "params": [],
+        "body": trueCondition,
+        "generator": false,
+        "expression": false,
+        "async": false
+      };
+      var args = [syntaxTree.test, lambda1];
+
+      if (falseCondition) {
+        var lambda2 = Object.assign({}, lambda1);
+        lambda2.body = falseCondition;
+        args.push(lambda2);
+      }
+
+      delete syntaxTree.test;
+      delete syntaxTree.alternate;
+      delete syntaxTree.consequent;
+      var newSyntaxTree = {
+        "type": "ExpressionStatement",
+        "expression": {
+          "type": "CallExpression",
+          "callee": {
+            type: 'Identifier',
+            name: '_if'
+          },
+          "arguments": args
+        }
+      };
+      Object.entries(newSyntaxTree).forEach(function (_ref) {
+        var _ref2 = _slicedToArray(_ref, 2),
+            key = _ref2[0],
+            val = _ref2[1];
+
+        return syntaxTree[key] = val;
+      }); // Object.assign(syntaxTree, newSyntaxTree);
+
+      console.log('updated Syntax tree', syntaxTree);
+    }
+  } // Converts binary math _operators to our own version
+
 
   function replaceBinaryOp(syntaxTree) {
     if (_typeof(syntaxTree) === 'object') {
@@ -15775,6 +15836,8 @@
           'raw': "'".concat(_op, "'")
         }];
         delete syntaxTree.operator;
+        delete syntaxTree.left;
+        delete syntaxTree.right;
       }
     }
   }
@@ -15879,6 +15942,7 @@
     replaceOperatorOverload(tree);
     replaceBinaryOp(tree);
     replaceSliderInput(tree);
+    replaceIf(tree);
     console.log('tree', tree);
 
     try {
@@ -16188,10 +16252,10 @@
 
 
     function applyVectorAssignmentOverload(self, objs) {
-      Object.entries(objs).forEach(function (_ref) {
-        var _ref2 = _slicedToArray(_ref, 2),
-            key = _ref2[0],
-            func = _ref2[1];
+      Object.entries(objs).forEach(function (_ref3) {
+        var _ref4 = _slicedToArray(_ref3, 2),
+            key = _ref4[0],
+            func = _ref4[1];
 
         Object.defineProperty(self, key, {
           get: function get() {
