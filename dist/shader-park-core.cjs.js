@@ -15721,9 +15721,8 @@ var _operators = {
   },
   '<=': function _(a, b) {
     return a <= b;
-  } // Converts binary math _operators to our own version
-
-};
+  }
+}; // Converts binary math _operators to our own version
 
 function replaceBinaryOp(syntaxTree) {
   if (_typeof(syntaxTree) === 'object') {
@@ -16395,70 +16394,6 @@ function sculptToGLSL(userProvidedSrc) {
       var dims = Math.max(left.dims, right.dims);
       return new makeVarWithDims("(".concat(collapseToString(left), " ").concat(symbol, " ").concat(collapseToString(right), ")"), dims);
     }
-  }
-
-  function mult(a, b) {
-    if (typeof a === 'number' && typeof b === 'number') return a * b;
-    a = tryMakeNum(a);
-    b = tryMakeNum(b);
-
-    if (debug) {
-      console.log("multiplying...");
-      console.log("a: ", a);
-      console.log("b: ", b);
-    }
-
-    ensureGroupOp("mult", a, b);
-    var dims = Math.max(a.dims, b.dims);
-    return new makeVarWithDims("(" + collapseToString(a) + "*" + collapseToString(b) + ")", dims);
-  }
-
-  function add(a, b) {
-    if (typeof a === 'number' && typeof b === 'number') return a + b;
-    a = tryMakeNum(a);
-    b = tryMakeNum(b);
-
-    if (debug) {
-      console.log("adding...");
-      console.log("a: ", a);
-      console.log("b: ", b);
-    }
-
-    ensureGroupOp("add", a, b);
-    var dims = Math.max(a.dims, b.dims);
-    return new makeVarWithDims("(" + collapseToString(a) + "+" + collapseToString(b) + ")", dims);
-  }
-
-  function sub(a, b) {
-    if (typeof a === 'number' && typeof b === 'number') return a - b;
-    a = tryMakeNum(a);
-    b = tryMakeNum(b);
-
-    if (debug) {
-      console.log("subtracting...");
-      console.log("a: ", a);
-      console.log("b: ", b);
-    }
-
-    ensureGroupOp("sub", a, b);
-    var dims = Math.max(a.dims, b.dims);
-    return new makeVarWithDims("(" + collapseToString(a) + "-" + collapseToString(b) + ")", dims);
-  }
-
-  function divide(a, b) {
-    if (typeof a === 'number' && typeof b === 'number') return a / b;
-    a = tryMakeNum(a);
-    b = tryMakeNum(b);
-
-    if (debug) {
-      console.log("dividing...");
-      console.log("a: ", a);
-      console.log("b: ", b);
-    }
-
-    ensureGroupOp("divide", a, b);
-    var dims = Math.max(a.dims, b.dims);
-    return new makeVarWithDims("(" + collapseToString(a) + "/" + collapseToString(b) + ")", dims);
   }
 
   function setSDF(dist) {

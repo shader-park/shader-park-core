@@ -644,63 +644,6 @@ export function sculptToGLSL(userProvidedSrc) {
 			let dims = Math.max(left.dims, right.dims);
 			return new makeVarWithDims(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, dims);
 		}
-		
-	}
-
-	function mult(a,b) {
-		if (typeof a === 'number' && typeof b === 'number') return (a*b);
-		a = tryMakeNum(a);
- 		b = tryMakeNum(b);
- 		if (debug) {
-			console.log("multiplying...");
-			console.log("a: ", a);
-			console.log("b: ", b);
-		}
- 		ensureGroupOp("mult", a, b);
- 		let dims = Math.max(a.dims, b.dims);
- 		return new makeVarWithDims("(" + collapseToString(a) + "*" + collapseToString(b) + ")", dims);
-	}
-
-	function add(a,b) {
- 		if (typeof a === 'number' && typeof b === 'number') return (a+b);
- 		a = tryMakeNum(a);
- 		b = tryMakeNum(b);
- 		if (debug) {
-			console.log("adding...");
-			console.log("a: ", a);
-			console.log("b: ", b);
-		}
- 		ensureGroupOp("add", a, b);
- 		let dims = Math.max(a.dims, b.dims);
- 		return new makeVarWithDims("(" + collapseToString(a) + "+" + collapseToString(b) + ")", dims);
-	}
-
-	function sub(a,b) {
- 		if (typeof a === 'number' && typeof b === 'number') return (a-b);
- 		a = tryMakeNum(a);
- 		b = tryMakeNum(b);
- 		if (debug) {
-			console.log("subtracting...");
-			console.log("a: ", a);
-			console.log("b: ", b);
-		}
- 		ensureGroupOp("sub", a, b);
- 		let dims = Math.max(a.dims, b.dims);
- 		return new makeVarWithDims("(" + collapseToString(a) + "-" + collapseToString(b) + ")", dims);
-	}
-
-	function divide(a,b) {
-		if (typeof a === 'number' && typeof b === 'number') return (a/b);
-		a = tryMakeNum(a);
-		b = tryMakeNum(b);
-		if (debug) {
-		   console.log("dividing...");
-		   console.log("a: ", a);
-		   console.log("b: ", b);
-	   }
-		ensureGroupOp("divide", a, b);
-		let dims = Math.max(a.dims, b.dims);
-		return new makeVarWithDims("(" + collapseToString(a) + "/" + collapseToString(b) + ")", dims);
 	}
 	
 	function setSDF(dist) {
@@ -896,7 +839,8 @@ export function sculptToGLSL(userProvidedSrc) {
 	let error = undefined;
 	function getSpherical() {
 		toSpherical(getSpace());
-	} 
+	}
+	
 	// Define any code that needs to reference auto generated from bindings.js code here
 	let postGeneratedFunctions = [
 		getSpherical,
