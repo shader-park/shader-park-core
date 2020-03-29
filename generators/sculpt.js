@@ -103,11 +103,32 @@ function replaceIf(syntaxTree) {
 		let args = [syntaxTree.test, lambda1];
 		
 		if (falseCondition) {
-			let lambda2 = Object.assign({}, lambda1);
-			lambda2.body = falseCondition;
+			console.log('falseCondition', falseCondition);
+			// if (falseCondition.arguments && falseCondition.arguments.length === 3 ) {
+			// 	let lastArg = falseCondition.arguments[2];
+			// 	let functionBody = {
+			// 		"type": "BlockStatement",
+			// 		"body": lastArg
+			// 	}
+			// 	falseCondition.arguments[2] = functionBody;
+			// }
+			// let lambda2 = Object.assign({}, lambda1);
+			let lambda2 = {
+				"type": "FunctionExpression",
+				"id": null,
+				"params": [],
+				"body": [{
+					"type": "BlockStatement",
+					"body": falseCondition
+				}],
+				"generator": false,
+				"expression": false,
+				"async": false
+			};
+			// lambda2.body = falseCondition;
 			args.push(lambda2);
 		}
-		
+
 		delete syntaxTree.test;
 		delete syntaxTree.alternate;
 		delete syntaxTree.consequent;
