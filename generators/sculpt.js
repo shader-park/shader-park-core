@@ -117,14 +117,15 @@ function replaceIf(syntaxTree) {
 				"type": "FunctionExpression",
 				"id": null,
 				"params": [],
-				"body": [{
+				"body": {
 					"type": "BlockStatement",
-					"body": falseCondition
-				}],
+					"body": [falseCondition]
+				},
 				"generator": false,
 				"expression": false,
 				"async": false
 			};
+			
 			// lambda2.body = falseCondition;
 			args.push(lambda2);
 		}
