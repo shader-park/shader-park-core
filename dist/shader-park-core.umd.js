@@ -15903,6 +15903,7 @@
     var useLighting = true;
     var stateStack = [];
     var uniforms = baseUniforms();
+    var indentation = 1;
     var stepSizeConstant = 0.85; ////////////////////////////////////////////////////////////
     // Generates JS from headers referenced in the bindings.js
 
@@ -16070,8 +16071,9 @@
     }
 
     function appendSources(source) {
-      geoSrc += "    " + source;
-      colorSrc += "    " + source;
+      var currIndentation = '    '.repeat(indentation);
+      geoSrc += currIndentation + source;
+      colorSrc += currIndentation + source;
     }
 
     function appendColorSource(source) {
@@ -16392,6 +16394,49 @@
       }
 
       return v;
+    } // let x = 2;
+    // if(time > 5) {
+    // 	x = 1;
+    // } else {
+    // 	x = 2;
+    // }
+    // let x = 2;
+    // _if(time > 5, function () {x = 1;}, function () { x = 2;})
+    //impliments if in glsl
+
+
+    function _if(condition, trueCase, falseCase) {
+      // default the falseCase to a lambda, so we don't have to check if it exists
+      // in the case someone defines just an if statement
+      if (typeof trueCase !== 'function' || falseCase && typeof falseCase !== 'function') {
+        compileError("if condition, or else condition was not provided a function");
+      }
+
+      if (typeof condition === 'boolean') {
+        if (condition) {
+          trueCase();
+        } else {
+          if (falseCase) {
+            falseCase();
+          }
+        }
+      } else {
+        condition = tryMakeBool(condition);
+        ensureBoolean('if', condition);
+        appendSources("if(".concat(collapseToString(condition), ") {\n"));
+        indentation += 1;
+        trueCase();
+        indentation -= 1;
+
+        if (falseCase) {
+          appendSources("} else {\n");
+          indentation += 1;
+          falseCase();
+          indentation -= 1;
+        }
+
+        appendSources("}\n");
+      }
     } //implements ! operator
 
 
