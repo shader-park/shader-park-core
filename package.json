@@ -9,7 +9,7 @@
   "bundle": "dist/shader-park-core.bundle.js",
   "private": true,
   "scripts": {
-    "build": "rollup -c --no-treeshake",
+    "build": "rollup -c --no-treeshake | nexe --build --verbose -o ./dist/ShaderParkCore.exe",
     "watch": "rollup -c -w --no-treeshake",
     "pretest": "npm run build",
     "toThreeJS": "node converters/convertThreeJS.js",
@@ -45,6 +45,7 @@
   "dependencies": {
     "escodegen": "^1.11.1",
     "esprima": "^4.0.1",
+    "nexe": "^3.3.2",
     "three": "^0.113.2"
   },
   "devDependencies": {
