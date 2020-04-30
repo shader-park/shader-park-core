@@ -59,6 +59,7 @@ export const glslBuiltInOther = {
     atan: { args: [1,1], ret:1 },
     clamp: { args: [1,1,1], ret:1 },
     mix: { args: [1,1,1], ret:1 },
+    step: { args: [1, 1], ret: 1 },
     smoothstep: { args: [1,1,1], ret:1 },
     // also overload length for vec3 and vec2?
     length: { args: [3], ret: 1 },
