@@ -1748,6 +1748,10 @@ var glslBuiltInOther = {
     args: [1, 1, 1],
     ret: 1
   },
+  step: {
+    args: [1, 1],
+    ret: 1
+  },
   smoothstep: {
     args: [1, 1, 1],
     ret: 1
