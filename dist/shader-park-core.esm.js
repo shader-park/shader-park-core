@@ -16163,8 +16163,12 @@ function sculptToGLSL(userProvidedSrc) {
     colorSrc += "    " + source;
   }
 
-  function updateVar(source, name) {
-    appendSources("".concat(name, " = ").concat(source, "; \n"));
+  function updateVar(name, source) {
+    if (source instanceof GLSLVar) {
+      appendSources("".concat(name, " = ").concat(source, "; \n"));
+    }
+
+    return source;
   } //takes a glsl variable and creates a non-inlined version in 
 
 

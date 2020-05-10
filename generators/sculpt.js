@@ -427,10 +427,13 @@ export function sculptToGLSL(userProvidedSrc) {
 		colorSrc += "    " + source;
 	}
 
-	function updateVar(source, name) {
-		appendSources(`${name} = ${source}; \n`);
+	function updateVar(name, source) {
+		if (source instanceof GLSLVar) {
+			appendSources(`${name} = ${source}; \n`);
+		}
+		return source;
 	}
-	
+
 	//takes a glsl variable and creates a non-inlined version in 
 	function makeNamedVar(name, value) {
 		if (value instanceof GLSLVar) {
