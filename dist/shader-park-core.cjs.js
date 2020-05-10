@@ -16079,7 +16079,7 @@ function sculptToGLSL(userProvidedSrc) {
         _iterator2.f();
       }
 
-      wrapperSrc += "    return new makeVarWithDims(\"" + _funcName + "(\" + ";
+      wrapperSrc += "    return new makeGLSLVarWithDims(\"" + _funcName + "(\" + ";
 
       for (var _argIdx3 = 0; _argIdx3 < _argList.length; _argIdx3++) {
         wrapperSrc += "arg_" + _argIdx3 + " + ";
@@ -16104,7 +16104,7 @@ function sculptToGLSL(userProvidedSrc) {
   try {
     for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
       var _funcName2 = _step3.value;
-      builtInOneToOneJS += "function ".concat(_funcName2, "(x) {\n    x = tryMakeNum(x);\n\t// debug here\n\treturn new makeVarWithDims(\"").concat(_funcName2, "(\" + x + \")\", x.dims);\n}\n");
+      builtInOneToOneJS += "function ".concat(_funcName2, "(x) {\n    x = tryMakeNum(x);\n\t// debug here\n\treturn new makeGLSLVarWithDims(\"").concat(_funcName2, "(\" + x + \")\", x.dims);\n}\n");
     }
   } catch (err) {
     _iterator3.e(err);
@@ -16165,46 +16165,69 @@ function sculptToGLSL(userProvidedSrc) {
 
   function appendColorSource(source) {
     colorSrc += "    " + source;
-  } // General Variable class
+  }
+
+  function updateVar(source, name) {
+    appendSources("".concat(name, " = ").concat(source, "; \n"));
+  } //takes a glsl variable and creates a non-inlined version in 
 
 
-  function makeVar(source, type, dims, inline) {
-    console.log('make var', source, type, dims, inline);
-    var name = source;
-
-    if (!inline) {
-      name = "v_" + varCount;
-      appendSources("".concat(type, " ").concat(name, " = ").concat(source, "; \n"));
-      varCount += 1;
+  function makeNamedVar(name, value) {
+    if (value instanceof GLSLVar) {
+      appendSources("".concat(value.type, " ").concat(name, " = ").concat(value.name, "; \n"));
     }
 
-    return {
-      type: type,
-      dims: dims,
-      name: name,
-      toString: function toString() {
-        return name;
+    return value;
+  } // General Variable class
+  // Generates GLSL expression, or variable
+  // function makeVar(source, type, dims, inline) {
+  // 	console.log('make var', source, type, dims, inline)
+  // 	let name = source;
+  // 	if (!inline) {
+  // 		name = "v_" + varCount;
+  // 		appendSources(`${type} ${name} = ${source}; \n`);
+  // 		varCount += 1;
+  // 	}
+  // 	return new GLSLVar(type, dims, name); //{ type, dims, name, toString: () => name, isGLSLVar: true }
+  // }
+
+
+  var GLSLVar = /*#__PURE__*/function () {
+    function GLSLVar(type, name, dims) {
+      _classCallCheck(this, GLSLVar);
+
+      this.type = type;
+      this.dims = dims;
+      this.name = name;
+    }
+
+    _createClass(GLSLVar, [{
+      key: "toString",
+      value: function toString() {
+        return this.name;
       }
-    };
-  } // Need to handle cases like - vec3(v.x, 0.1, mult(0.1, time))
+    }]);
+
+    return GLSLVar;
+  }(); // Need to handle cases like - vec3(v.x, 0.1, mult(0.1, time))
 
 
-  function _bool(source, inline) {
+  function _bool(source) {
     console.log('inside Bool', source);
     source = collapseToString(source);
     console.log('collapsed', source); //flag the bool with 0 dimensions, so we can type check
 
-    return new makeVar(source, 'bool', 0, inline);
+    return new GLSLVar('bool', source, 0);
   }
 
-  function float(source, inline) {
+  function float(source) {
     //if (typeof source !== 'string') {
     source = collapseToString(source); //}
 
-    return new makeVar(source, 'float', 1, inline);
+    return new GLSLVar('float', source, 1);
   }
 
-  function vec2(source, y, inline) {
+  function vec2(source, y) {
     if (y === undefined) {
       y = source;
     }
@@ -16213,9 +16236,9 @@ function sculptToGLSL(userProvidedSrc) {
       source = "vec2(" + collapseToString(source) + ", " + collapseToString(y) + ")";
     }
 
-    var self = new makeVar(source, 'vec2', 2, inline);
-    var currX = new makeVarWithDims(self.name + ".x", 1, true);
-    var currY = new makeVarWithDims(self.name + ".y", 1, true);
+    var self = new GLSLVar('vec2', source, 2);
+    var currX = new makeGLSLVarWithDims(self.name + ".x", 1);
+    var currY = new makeGLSLVarWithDims(self.name + ".y", 1);
     var objs = {
       'x': currX,
       'y': currY
@@ -16224,7 +16247,7 @@ function sculptToGLSL(userProvidedSrc) {
     return self;
   }
 
-  function vec3(source, y, z, inline) {
+  function vec3(source, y, z) {
     if (y === undefined) {
       y = source;
       z = source;
@@ -16234,10 +16257,10 @@ function sculptToGLSL(userProvidedSrc) {
       source = "vec3(" + collapseToString(source) + ", " + collapseToString(y) + ", " + collapseToString(z) + ")";
     }
 
-    var self = new makeVar(source, 'vec3', 3, inline);
-    var currX = new makeVarWithDims(self.name + ".x", 1, true);
-    var currY = new makeVarWithDims(self.name + ".y", 1, true);
-    var currZ = new makeVarWithDims(self.name + ".z", 1, true);
+    var self = new GLSLVar('vec3', source, 3);
+    var currX = new makeGLSLVarWithDims(self.name + ".x", 1);
+    var currY = new makeGLSLVarWithDims(self.name + ".y", 1);
+    var currZ = new makeGLSLVarWithDims(self.name + ".z", 1);
     var objs = {
       'x': currX,
       'y': currY,
@@ -16247,7 +16270,7 @@ function sculptToGLSL(userProvidedSrc) {
     return self;
   }
 
-  function vec4(source, y, z, w, inline) {
+  function vec4(source, y, z, w) {
     if (y === undefined && z === undefined) {
       y = source;
       z = source;
@@ -16258,11 +16281,11 @@ function sculptToGLSL(userProvidedSrc) {
       source = "vec4(" + collapseToString(source) + ", " + collapseToString(y) + ", " + collapseToString(z) + ", " + collapseToString(w) + ")";
     }
 
-    var self = new makeVar(source, 'vec4', 4, inline);
-    var currX = new makeVarWithDims(self.name + ".x", 1, true);
-    var currY = new makeVarWithDims(self.name + ".y", 1, true);
-    var currZ = new makeVarWithDims(self.name + ".z", 1, true);
-    var currW = new makeVarWithDims(self.name + ".w", 1, true);
+    var self = new GLSLVar('vec4', source, 4);
+    var currX = new makeGLSLVarWithDims(self.name + ".x", 1);
+    var currY = new makeGLSLVarWithDims(self.name + ".y", 1);
+    var currZ = new makeGLSLVarWithDims(self.name + ".z", 1);
+    var currW = new makeGLSLVarWithDims(self.name + ".w", 1);
     var objs = {
       'x': currX,
       'y': currY,
@@ -16291,12 +16314,12 @@ function sculptToGLSL(userProvidedSrc) {
     });
   }
 
-  function makeVarWithDims(source, dims, inline) {
+  function makeGLSLVarWithDims(source, dims) {
     if (dims < 1 || dims > 4) compileError("Tried creating variable with dim: " + dims);
-    if (dims === 1) return new float(source, inline);
-    if (dims === 2) return new vec2(source, null, inline);
-    if (dims === 3) return new vec3(source, null, null, inline);
-    if (dims === 4) return new vec4(source, null, null, null, inline);
+    if (dims === 1) return new float(source);
+    if (dims === 2) return new vec2(source);
+    if (dims === 3) return new vec3(source);
+    if (dims === 4) return new vec4(source);
   } // Modes enum
 
 
@@ -16308,17 +16331,17 @@ function sculptToGLSL(userProvidedSrc) {
     MIXGEO: 14
   };
   var additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
-  var time = new float("time", true);
-  var mouse = new vec3("mouse", null, null, true);
-  var normal = new vec3("normal", null, null, true);
+  var time = new float("time");
+  var mouse = new vec3("mouse");
+  var normal = new vec3("normal");
 
   function mouseIntersection() {
     appendColorSource("mouseIntersect = mouseIntersection();\n");
-    return new vec3("mouseIntersect", null, null, true);
+    return new vec3("mouseIntersect");
   }
 
   function getRayDirection() {
-    return new vec3("getRayDirection()", null, null, false);
+    return new vec3("getRayDirection()");
   }
 
   function compileError(err) {
@@ -16441,7 +16464,7 @@ function sculptToGLSL(userProvidedSrc) {
     appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
     appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
     appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
-    stateStack[stateStack.length - 1].p = vec3(stateStack[stateStack.length - 1].id + "p", null, null, true);
+    stateStack[stateStack.length - 1].p = vec3(stateStack[stateStack.length - 1].id + "p");
     stateCount++;
   }
 
@@ -16531,7 +16554,7 @@ function sculptToGLSL(userProvidedSrc) {
     if (typeof arg === 'boolean') return !arg;
     arg = tryMakeBool(arg);
     ensureBoolean('!', arg);
-    return _bool('!' + arg.name, true);
+    return _bool('!' + arg.name);
   } /// Math ///
   // Group ops
 
@@ -16555,7 +16578,7 @@ function sculptToGLSL(userProvidedSrc) {
       ensureGroupOp(symbol, left, right); // called for *, -, +, /
 
       var dims = Math.max(left.dims, right.dims);
-      return new makeVarWithDims("(".concat(collapseToString(left), " ").concat(symbol, " ").concat(collapseToString(right), ")"), dims);
+      return new makeGLSLVarWithDims("(".concat(collapseToString(left), " ").concat(symbol, " ").concat(collapseToString(right), ")"), dims);
     }
   }
 
@@ -16565,7 +16588,7 @@ function sculptToGLSL(userProvidedSrc) {
   }
 
   function getSDF() {
-    return float(getCurrentDist(), true);
+    return float(getCurrentDist());
   } // Displacements
 
 
@@ -16731,7 +16754,7 @@ function sculptToGLSL(userProvidedSrc) {
       min: min,
       max: max
     });
-    return new float(name, true);
+    return new float(name);
   }
   /*
   function input2(name, x, y) {
@@ -16741,7 +16764,7 @@ function sculptToGLSL(userProvidedSrc) {
   	if(y === undefined) {
   		uniform.value = x;
   	} else {
-  		out = new vec2(x, y, true);
+  		out = new vec2(x, y);
   		uniform.value = out;
   	}
   	uniforms.push(uniform);

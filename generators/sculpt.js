@@ -348,7 +348,7 @@ export function sculptToGLSL(userProvidedSrc) {
 				argIdxB += 1;
 			}
 			// debug here
-			wrapperSrc += "    return new makeVarWithDims(\"" + funcName + "(\" + ";
+			wrapperSrc += "    return new makeGLSLVarWithDims(\"" + funcName + "(\" + ";
 			for (let argIdx = 0; argIdx < argList.length; argIdx++) {
 				wrapperSrc += "arg_" + argIdx + " + ";
 				if (argIdx < argList.length - 1) wrapperSrc += "\", \" + ";
@@ -370,7 +370,7 @@ export function sculptToGLSL(userProvidedSrc) {
 `function ${funcName}(x) {
     x = tryMakeNum(x);
 	// debug here
-	return new makeVarWithDims("${funcName}(" + x + ")", x.dims);
+	return new makeGLSLVarWithDims("${funcName}(" + x + ")", x.dims);
 }
 `;
 	}
@@ -427,36 +427,61 @@ export function sculptToGLSL(userProvidedSrc) {
 		colorSrc += "    " + source;
 	}
 
-	// General Variable class
-	function makeVar(source, type, dims, inline) {
-		console.log('make var', source, type, dims, inline)
-		let name = source;
-		if (!inline) {
-			name = "v_" + varCount;
-			appendSources(`${type} ${name} = ${source}; \n`);
-			varCount += 1;
+	function updateVar(source, name) {
+		appendSources(`${name} = ${source}; \n`);
+	}
+	
+	//takes a glsl variable and creates a non-inlined version in 
+	function makeNamedVar(name, value) {
+		if (value instanceof GLSLVar) {
+			appendSources(`${value.type} ${name} = ${value.name}; \n`);
 		}
-		return { type, dims, name, toString: () => name }
+		return value;
+	}
+
+	// General Variable class
+	// Generates GLSL expression, or variable
+	// function makeVar(source, type, dims, inline) {
+	// 	console.log('make var', source, type, dims, inline)
+	// 	let name = source;
+	// 	if (!inline) {
+	// 		name = "v_" + varCount;
+	// 		appendSources(`${type} ${name} = ${source}; \n`);
+	// 		varCount += 1;
+	// 	}
+	// 	return new GLSLVar(type, dims, name); //{ type, dims, name, toString: () => name, isGLSLVar: true }
+	// }
+
+	class GLSLVar {
+		constructor(type, name, dims) {
+			this.type = type;
+			this.dims = dims;
+			this.name = name;	
+		}
+
+		toString() {
+			return this.name;
+		}
 	}
 
 	// Need to handle cases like - vec3(v.x, 0.1, mult(0.1, time))
 
-	function _bool(source, inline) {
+	function _bool(source) {
 		console.log('inside Bool', source);
 		source = collapseToString(source);
 		console.log('collapsed', source);
 		//flag the bool with 0 dimensions, so we can type check
-		return new makeVar(source, 'bool', 0, inline);
+		return new GLSLVar('bool', source, 0);
 	}
 
-	function float(source, inline) {
+	function float(source) {
 		//if (typeof source !== 'string') {
 			source = collapseToString(source);
 		//}
-		return new makeVar(source, 'float', 1, inline);
+		return new GLSLVar('float', source, 1);
 	}
 
-	function vec2(source, y, inline) {
+	function vec2(source, y) {
 		if (y === undefined ) {
 			y = source;
 		}
@@ -464,17 +489,16 @@ export function sculptToGLSL(userProvidedSrc) {
 			source = "vec2(" + collapseToString(source) + ", " 
 							 + collapseToString(y) + ")";
 		}
-		let self = new makeVar(source, 'vec2', 2, inline);
-
-		let currX = new makeVarWithDims(self.name + ".x", 1, true); 
-		let currY = new makeVarWithDims(self.name + ".y", 1, true);
+		let self = new GLSLVar('vec2', source, 2);
+		let currX = new makeGLSLVarWithDims(self.name + ".x", 1); 
+		let currY = new makeGLSLVarWithDims(self.name + ".y", 1);
 		let objs = { 'x': currX, 'y': currY};
 		applyVectorAssignmentOverload(self, objs);
 
 		return self;
 	}
 
-	function vec3(source, y, z, inline) {
+	function vec3(source, y, z) {
 		if (y === undefined) {
 			y = source;
 			z = source;
@@ -486,16 +510,16 @@ export function sculptToGLSL(userProvidedSrc) {
 							 + collapseToString(z) + ")";
 			
 		}
-		let self = new makeVar(source, 'vec3', 3, inline);
-		let currX = new makeVarWithDims(self.name + ".x", 1, true);
-		let currY = new makeVarWithDims(self.name + ".y", 1, true);
-		let currZ = new makeVarWithDims(self.name + ".z", 1, true);
+		let self = new GLSLVar('vec3', source, 3);
+		let currX = new makeGLSLVarWithDims(self.name + ".x", 1);
+		let currY = new makeGLSLVarWithDims(self.name + ".y", 1);
+		let currZ = new makeGLSLVarWithDims(self.name + ".z", 1);
 		let objs = {'x': currX, 'y': currY, 'z': currZ};
 		applyVectorAssignmentOverload(self, objs);
 		return self;
 	}
 
-	function vec4(source, y, z, w, inline) {
+	function vec4(source, y, z, w) {
 		if (y === undefined && z === undefined) {
 			y = source;
 			z = source;
@@ -507,11 +531,11 @@ export function sculptToGLSL(userProvidedSrc) {
 							 + collapseToString(z) + ", "
 							 + collapseToString(w) + ")";
 		}
-		let self = new makeVar(source, 'vec4', 4, inline);
-		let currX = new makeVarWithDims(self.name + ".x", 1, true);
-		let currY = new makeVarWithDims(self.name + ".y", 1, true);
-		let currZ = new makeVarWithDims(self.name + ".z", 1, true);
-		let currW = new makeVarWithDims(self.name + ".w", 1, true);
+		let self = new GLSLVar('vec4', source, 4);
+		let currX = new makeGLSLVarWithDims(self.name + ".x", 1);
+		let currY = new makeGLSLVarWithDims(self.name + ".y", 1);
+		let currZ = new makeGLSLVarWithDims(self.name + ".z", 1);
+		let currW = new makeGLSLVarWithDims(self.name + ".w", 1);
 	let objs = { 'x': currX, 'y': currY, 'z': currZ, 'w': currW };
 		applyVectorAssignmentOverload(self, objs);
 		return self;
@@ -527,12 +551,12 @@ export function sculptToGLSL(userProvidedSrc) {
 		});
 	}
 
-	function makeVarWithDims(source, dims, inline) {
+	function makeGLSLVarWithDims(source, dims) {
 		if (dims < 1 || dims > 4) compileError("Tried creating variable with dim: " + dims);
-		if (dims === 1) return new float(source, inline);
-		if (dims === 2) return new vec2(source, null, inline);
-		if (dims === 3) return new vec3(source, null, null, inline);
-		if (dims === 4) return new vec4(source, null, null, null, inline);
+		if (dims === 1) return new float(source);
+		if (dims === 2) return new vec2(source);
+		if (dims === 3) return new vec3(source);
+		if (dims === 4) return new vec4(source);
 	}
 
 	// Modes enum
@@ -545,17 +569,17 @@ export function sculptToGLSL(userProvidedSrc) {
 	};
 	const additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
 
-	let time = new float("time", true);
-	let mouse = new vec3("mouse", null, null, true);
-	let normal = new vec3("normal", null, null, true);
+	let time = new float("time");
+	let mouse = new vec3("mouse");
+	let normal = new vec3("normal");
 
 	function mouseIntersection() {
 		appendColorSource("mouseIntersect = mouseIntersection();\n");
-		return new vec3("mouseIntersect", null, null, true);
+		return new vec3("mouseIntersect");
 	}
 
 	function getRayDirection() {
-		return new vec3("getRayDirection()", null, null, false);
+		return new vec3("getRayDirection()");
 	}
 
 	function compileError(err) {
@@ -673,7 +697,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
 		appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
 		appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
-		stateStack[stateStack.length-1].p = vec3(stateStack[stateStack.length-1].id+"p", null, null, true);
+		stateStack[stateStack.length-1].p = vec3(stateStack[stateStack.length-1].id+"p");
                 stateCount++;
 	}
 
@@ -758,7 +782,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		if (typeof arg === 'boolean') return !arg;
 		arg = tryMakeBool(arg);
 		ensureBoolean('!', arg);
-		return _bool('!' + arg.name, true);
+		return _bool('!' + arg.name);
 	}
 
 	/// Math ///
@@ -784,7 +808,7 @@ export function sculptToGLSL(userProvidedSrc) {
 			ensureGroupOp(symbol, left, right);
 			// called for *, -, +, /
 			let dims = Math.max(left.dims, right.dims);
-			return new makeVarWithDims(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, dims);
+			return new makeGLSLVarWithDims(`(${collapseToString(left)} ${symbol} ${collapseToString(right)})`, dims);
 		}
 	}
 	
@@ -794,7 +818,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 	
 	function getSDF() {
-		return float(getCurrentDist(), true);
+		return float(getCurrentDist());
 	}
 
 	// Displacements
@@ -959,7 +983,7 @@ export function sculptToGLSL(userProvidedSrc) {
 			compileError('input value, min, and max must be constant numbers');
 		}
 		uniforms.push({name, type:'float', value, min, max});
-		return new float(name, true);
+		return new float(name);
 	}
 	
 	/*
@@ -970,7 +994,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		if(y === undefined) {
 			uniform.value = x;
 		} else {
-			out = new vec2(x, y, true);
+			out = new vec2(x, y);
 			uniform.value = out;
 		}
 		uniforms.push(uniform);
@@ -988,7 +1012,6 @@ export function sculptToGLSL(userProvidedSrc) {
 		getSpherical,
 	].map(el => el.toString()).join('\n');
 	
-
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
 	
 	let geoFinal = buildGeoSource(geoSrc);
