@@ -193,6 +193,40 @@ function replaceBinaryOp(syntaxTree) {
 	}
 }
 
+function replaceVariableDeclaration(syntaxTree) {
+	if (syntaxTree && typeof syntaxTree === "object") {
+		for (let node in syntaxTree) {
+			if (syntaxTree.hasOwnProperty(node)) {
+				replaceVariableDeclaration(syntaxTree[node]);
+			}
+		}
+	}
+	if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree
+		&& syntaxTree.type === 'VariableDeclaration'
+		&& 'declarations' in syntaxTree
+		&& syntaxTree.declarations.length) {
+		console.log('hitting VariableDeclaration', syntaxTree);
+		let declarations = syntaxTree.declarations;
+		let declaration = declarations[declarations.length - 1];
+		declaration.init = {
+			type: "CallExpression",
+			callee: {
+				type: "Identifier",
+				name: "makeNamedVar"
+			},
+			arguments: [{
+				type: "Literal",
+				value: declaration.id.name,
+				raw: `'${declaration.id.name}'`
+			}, 
+			{
+				...declaration.init
+			}]
+		};
+	}
+}
+
+
 function replaceOperatorOverload(syntaxTree) {
 	if (syntaxTree && typeof syntaxTree === "object") {
 		for (let node in syntaxTree) {
@@ -279,7 +313,8 @@ export function sculptToGLSL(userProvidedSrc) {
 	replaceBinaryOp(tree);
 	replaceSliderInput(tree);
 	replaceIf(tree);
-	console.log('tree', tree)
+	replaceVariableDeclaration(tree);
+	console.log('tree1', tree)
 	try {
 		userProvidedSrc = escodegen.generate(tree);
 	} catch (e) {

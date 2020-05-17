@@ -15867,6 +15867,34 @@
     }
   }
 
+  function replaceVariableDeclaration(syntaxTree) {
+    if (syntaxTree && _typeof(syntaxTree) === "object") {
+      for (var node in syntaxTree) {
+        if (syntaxTree.hasOwnProperty(node)) {
+          replaceVariableDeclaration(syntaxTree[node]);
+        }
+      }
+    }
+
+    if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree.type === 'VariableDeclaration' && 'declarations' in syntaxTree && syntaxTree.declarations.length) {
+      console.log('hitting VariableDeclaration', syntaxTree);
+      var declarations = syntaxTree.declarations;
+      var declaration = declarations[declarations.length - 1];
+      declaration.init = {
+        type: "CallExpression",
+        callee: {
+          type: "Identifier",
+          name: "makeNamedVar"
+        },
+        arguments: [{
+          type: "Literal",
+          value: declaration.id.name,
+          raw: "'".concat(declaration.id.name, "'")
+        }, _objectSpread2({}, declaration.init)]
+      };
+    }
+  }
+
   function replaceOperatorOverload(syntaxTree) {
     if (syntaxTree && _typeof(syntaxTree) === "object") {
       for (var node in syntaxTree) {
@@ -15968,7 +15996,8 @@
     replaceBinaryOp(tree);
     replaceSliderInput(tree);
     replaceIf(tree);
-    console.log('tree', tree);
+    replaceVariableDeclaration(tree);
+    console.log('tree1', tree);
 
     try {
       userProvidedSrc = escodegen_2(tree);
