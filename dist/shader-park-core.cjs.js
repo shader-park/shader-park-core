@@ -15875,7 +15875,6 @@ function replaceVariableDeclaration(syntaxTree) {
   }
 
   if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree.type === 'VariableDeclaration' && 'declarations' in syntaxTree && syntaxTree.declarations.length) {
-    console.log('hitting VariableDeclaration', syntaxTree);
     var declarations = syntaxTree.declarations;
     var declaration = declarations[declarations.length - 1];
     declaration.init = {
@@ -16196,18 +16195,39 @@ function sculptToGLSL(userProvidedSrc) {
     colorSrc += "    " + source;
   }
 
-  function updateVar(name, source) {
-    if (source instanceof GLSLVar) {
-      appendSources("".concat(name, " = ").concat(source, "; \n"));
+  function updateVar(name, value) {
+    value = tryMakeNum(value);
+
+    if (value instanceof GLSLVar) {
+      appendSources("".concat(name, " = ").concat(value, "; \n"));
+      value.name = name;
     }
 
-    return source;
+    return value;
   } //takes a glsl variable and creates a non-inlined version in 
 
 
   function makeNamedVar(name, value) {
+    value = tryMakeNum(value);
+
     if (value instanceof GLSLVar) {
       appendSources("".concat(value.type, " ").concat(name, " = ").concat(value.name, "; \n"));
+
+      if (value.dims >= 2) {
+        value.x = new float(name + ".x");
+        value.y = new float(name + ".y"); // value.r = new float(value.name + ".r");
+        // value.g = new float(value.name + ".g"); 
+      }
+
+      if (value.dims >= 3) {
+        value.z = new float(name + ".z"); // value.b = new float(value.name + ".b"); 
+      }
+
+      if (value.dims >= 4) {
+        value.w = new float(name + ".w"); // value.a = new float(value.name + ".a");
+      }
+
+      value.name = name;
     }
 
     return value;
@@ -16275,8 +16295,8 @@ function sculptToGLSL(userProvidedSrc) {
     var objs = {
       'x': currX,
       'y': currY
-    };
-    applyVectorAssignmentOverload(self, objs);
+    }; // applyVectorAssignmentOverload(self, objs);
+
     return self;
   }
 
@@ -16298,8 +16318,8 @@ function sculptToGLSL(userProvidedSrc) {
       'x': currX,
       'y': currY,
       'z': currZ
-    };
-    applyVectorAssignmentOverload(self, objs);
+    }; // applyVectorAssignmentOverload(self, objs);
+
     return self;
   }
 
@@ -16324,8 +16344,8 @@ function sculptToGLSL(userProvidedSrc) {
       'y': currY,
       'z': currZ,
       'w': currW
-    };
-    applyVectorAssignmentOverload(self, objs);
+    }; // applyVectorAssignmentOverload(self, objs);
+
     return self;
   } // allows the user to re-assign a vector's components
 
