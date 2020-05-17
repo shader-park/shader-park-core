@@ -14,11 +14,10 @@ import * as esprima from 'esprima';
 
 function buildGeoSource(geo) {
 	return `
-float surfaceDistance(vec3 p) {
+float surfaceDistance(vec3 _p) {
 	vec3 normal = vec3(0.0,1.0,0.0);
-	vec3 mouseIntersect = vec3(0.0,1.0,0.0);
-    float d = 100.0;
-    vec3 op = p;
+	vec3 _mouseIntersect = vec3(0.0,1.0,0.0);
+    vec3 _op = _p;
 ${geo}
     return scope_0_d;
 }`;
@@ -27,19 +26,18 @@ ${geo}
 function buildColorSource(col, useLighting) {
 	let lgt = useLighting ? '' : '    return scope_0_material.albedo;';
 	return `
-vec3 shade(vec3 p, vec3 normal) {
-    float d = 100.0;
-    vec3 op = p;
-	vec3 lightDirection = vec3(0.0, 1.0, 0.0);
-	vec3 mouseIntersect = vec3(0.0,1.0,0.0);
+vec3 shade(vec3 _p, vec3 normal) {
+    vec3 _op = _p;
+	vec3 _lightDirection = vec3(0.0, 1.0, 0.0);
+	vec3 _mouseIntersect = vec3(0.0,1.0,0.0);
 	#ifdef USE_PBR
-	Material material = Material(vec3(1.0),0.5,0.7,1.0);
-	Material selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);
+	Material _material = Material(vec3(1.0),0.5,0.7,1.0);
+	Material _selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);
 	#else
-	float light = 1.0;
-	float occ = 1.0;
+	float _light = 1.0;
+	float _occ = 1.0;
     vec3 color = vec3(1.0,1.0,1.0);
-	vec3 selectedColor = vec3(1.0,1.0,1.0);
+	vec3 _selectedColor = vec3(1.0,1.0,1.0);
 	#endif
 ${col}
 ${lgt}
@@ -47,11 +45,11 @@ ${lgt}
 	return pbrLighting(
 		worldPos.xyz,
 		normal,
-		lightDirection,
+		_lightDirection,
 		scope_0_material
 		);
 	#else
-	return scope_0_material.albedo*simpleLighting(p, normal, lightDirection);*occ;
+	return scope_0_material.albedo*simpleLighting(_p, normal, _lightDirection)*_occ;
 	#endif
 }`;
 }
@@ -206,7 +204,7 @@ function replaceVariableUpdate(syntaxTree) {
 		&& 'expression' in syntaxTree
 		&& syntaxTree.expression.type === 'AssignmentExpression') {
 		let expression = syntaxTree.expression;
-		let name = expression.left.name;
+		let name = escodegen.generate(expression.left);
 		expression.right = {
 			type: "CallExpression",
 			callee: {
@@ -346,7 +344,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	replaceSliderInput(tree);
 	replaceIf(tree);
 	replaceVariableDeclaration(tree);
-	// replaceVariableUpdate(tree);
+	replaceVariableUpdate(tree);
 	try {
 		userProvidedSrc = escodegen.generate(tree);
 	} catch (e) {
@@ -564,9 +562,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function float(source) {
-		//if (typeof source !== 'string') {
-			source = collapseToString(source);
-		//}
+		source = collapseToString(source);
 		return new GLSLVar('float', source, 1);
 	}
 
@@ -579,11 +575,8 @@ export function sculptToGLSL(userProvidedSrc) {
 							 + collapseToString(y) + ")";
 		}
 		let self = new GLSLVar('vec2', source, 2);
-		let currX = new makeGLSLVarWithDims(self.name + ".x", 1); 
-		let currY = new makeGLSLVarWithDims(self.name + ".y", 1);
-		let objs = { 'x': currX, 'y': currY};
-		// applyVectorAssignmentOverload(self, objs);
-
+		self.x = new float(self.name + '.x');
+		self.y = new float(self.name + '.y');
 		return self;
 	}
 
@@ -600,11 +593,9 @@ export function sculptToGLSL(userProvidedSrc) {
 			
 		}
 		let self = new GLSLVar('vec3', source, 3);
-		let currX = new makeGLSLVarWithDims(self.name + ".x", 1);
-		let currY = new makeGLSLVarWithDims(self.name + ".y", 1);
-		let currZ = new makeGLSLVarWithDims(self.name + ".z", 1);
-		let objs = {'x': currX, 'y': currY, 'z': currZ};
-		// applyVectorAssignmentOverload(self, objs);
+		self.x = new float(self.name + '.x');
+		self.y = new float(self.name + '.y');
+		self.z = new float(self.name + '.z');
 		return self;
 	}
 
@@ -621,23 +612,11 @@ export function sculptToGLSL(userProvidedSrc) {
 							 + collapseToString(w) + ")";
 		}
 		let self = new GLSLVar('vec4', source, 4);
-		let currX = new makeGLSLVarWithDims(self.name + ".x", 1);
-		let currY = new makeGLSLVarWithDims(self.name + ".y", 1);
-		let currZ = new makeGLSLVarWithDims(self.name + ".z", 1);
-		let currW = new makeGLSLVarWithDims(self.name + ".w", 1);
-		let objs = { 'x': currX, 'y': currY, 'z': currZ, 'w': currW };
-		// applyVectorAssignmentOverload(self, objs);
+		self.x = new float(self.name + '.x');
+		self.y = new float(self.name + '.y');
+		self.z = new float(self.name + '.z');
+		self.w = new float(self.name + '.w');
 		return self;
-	}
-
-	// allows the user to re-assign a vector's components
-	function applyVectorAssignmentOverload(self, objs) {
-		Object.entries(objs).forEach(([key, func]) => {
-			Object.defineProperty(self, key, {
-				get: () => func,
-				set: (val) => appendSources(`${self.name}.${key} = ${val};\n`)
-			});
-		});
 	}
 
 	function makeGLSLVarWithDims(source, dims) {
@@ -661,10 +640,14 @@ export function sculptToGLSL(userProvidedSrc) {
 	let time = new float("time");
 	let mouse = new vec3("mouse");
 	let normal = new vec3("normal");
+	
+	appendColorSource("_mouseIntersect = mouseIntersection();\n");
+	let mouseIntersect = new vec3("_mouseIntersect");
 
 	function mouseIntersection() {
-		appendColorSource("mouseIntersect = mouseIntersection();\n");
-		return new vec3("mouseIntersect");
+		return mouseIntersect;
+		//appendColorSource("_mouseIntersect = mouseIntersection();\n");
+		// return new vec3("mouseIntersect");
 	}
 
 	function getRayDirection() {
@@ -781,8 +764,8 @@ export function sculptToGLSL(userProvidedSrc) {
 			mixAmount: 0.0,
 		});
 		appendSources("float " + getCurrentDist() + " = 100.0;\n");
-		let lastP = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"p" : "p";
-		let lastMat = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"currentMaterial" : "material";
+		let lastP = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"p" : "_p";
+		let lastMat = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"currentMaterial" : "_material";
 		appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
 		appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
 		appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
@@ -916,7 +899,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		if (stateStack.length > 1) {
 			appendSources(getCurrentPos()+" = " + stateStack[stateStack.length-2].id+"p;\n");
 		} else {
-			appendSources(getCurrentPos()+" = op;\n");
+			appendSources(getCurrentPos()+" = _op;\n");
 		}
 	}
 
@@ -1036,12 +1019,12 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	function lightDirection(x, y, z) {
 		if (y === undefined || z === undefined) {
-			appendColorSource("lightDirection = " + collapseToString(x) + ";\n");
+			appendColorSource("_lightDirection = " + collapseToString(x) + ";\n");
 		} else {
-			ensureScalar("lightDirection", x);
-			ensureScalar("lightDirection", y);
-			ensureScalar("lightDirection", z);
-			appendColorSource("lightDirection = vec3( " + collapseToString(x) + ", "
+			ensureScalar("_lightDirection", x);
+			ensureScalar("_lightDirection", y);
+			ensureScalar("_lightDirection", z);
+			appendColorSource("_lightDirection = vec3( " + collapseToString(x) + ", "
 				+ collapseToString(y) + ", "
 				+ collapseToString(z) + ");\n");
 		}
@@ -1060,7 +1043,7 @@ export function sculptToGLSL(userProvidedSrc) {
 			ensureScalar("occlusion", amount);
 			amt = collapseToString(amount);
 		} 
-		appendColorSource(getCurrentMaterial() + ".ao = mix(1.0, occlusion(op,normal), " + amt + ");\n");
+		appendColorSource(getCurrentMaterial() + ".ao = mix(1.0, occlusion(_op,normal), " + amt + ");\n");
 	}
 
 	function test() {

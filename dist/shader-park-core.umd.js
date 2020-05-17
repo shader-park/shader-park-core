@@ -15683,12 +15683,12 @@
   var esprima_1 = esprima.parse;
 
   function buildGeoSource(geo) {
-    return "\nfloat surfaceDistance(vec3 p) {\n\tvec3 normal = vec3(0.0,1.0,0.0);\n\tvec3 mouseIntersect = vec3(0.0,1.0,0.0);\n    float d = 100.0;\n    vec3 op = p;\n".concat(geo, "\n    return scope_0_d;\n}");
+    return "\nfloat surfaceDistance(vec3 _p) {\n\tvec3 normal = vec3(0.0,1.0,0.0);\n\tvec3 _mouseIntersect = vec3(0.0,1.0,0.0);\n    vec3 _op = _p;\n".concat(geo, "\n    return scope_0_d;\n}");
   }
 
   function buildColorSource(col, useLighting) {
     var lgt = useLighting ? '' : '    return scope_0_material.albedo;';
-    return "\nvec3 shade(vec3 p, vec3 normal) {\n    float d = 100.0;\n    vec3 op = p;\n\tvec3 lightDirection = vec3(0.0, 1.0, 0.0);\n\tvec3 mouseIntersect = vec3(0.0,1.0,0.0);\n\t#ifdef USE_PBR\n\tMaterial material = Material(vec3(1.0),0.5,0.7,1.0);\n\tMaterial selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);\n\t#else\n\tfloat light = 1.0;\n\tfloat occ = 1.0;\n    vec3 color = vec3(1.0,1.0,1.0);\n\tvec3 selectedColor = vec3(1.0,1.0,1.0);\n\t#endif\n".concat(col, "\n").concat(lgt, "\n\t#ifdef USE_PBR\n\treturn pbrLighting(\n\t\tworldPos.xyz,\n\t\tnormal,\n\t\tlightDirection,\n\t\tscope_0_material\n\t\t);\n\t#else\n\treturn scope_0_material.albedo*simpleLighting(p, normal, lightDirection);*occ;\n\t#endif\n}");
+    return "\nvec3 shade(vec3 _p, vec3 normal) {\n    vec3 _op = _p;\n\tvec3 _lightDirection = vec3(0.0, 1.0, 0.0);\n\tvec3 _mouseIntersect = vec3(0.0,1.0,0.0);\n\t#ifdef USE_PBR\n\tMaterial _material = Material(vec3(1.0),0.5,0.7,1.0);\n\tMaterial _selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);\n\t#else\n\tfloat _light = 1.0;\n\tfloat _occ = 1.0;\n    vec3 color = vec3(1.0,1.0,1.0);\n\tvec3 _selectedColor = vec3(1.0,1.0,1.0);\n\t#endif\n".concat(col, "\n").concat(lgt, "\n\t#ifdef USE_PBR\n\treturn pbrLighting(\n\t\tworldPos.xyz,\n\t\tnormal,\n\t\t_lightDirection,\n\t\tscope_0_material\n\t\t);\n\t#else\n\treturn scope_0_material.albedo*simpleLighting(_p, normal, _lightDirection)*_occ;\n\t#endif\n}");
   }
 
   var _operators = {
@@ -15878,7 +15878,7 @@
 
     if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree.type === 'ExpressionStatement' && 'expression' in syntaxTree && syntaxTree.expression.type === 'AssignmentExpression') {
       var expression = syntaxTree.expression;
-      var name = expression.left.name;
+      var name = escodegen_2(expression.left);
       expression.right = {
         type: "CallExpression",
         callee: {
@@ -16022,7 +16022,8 @@
     replaceBinaryOp(tree);
     replaceSliderInput(tree);
     replaceIf(tree);
-    replaceVariableDeclaration(tree); // replaceVariableUpdate(tree);
+    replaceVariableDeclaration(tree);
+    replaceVariableUpdate(tree);
 
     try {
       userProvidedSrc = escodegen_2(tree);
@@ -16304,9 +16305,7 @@
     }
 
     function float(source) {
-      //if (typeof source !== 'string') {
-      source = collapseToString(source); //}
-
+      source = collapseToString(source);
       return new GLSLVar('float', source, 1);
     }
 
@@ -16320,13 +16319,8 @@
       }
 
       var self = new GLSLVar('vec2', source, 2);
-      var currX = new makeGLSLVarWithDims(self.name + ".x", 1);
-      var currY = new makeGLSLVarWithDims(self.name + ".y", 1);
-      var objs = {
-        'x': currX,
-        'y': currY
-      }; // applyVectorAssignmentOverload(self, objs);
-
+      self.x = new float(self.name + '.x');
+      self.y = new float(self.name + '.y');
       return self;
     }
 
@@ -16341,15 +16335,9 @@
       }
 
       var self = new GLSLVar('vec3', source, 3);
-      var currX = new makeGLSLVarWithDims(self.name + ".x", 1);
-      var currY = new makeGLSLVarWithDims(self.name + ".y", 1);
-      var currZ = new makeGLSLVarWithDims(self.name + ".z", 1);
-      var objs = {
-        'x': currX,
-        'y': currY,
-        'z': currZ
-      }; // applyVectorAssignmentOverload(self, objs);
-
+      self.x = new float(self.name + '.x');
+      self.y = new float(self.name + '.y');
+      self.z = new float(self.name + '.z');
       return self;
     }
 
@@ -16365,36 +16353,11 @@
       }
 
       var self = new GLSLVar('vec4', source, 4);
-      var currX = new makeGLSLVarWithDims(self.name + ".x", 1);
-      var currY = new makeGLSLVarWithDims(self.name + ".y", 1);
-      var currZ = new makeGLSLVarWithDims(self.name + ".z", 1);
-      var currW = new makeGLSLVarWithDims(self.name + ".w", 1);
-      var objs = {
-        'x': currX,
-        'y': currY,
-        'z': currZ,
-        'w': currW
-      }; // applyVectorAssignmentOverload(self, objs);
-
+      self.x = new float(self.name + '.x');
+      self.y = new float(self.name + '.y');
+      self.z = new float(self.name + '.z');
+      self.w = new float(self.name + '.w');
       return self;
-    } // allows the user to re-assign a vector's components
-
-
-    function applyVectorAssignmentOverload(self, objs) {
-      Object.entries(objs).forEach(function (_ref3) {
-        var _ref4 = _slicedToArray(_ref3, 2),
-            key = _ref4[0],
-            func = _ref4[1];
-
-        Object.defineProperty(self, key, {
-          get: function get() {
-            return func;
-          },
-          set: function set(val) {
-            return appendSources("".concat(self.name, ".").concat(key, " = ").concat(val, ";\n"));
-          }
-        });
-      });
     }
 
     function makeGLSLVarWithDims(source, dims) {
@@ -16417,10 +16380,12 @@
     var time = new float("time");
     var mouse = new vec3("mouse");
     var normal = new vec3("normal");
+    appendColorSource("_mouseIntersect = mouseIntersection();\n");
+    var mouseIntersect = new vec3("_mouseIntersect");
 
     function mouseIntersection() {
-      appendColorSource("mouseIntersect = mouseIntersection();\n");
-      return new vec3("mouseIntersect");
+      return mouseIntersect; //appendColorSource("_mouseIntersect = mouseIntersection();\n");
+      // return new vec3("mouseIntersect");
     }
 
     function getRayDirection() {
@@ -16542,8 +16507,8 @@
         mixAmount: 0.0
       });
       appendSources("float " + getCurrentDist() + " = 100.0;\n");
-      var lastP = stateStack.length > 1 ? stateStack[stateStack.length - 2].id + "p" : "p";
-      var lastMat = stateStack.length > 1 ? stateStack[stateStack.length - 2].id + "currentMaterial" : "material";
+      var lastP = stateStack.length > 1 ? stateStack[stateStack.length - 2].id + "p" : "_p";
+      var lastMat = stateStack.length > 1 ? stateStack[stateStack.length - 2].id + "currentMaterial" : "_material";
       appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
       appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
       appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
@@ -16679,7 +16644,7 @@
       if (stateStack.length > 1) {
         appendSources(getCurrentPos() + " = " + stateStack[stateStack.length - 2].id + "p;\n");
       } else {
-        appendSources(getCurrentPos() + " = op;\n");
+        appendSources(getCurrentPos() + " = _op;\n");
       }
     }
 
@@ -16789,12 +16754,12 @@
 
     function lightDirection(x, y, z) {
       if (y === undefined || z === undefined) {
-        appendColorSource("lightDirection = " + collapseToString(x) + ";\n");
+        appendColorSource("_lightDirection = " + collapseToString(x) + ";\n");
       } else {
-        ensureScalar("lightDirection", x);
-        ensureScalar("lightDirection", y);
-        ensureScalar("lightDirection", z);
-        appendColorSource("lightDirection = vec3( " + collapseToString(x) + ", " + collapseToString(y) + ", " + collapseToString(z) + ");\n");
+        ensureScalar("_lightDirection", x);
+        ensureScalar("_lightDirection", y);
+        ensureScalar("_lightDirection", z);
+        appendColorSource("_lightDirection = vec3( " + collapseToString(x) + ", " + collapseToString(y) + ", " + collapseToString(z) + ");\n");
       }
     } // should this also be 'op'? 
 
@@ -16814,7 +16779,7 @@
         amt = collapseToString(amount);
       }
 
-      appendColorSource(getCurrentMaterial() + ".ao = mix(1.0, occlusion(op,normal), " + amt + ");\n");
+      appendColorSource(getCurrentMaterial() + ".ao = mix(1.0, occlusion(_op,normal), " + amt + ");\n");
     }
 
     function test() {
