@@ -544,10 +544,6 @@ export function sculptToGLSL(userProvidedSrc) {
 	function getSpace() {
 		return getCurrentState().p;
 	}
-	
-	function getSpherical() {
-		return toSpherical(getSpace());	
-	}
 
 	function pushState() {
 		stateStack.push({
@@ -845,6 +841,11 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	let error = undefined;
 	eval( generatedJSFuncsSource + userProvidedSrc );
+	
+	function getSpherical() {
+		return toSpherical(getSpace());	
+	}
+	
 	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
 
