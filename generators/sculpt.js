@@ -193,6 +193,39 @@ function replaceBinaryOp(syntaxTree) {
 	}
 }
 
+function replaceVariableUpdate(syntaxTree) {
+	if (syntaxTree && typeof syntaxTree === "object") {
+		for (let node in syntaxTree) {
+			if (syntaxTree.hasOwnProperty(node)) {
+				replaceVariableUpdate(syntaxTree[node]);
+			}
+		}
+	}
+	if (syntaxTree && typeof syntaxTree === "object" && 'type' in syntaxTree
+		&& syntaxTree.type === 'ExpressionStatement'
+		&& 'expression' in syntaxTree
+		&& syntaxTree.expression.type === 'AssignmentExpression') {
+		let expression = syntaxTree.expression;
+		let name = expression.left.name;
+		expression.right = {
+			type: "CallExpression",
+			callee: {
+				type: "Identifier",
+				name: "updateVar"
+			},
+			arguments: 
+			[{
+				type: "Literal",
+				value: name,
+				raw: `'${name}'`
+			},
+			{
+				...expression.right
+			}]
+		};
+	}
+}
+
 function replaceVariableDeclaration(syntaxTree) {
 	if (syntaxTree && typeof syntaxTree === "object") {
 		for (let node in syntaxTree) {
@@ -313,7 +346,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	replaceSliderInput(tree);
 	replaceIf(tree);
 	replaceVariableDeclaration(tree);
-	console.log('tree1', tree)
+	// replaceVariableUpdate(tree);
 	try {
 		userProvidedSrc = escodegen.generate(tree);
 	} catch (e) {
@@ -465,9 +498,23 @@ export function sculptToGLSL(userProvidedSrc) {
 		value = tryMakeNum(value);
 		if (value instanceof GLSLVar) {
 			appendSources(`${name} = ${value}; \n`);
+			addVecComponents(value, name);
 			value.name = name;
 		}
 		return value;
+	}
+
+	function addVecComponents(value, name) {
+		if (value.dims >= 2) {
+			value.x = new float(name + ".x");
+			value.y = new float(name + ".y");
+		}
+		if (value.dims >= 3) {
+			value.z = new float(name + ".z");
+		}
+		if (value.dims >= 4) {
+			value.w = new float(name + ".w");
+		}
 	}
 
 	//takes a glsl variable and creates a non-inlined version in 
@@ -475,20 +522,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		value = tryMakeNum(value);
 		if (value instanceof GLSLVar) {
 			appendSources(`${value.type} ${name} = ${value.name}; \n`);
-			if (value.dims >= 2) {
-				value.x = new float(name + ".x"); 
-				value.y = new float(name + ".y"); 
-				// value.r = new float(value.name + ".r");
-				// value.g = new float(value.name + ".g"); 
-			} 
-			if (value.dims >= 3) {
-				value.z = new float(name + ".z"); 
-				// value.b = new float(value.name + ".b"); 
-			}
-			if (value.dims >= 4) {
-				value.w = new float(name + ".w"); 
-				// value.a = new float(value.name + ".a");
-			}
+			addVecComponents(value, name);
 			value.name = name;
 		}
 		return value;

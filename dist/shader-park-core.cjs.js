@@ -15865,6 +15865,33 @@ function replaceBinaryOp(syntaxTree) {
   }
 }
 
+function replaceVariableUpdate(syntaxTree) {
+  if (syntaxTree && _typeof(syntaxTree) === "object") {
+    for (var node in syntaxTree) {
+      if (syntaxTree.hasOwnProperty(node)) {
+        replaceVariableUpdate(syntaxTree[node]);
+      }
+    }
+  }
+
+  if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree.type === 'ExpressionStatement' && 'expression' in syntaxTree && syntaxTree.expression.type === 'AssignmentExpression') {
+    var expression = syntaxTree.expression;
+    var name = expression.left.name;
+    expression.right = {
+      type: "CallExpression",
+      callee: {
+        type: "Identifier",
+        name: "updateVar"
+      },
+      arguments: [{
+        type: "Literal",
+        value: name,
+        raw: "'".concat(name, "'")
+      }, _objectSpread2({}, expression.right)]
+    };
+  }
+}
+
 function replaceVariableDeclaration(syntaxTree) {
   if (syntaxTree && _typeof(syntaxTree) === "object") {
     for (var node in syntaxTree) {
@@ -15993,8 +16020,7 @@ function sculptToGLSL(userProvidedSrc) {
   replaceBinaryOp(tree);
   replaceSliderInput(tree);
   replaceIf(tree);
-  replaceVariableDeclaration(tree);
-  console.log('tree1', tree);
+  replaceVariableDeclaration(tree); // replaceVariableUpdate(tree);
 
   try {
     userProvidedSrc = escodegen_2(tree);
@@ -16200,10 +16226,26 @@ function sculptToGLSL(userProvidedSrc) {
 
     if (value instanceof GLSLVar) {
       appendSources("".concat(name, " = ").concat(value, "; \n"));
+      addVecComponents(value, name);
       value.name = name;
     }
 
     return value;
+  }
+
+  function addVecComponents(value, name) {
+    if (value.dims >= 2) {
+      value.x = new float(name + ".x");
+      value.y = new float(name + ".y");
+    }
+
+    if (value.dims >= 3) {
+      value.z = new float(name + ".z");
+    }
+
+    if (value.dims >= 4) {
+      value.w = new float(name + ".w");
+    }
   } //takes a glsl variable and creates a non-inlined version in 
 
 
@@ -16212,21 +16254,7 @@ function sculptToGLSL(userProvidedSrc) {
 
     if (value instanceof GLSLVar) {
       appendSources("".concat(value.type, " ").concat(name, " = ").concat(value.name, "; \n"));
-
-      if (value.dims >= 2) {
-        value.x = new float(name + ".x");
-        value.y = new float(name + ".y"); // value.r = new float(value.name + ".r");
-        // value.g = new float(value.name + ".g"); 
-      }
-
-      if (value.dims >= 3) {
-        value.z = new float(name + ".z"); // value.b = new float(value.name + ".b"); 
-      }
-
-      if (value.dims >= 4) {
-        value.w = new float(name + ".w"); // value.a = new float(value.name + ".a");
-      }
-
+      addVecComponents(value, name);
       value.name = name;
     }
 
