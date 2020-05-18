@@ -6,7 +6,8 @@ import {
 	geometryFunctions, 
 	mathFunctions, 
 	glslBuiltInOneToOne, 
-	glslBuiltInOther
+	glslBuiltInOther, 
+	primitivesJS
 } from '../glsl/bindings.js';
 
 import * as escodegen from 'escodegen';
@@ -369,8 +370,33 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	let stepSizeConstant = 0.85;
 
+	generatedJSFuncsSource += primitivesJS();
+
 	////////////////////////////////////////////////////////////
 	// Generates JS from headers referenced in the bindings.js
+
+	/*
+	let primitivesJS = '';
+	for (let [funcName, body] of Object.entries(geometryFunctions)) {
+		let argList = [];
+		for (let i = 0; i < body['args'].length; i++) {
+			argList.push(`arg_${i}`);
+		}
+		let args = argList.join(', ');
+		let collapsedString = argList.map(arg => ` + collapseToString(${arg}) + `).join(`', '`);
+		primitivesJS += 
+`
+function ${funcName} (${args}) {
+${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
+	applyMode('${funcName}('+getCurrentState().p+', '${collapsedString}')');
+}
+`;
+	}
+	console.log('Gen Code', primitivesJS);
+	
+	// console.log('Gen Code', newPrims);
+	
+	
 	let primitivesJS = "";
 	for (let [funcName, body] of Object.entries(geometryFunctions)) {
 		let argList = body['args'];
@@ -395,6 +421,8 @@ export function sculptToGLSL(userProvidedSrc) {
 		primitivesJS += "\")\");\n}\n\n";
 	}
 	generatedJSFuncsSource += primitivesJS;
+	console.log('Old GenCode', primitivesJS);
+	*/
 
 	function generateGLSLWrapper(funcJSON) {
 		let wrapperSrc = "";
@@ -739,6 +767,8 @@ export function sculptToGLSL(userProvidedSrc) {
 		}
 	}
 
+	
+
 	function applyMode(prim, finalCol) {
 		let cmode = getMode();
 		let primName = "prim_" + primCount;
@@ -900,6 +930,29 @@ export function sculptToGLSL(userProvidedSrc) {
 			appendSources(getCurrentPos()+" = " + stateStack[stateStack.length-2].id+"p;\n");
 		} else {
 			appendSources(getCurrentPos()+" = _op;\n");
+		}
+	}
+
+	function box(x, y, z) {
+		if (y === undefined || z === undefined) {
+			if(typeof x === 'number') {
+				applyMode(`box(${getCurrentState().p}, vec3(${collapseToString(x)}));\n`);
+			} else if (x instanceof GLSLVar) {
+				if (x.type === 'float') {
+					applyMode(`box(${getCurrentState().p}, vec3(${collapseToString(x)}));\n`);
+				} else if (x.type === 'vec3') { 
+					applyMode(`box(${getCurrentState().p}, ${collapseToString(x)});\n`);
+				} else {
+					compileError(`box expects either a float, or a vec3. Was given: ${x.type}`);
+				}
+			} else {
+				compileError(`box expects either a float, or a vec3. Was given: ${x}`);
+			}
+		} else {
+			ensureScalar('box', x);
+			ensureScalar('box', y);
+			ensureScalar('box', z);
+			applyMode(`box(${getCurrentPos()}, vec3(${collapseToString(x)}, ${collapseToString(y)}, ${collapseToString(z)}));\n`);
 		}
 	}
 

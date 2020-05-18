@@ -4,7 +4,7 @@
 export const geometryFunctions = {
     sphere: { args: [1] },
     line: { args: [3,3,1] },
-    box: { args: [1,1,1] },
+    // box: { args: [1,1,1] },
     torus: { args: [1,1] },
     cylinder: { args: [1,1] },
     cone: { args: [1,1] },
@@ -70,3 +70,23 @@ export const glslBuiltInOther = {
     reflect: { args: [3,3], ret:3 },
     refract: { args: [3,3], ret:3 },
 };
+
+
+let generatedJSPrimitives = '';
+for (let [funcName, body] of Object.entries(geometryFunctions)) {
+    let argList = [];
+    for (let i = 0; i < body['args'].length; i++) {
+        argList.push(`arg_${i}`);
+    }
+    let args = argList.join(', ');
+    let collapsedString = argList.map(arg => ` + collapseToString(${arg}) + `).join(`', '`);
+    generatedJSPrimitives +=
+        `
+function ${funcName} (${args}) {
+${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
+    applyMode('${funcName}('+getCurrentState().p+', '${collapsedString}')');
+}
+`;
+}
+
+export const primitivesJS = () => generatedJSPrimitives;

@@ -1643,9 +1643,7 @@
     line: {
       args: [3, 3, 1]
     },
-    box: {
-      args: [1, 1, 1]
-    },
+    // box: { args: [1,1,1] },
     torus: {
       args: [1, 1]
     },
@@ -1787,6 +1785,35 @@
       args: [3, 3],
       ret: 3
     }
+  };
+  var generatedJSPrimitives = '';
+
+  var _loop = function _loop() {
+    var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+        funcName = _Object$entries$_i[0],
+        body = _Object$entries$_i[1];
+
+    var argList = [];
+
+    for (var i = 0; i < body['args'].length; i++) {
+      argList.push("arg_".concat(i));
+    }
+
+    var args = argList.join(', ');
+    var collapsedString = argList.map(function (arg) {
+      return " + collapseToString(".concat(arg, ") + ");
+    }).join("', '");
+    generatedJSPrimitives += "\nfunction ".concat(funcName, " (").concat(args, ") {\n").concat(argList.map(function (arg) {
+      return "\tensureScalar('".concat(funcName, "', ").concat(arg, ");");
+    }).join('\n'), "\n    applyMode('").concat(funcName, "('+getCurrentState().p+', '").concat(collapsedString, "')');\n}\n");
+  };
+
+  for (var _i = 0, _Object$entries = Object.entries(geometryFunctions); _i < _Object$entries.length; _i++) {
+    _loop();
+  }
+
+  var primitivesJS = function primitivesJS() {
+    return generatedJSPrimitives;
   };
 
   var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -16048,99 +16075,100 @@
     var stateStack = [];
     var uniforms = baseUniforms();
     var indentation = 1;
-    var stepSizeConstant = 0.85; ////////////////////////////////////////////////////////////
+    var stepSizeConstant = 0.85;
+    generatedJSFuncsSource += primitivesJS(); ////////////////////////////////////////////////////////////
     // Generates JS from headers referenced in the bindings.js
 
-    var primitivesJS = "";
-
-    for (var _i = 0, _Object$entries = Object.entries(geometryFunctions); _i < _Object$entries.length; _i++) {
-      var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
-          funcName = _Object$entries$_i[0],
-          body = _Object$entries$_i[1];
-
-      var argList = body['args'];
-      primitivesJS += "function " + funcName + "(";
-
-      for (var argIdx = 0; argIdx < argList.length; argIdx++) {
-        if (argIdx !== 0) primitivesJS += ", ";
-        primitivesJS += "arg_" + argIdx;
-      }
-
-      primitivesJS += ") {\n";
-      var argIdxB = 0;
-
-      var _iterator = _createForOfIteratorHelper(argList),
-          _step;
-
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var argDim = _step.value;
-
-          if (argDim === 1) {
-            primitivesJS += "    ensureScalar(\"" + funcName + "\", arg_" + argIdxB + ");\n";
-          }
-
-          argIdxB += 1;
-        }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
-
-      primitivesJS += "    applyMode(\"" + funcName + "(\"+getCurrentState().p+\", \" + ";
-
-      for (var _argIdx = 0; _argIdx < argList.length; _argIdx++) {
-        primitivesJS += "collapseToString(arg_" + _argIdx + ") + ";
-        if (_argIdx < argList.length - 1) primitivesJS += "\", \" + ";
-      }
-
-      primitivesJS += "\")\");\n}\n\n";
+    /*
+    let primitivesJS = '';
+    for (let [funcName, body] of Object.entries(geometryFunctions)) {
+    	let argList = [];
+    	for (let i = 0; i < body['args'].length; i++) {
+    		argList.push(`arg_${i}`);
+    	}
+    	let args = argList.join(', ');
+    	let collapsedString = argList.map(arg => ` + collapseToString(${arg}) + `).join(`', '`);
+    	primitivesJS += 
+    `
+    function ${funcName} (${args}) {
+    ${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
+    applyMode('${funcName}('+getCurrentState().p+', '${collapsedString}')');
     }
-
+    `;
+    }
+    console.log('Gen Code', primitivesJS);
+    
+    // console.log('Gen Code', newPrims);
+    
+    
+    let primitivesJS = "";
+    for (let [funcName, body] of Object.entries(geometryFunctions)) {
+    	let argList = body['args'];
+    	primitivesJS += "function " + funcName + "(";
+    	for (let argIdx = 0; argIdx < argList.length; argIdx++) {
+    		if (argIdx !== 0) primitivesJS += ", ";
+    		primitivesJS += "arg_" + argIdx;
+    	}
+    	primitivesJS += ") {\n";
+    	let argIdxB = 0;
+    	for (let argDim of argList) {
+    		if (argDim === 1) {
+    			primitivesJS += "    ensureScalar(\"" + funcName + "\", arg_" + argIdxB + ");\n";
+    		}
+    		argIdxB += 1;
+    	}
+    	primitivesJS += "    applyMode(\"" + funcName + "(\"+getCurrentState().p+\", \" + ";
+    	for (let argIdx = 0; argIdx < argList.length; argIdx++) {
+    		primitivesJS += "collapseToString(arg_" + argIdx + ") + ";
+    		if (argIdx < argList.length - 1) primitivesJS += "\", \" + ";
+    	}
+    	primitivesJS += "\")\");\n}\n\n";
+    }
     generatedJSFuncsSource += primitivesJS;
+    console.log('Old GenCode', primitivesJS);
+    */
 
     function generateGLSLWrapper(funcJSON) {
       var wrapperSrc = "";
 
-      for (var _i2 = 0, _Object$entries2 = Object.entries(funcJSON); _i2 < _Object$entries2.length; _i2++) {
-        var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 2),
-            _funcName = _Object$entries2$_i[0],
-            _body = _Object$entries2$_i[1];
+      for (var _i = 0, _Object$entries = Object.entries(funcJSON); _i < _Object$entries.length; _i++) {
+        var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+            funcName = _Object$entries$_i[0],
+            body = _Object$entries$_i[1];
 
-        var _argList = _body['args'];
-        var returnType = _body['ret'];
-        wrapperSrc += "function " + _funcName + "(";
+        var argList = body['args'];
+        var returnType = body['ret'];
+        wrapperSrc += "function " + funcName + "(";
 
-        for (var _argIdx2 = 0; _argIdx2 < _argList.length; _argIdx2++) {
-          if (_argIdx2 !== 0) wrapperSrc += ", ";
-          wrapperSrc += "arg_" + _argIdx2;
+        for (var argIdx = 0; argIdx < argList.length; argIdx++) {
+          if (argIdx !== 0) wrapperSrc += ", ";
+          wrapperSrc += "arg_" + argIdx;
         }
 
         wrapperSrc += ") {\n";
-        var _argIdxB = 0;
+        var argIdxB = 0;
 
-        var _iterator2 = _createForOfIteratorHelper(_argList),
-            _step2;
+        var _iterator = _createForOfIteratorHelper(argList),
+            _step;
 
         try {
-          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-            var arg = _step2.value;
-            wrapperSrc += "    arg_" + _argIdxB + " = tryMakeNum(arg_" + _argIdxB + ");\n";
-            _argIdxB += 1;
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var arg = _step.value;
+            wrapperSrc += "    arg_" + argIdxB + " = tryMakeNum(arg_" + argIdxB + ");\n";
+            argIdxB += 1;
           } // debug here
 
         } catch (err) {
-          _iterator2.e(err);
+          _iterator.e(err);
         } finally {
-          _iterator2.f();
+          _iterator.f();
         }
 
-        wrapperSrc += "    return new makeGLSLVarWithDims(\"" + _funcName + "(\" + ";
+        wrapperSrc += "    return new makeGLSLVarWithDims(\"" + funcName + "(\" + ";
 
-        for (var _argIdx3 = 0; _argIdx3 < _argList.length; _argIdx3++) {
-          wrapperSrc += "arg_" + _argIdx3 + " + ";
-          if (_argIdx3 < _argList.length - 1) wrapperSrc += "\", \" + ";
+        for (var _argIdx = 0; _argIdx < argList.length; _argIdx++) {
+          wrapperSrc += "arg_" + _argIdx + " + ";
+          if (_argIdx < argList.length - 1) wrapperSrc += "\", \" + ";
         }
 
         wrapperSrc += "\")\", " + returnType + ");\n}\n";
@@ -16155,18 +16183,18 @@
     generatedJSFuncsSource += builtInOtherJS;
     var builtInOneToOneJS = "";
 
-    var _iterator3 = _createForOfIteratorHelper(glslBuiltInOneToOne),
-        _step3;
+    var _iterator2 = _createForOfIteratorHelper(glslBuiltInOneToOne),
+        _step2;
 
     try {
-      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-        var _funcName2 = _step3.value;
-        builtInOneToOneJS += "function ".concat(_funcName2, "(x) {\n    x = tryMakeNum(x);\n\t// debug here\n\treturn new makeGLSLVarWithDims(\"").concat(_funcName2, "(\" + x + \")\", x.dims);\n}\n");
+      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+        var funcName = _step2.value;
+        builtInOneToOneJS += "function ".concat(funcName, "(x) {\n    x = tryMakeNum(x);\n\t// debug here\n\treturn new makeGLSLVarWithDims(\"").concat(funcName, "(\" + x + \")\", x.dims);\n}\n");
       }
     } catch (err) {
-      _iterator3.e(err);
+      _iterator2.e(err);
     } finally {
-      _iterator3.f();
+      _iterator2.f();
     }
 
     generatedJSFuncsSource += builtInOneToOneJS; ////////////////////////////////////////////////////////////
@@ -16645,6 +16673,29 @@
         appendSources(getCurrentPos() + " = " + stateStack[stateStack.length - 2].id + "p;\n");
       } else {
         appendSources(getCurrentPos() + " = _op;\n");
+      }
+    }
+
+    function box(x, y, z) {
+      if (y === undefined || z === undefined) {
+        if (typeof x === 'number') {
+          applyMode("box(".concat(getCurrentState().p, ", vec3(").concat(collapseToString(x), "));\n"));
+        } else if (x instanceof GLSLVar) {
+          if (x.type === 'float') {
+            applyMode("box(".concat(getCurrentState().p, ", vec3(").concat(collapseToString(x), "));\n"));
+          } else if (x.type === 'vec3') {
+            applyMode("box(".concat(getCurrentState().p, ", ").concat(collapseToString(x), ");\n"));
+          } else {
+            compileError("box expects either a float, or a vec3. Was given: ".concat(x.type));
+          }
+        } else {
+          compileError("box expects either a float, or a vec3. Was given: ".concat(x));
+        }
+      } else {
+        ensureScalar('box', x);
+        ensureScalar('box', y);
+        ensureScalar('box', z);
+        applyMode("box(".concat(getCurrentPos(), ", vec3(").concat(collapseToString(x), ", ").concat(collapseToString(y), ", ").concat(collapseToString(z), "));\n"));
       }
     }
 
