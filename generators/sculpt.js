@@ -936,12 +936,12 @@ ${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
 	function box(x, y, z) {
 		if (y === undefined || z === undefined) {
 			if(typeof x === 'number') {
-				applyMode(`box(${getCurrentState().p}, vec3(${collapseToString(x)}));\n`);
+				applyMode(`box(${getCurrentState().p}, vec3(${collapseToString(x)}))`);
 			} else if (x instanceof GLSLVar) {
 				if (x.type === 'float') {
-					applyMode(`box(${getCurrentState().p}, vec3(${collapseToString(x)}));\n`);
+					applyMode(`box(${getCurrentState().p}, vec3(${collapseToString(x)}))`);
 				} else if (x.type === 'vec3') { 
-					applyMode(`box(${getCurrentState().p}, ${collapseToString(x)});\n`);
+					applyMode(`box(${getCurrentState().p}, ${collapseToString(x)})`);
 				} else {
 					compileError(`box expects either a float, or a vec3. Was given: ${x.type}`);
 				}
@@ -952,7 +952,7 @@ ${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
 			ensureScalar('box', x);
 			ensureScalar('box', y);
 			ensureScalar('box', z);
-			applyMode(`box(${getCurrentPos()}, vec3(${collapseToString(x)}, ${collapseToString(y)}, ${collapseToString(z)}));\n`);
+			applyMode(`box(${getCurrentPos()}, vec3(${collapseToString(x)}, ${collapseToString(y)}, ${collapseToString(z)}))`);
 		}
 	}
 

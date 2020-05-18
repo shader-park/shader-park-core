@@ -16679,12 +16679,12 @@
     function box(x, y, z) {
       if (y === undefined || z === undefined) {
         if (typeof x === 'number') {
-          applyMode("box(".concat(getCurrentState().p, ", vec3(").concat(collapseToString(x), "));\n"));
+          applyMode("box(".concat(getCurrentState().p, ", vec3(").concat(collapseToString(x), "))"));
         } else if (x instanceof GLSLVar) {
           if (x.type === 'float') {
-            applyMode("box(".concat(getCurrentState().p, ", vec3(").concat(collapseToString(x), "));\n"));
+            applyMode("box(".concat(getCurrentState().p, ", vec3(").concat(collapseToString(x), "))"));
           } else if (x.type === 'vec3') {
-            applyMode("box(".concat(getCurrentState().p, ", ").concat(collapseToString(x), ");\n"));
+            applyMode("box(".concat(getCurrentState().p, ", ").concat(collapseToString(x), ")"));
           } else {
             compileError("box expects either a float, or a vec3. Was given: ".concat(x.type));
           }
@@ -16695,7 +16695,7 @@
         ensureScalar('box', x);
         ensureScalar('box', y);
         ensureScalar('box', z);
-        applyMode("box(".concat(getCurrentPos(), ", vec3(").concat(collapseToString(x), ", ").concat(collapseToString(y), ", ").concat(collapseToString(z), "));\n"));
+        applyMode("box(".concat(getCurrentPos(), ", vec3(").concat(collapseToString(x), ", ").concat(collapseToString(y), ", ").concat(collapseToString(z), "))"));
       }
     }
 
