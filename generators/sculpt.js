@@ -370,31 +370,12 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	let stepSizeConstant = 0.85;
 
-	generatedJSFuncsSource += primitivesJS();
+	// generatedJSFuncsSource += primitivesJS();
 
 	////////////////////////////////////////////////////////////
 	// Generates JS from headers referenced in the bindings.js
 
-	/*
-	let primitivesJS = '';
-	for (let [funcName, body] of Object.entries(geometryFunctions)) {
-		let argList = [];
-		for (let i = 0; i < body['args'].length; i++) {
-			argList.push(`arg_${i}`);
-		}
-		let args = argList.join(', ');
-		let collapsedString = argList.map(arg => ` + collapseToString(${arg}) + `).join(`', '`);
-		primitivesJS += 
-`
-function ${funcName} (${args}) {
-${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
-	applyMode('${funcName}('+getCurrentState().p+', '${collapsedString}')');
-}
-`;
-	}
-	console.log('Gen Code', primitivesJS);
 	
-	// console.log('Gen Code', newPrims);
 	
 	
 	let primitivesJS = "";
@@ -421,8 +402,6 @@ ${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
 		primitivesJS += "\")\");\n}\n\n";
 	}
 	generatedJSFuncsSource += primitivesJS;
-	console.log('Old GenCode', primitivesJS);
-	*/
 
 	function generateGLSLWrapper(funcJSON) {
 		let wrapperSrc = "";
@@ -521,11 +500,13 @@ ${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
 	}
 
 	function updateVar(name, value) {
+		//name = x, value = 'time'
 		value = tryMakeNum(value);
 		if (value instanceof GLSLVar) {
 			appendSources(`${name} = ${value}; \n`);
-			addVecComponents(value, name);
-			value.name = name;
+			let newVal = new GLSLVar(value.type, name, value.dims);
+			addVecComponents(newVal, name);
+			return newVal;
 		}
 		return value;
 	}
@@ -547,10 +528,12 @@ ${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
 	function makeNamedVar(name, value) {
 		value = tryMakeNum(value);
 		if (value instanceof GLSLVar) {
+
 			appendSources(`${value.type} ${name} = ${value.name}; \n`);
-			addVecComponents(value, name);
-			value.name = name;
-		}
+			let newVal = new GLSLVar(value.type, name, value.dims);
+			addVecComponents(newVal, name);
+			return newVal;
+		} 
 		return value;
 	}
 
@@ -800,7 +783,7 @@ ${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
 		appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
 		appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
 		stateStack[stateStack.length-1].p = vec3(stateStack[stateStack.length-1].id+"p");
-                stateCount++;
+		stateCount++;
 	}
 
 	function popState() {
@@ -931,6 +914,36 @@ ${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
 		} else {
 			appendSources(getCurrentPos()+" = _op;\n");
 		}
+	}
+
+	function _vec2Function(name, x, y) {
+		if (y === undefined) {
+			if (typeof x === 'number') {
+				applyMode(`${name}(${getCurrentState().p}, vec2(${collapseToString(x)}))`);
+			} else if (x instanceof GLSLVar) {
+				if (x.type === 'float') {
+					applyMode(`${name}(${getCurrentState().p}, vec2(${collapseToString(x)}))`);
+				} else if (x.type === 'vec2') {
+					applyMode(`${name}(${getCurrentState().p}, ${collapseToString(x)})`);
+				} else {
+					compileError(`${name} expects either a float, or a vec2. Was given: ${x.type}`);
+				}
+			} else {
+				compileError(`${name} expects either a float, or a vec2. Was given: ${x}`);
+			}
+		} else {
+			ensureScalar(name, x);
+			ensureScalar(name, y);
+			applyMode(`${name}(${getCurrentPos()}, vec2(${collapseToString(x)}, ${collapseToString(y)}))`);
+		}
+	}
+
+	function torus(x, y) {
+		_vec2Function('torus', x, y,);
+	}
+
+	function cylinder(x, y) {
+		_vec2Function('cylinder', x, y);
 	}
 
 	function box(x, y, z) {

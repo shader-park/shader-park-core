@@ -3,11 +3,15 @@
 
 export const geometryFunctions = {
     sphere: { args: [1] },
+    octahedron: { args: [1] },
+    pyramid: { args: [1] },
     line: { args: [3,3,1] },
+    torusSegment: { args: [2, 1, 1] },
+    link: { args: [1, 1, 1] },
     // box: { args: [1,1,1] },
-    torus: { args: [1,1] },
-    cylinder: { args: [1,1] },
-    cone: { args: [1,1] },
+    // torus: { args: [1,1] },
+    // cylinder: { args: [1,1] },
+    cone: { args: [1, 1, 1] },
     roundCone: { args: [3,3,1,1] },
     plane: { args: [1,1,1,1] },
 };
@@ -75,15 +79,22 @@ export const glslBuiltInOther = {
 let generatedJSPrimitives = '';
 for (let [funcName, body] of Object.entries(geometryFunctions)) {
     let argList = [];
-    for (let i = 0; i < body['args'].length; i++) {
+    let dims = body['args'];
+    for (let i = 0; i < dims.length; i++) {
         argList.push(`arg_${i}`);
     }
     let args = argList.join(', ');
+
+    //only ensureScalar on elements that are dim 1
+    let ensureScaler = argList.filter((el, index) => (arg, i) => dims[i] === 1)
+    .map((arg, i) => `	ensureScalar('${funcName}', ${arg});`)
+    .join('\n');
+
     let collapsedString = argList.map(arg => ` + collapseToString(${arg}) + `).join(`', '`);
     generatedJSPrimitives +=
-        `
+`
 function ${funcName} (${args}) {
-${argList.map(arg => `	ensureScalar('${funcName}', ${arg});`).join('\n')}
+${ensureScaler}
     applyMode('${funcName}('+getCurrentState().p+', '${collapsedString}')');
 }
 `;
