@@ -5,6 +5,8 @@ import pkg from './package.json';
 import json from '@rollup/plugin-json';
 
 export default [
+
+
   // browser-friendly UMD build
   {
     input: 'index.js',
@@ -50,6 +52,7 @@ export default [
   // builds from a single configuration where possible, using
   // an array for the `output` option, where we can specify 
   // `file` and `format` for each target)
+  /*
   {
     input: 'index.js',
     //external: ['escodegen', 'esprima'],
@@ -87,4 +90,5 @@ export default [
       })
     ]
   }
+  */
 ];

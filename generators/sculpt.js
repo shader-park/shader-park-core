@@ -194,9 +194,14 @@ function replaceBinaryOp(syntaxTree) {
 
 function replaceVariableUpdate(syntaxTree) {
 	if (syntaxTree && typeof syntaxTree === "object") {
-		for (let node in syntaxTree) {
-			if (syntaxTree.hasOwnProperty(node)) {
-				replaceVariableUpdate(syntaxTree[node]);
+		if (syntaxTree.type === 'ForStatement' || syntaxTree.type === 'ForOfStatement') {
+			replaceVariableUpdate(syntaxTree.body);
+		} else {
+			for (let node in syntaxTree) {
+				if (syntaxTree.hasOwnProperty(node)) {
+
+					replaceVariableUpdate(syntaxTree[node]);
+				}
 			}
 		}
 	}
@@ -227,9 +232,14 @@ function replaceVariableUpdate(syntaxTree) {
 
 function replaceVariableDeclaration(syntaxTree) {
 	if (syntaxTree && typeof syntaxTree === "object") {
-		for (let node in syntaxTree) {
-			if (syntaxTree.hasOwnProperty(node)) {
-				replaceVariableDeclaration(syntaxTree[node]);
+		if (syntaxTree.type === 'ForStatement' || syntaxTree.type === 'ForOfStatement') {
+			replaceVariableDeclaration(syntaxTree.body);
+		} else {
+			for (let node in syntaxTree) {
+				if (syntaxTree.hasOwnProperty(node)) {
+
+					replaceVariableDeclaration(syntaxTree[node]);
+				}
 			}
 		}
 	}
@@ -499,14 +509,18 @@ export function sculptToGLSL(userProvidedSrc) {
 		colorSrc += "    " + source;
 	}
 
-	function updateVar(name, value) {
-		//name = x, value = 'time'
+	function updateVar(name, value, inline = false) {
 		value = tryMakeNum(value);
+		let scopedName = getCurrentState().id + name;
 		if (value instanceof GLSLVar) {
-			appendSources(`${name} = ${value}; \n`);
-			let newVal = new GLSLVar(value.type, name, value.dims);
-			addVecComponents(newVal, name);
-			return newVal;
+			if(inline) {
+				return collapseToString(value);
+			} else {
+				appendSources(`${scopedName} = ${value}; \n`);
+				let newVal = new GLSLVar(value.type, scopedName, value.dims);
+				addVecComponents(newVal, scopedName);
+				return newVal;
+			}
 		}
 		return value;
 	}
@@ -525,14 +539,22 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	//takes a glsl variable and creates a non-inlined version in 
-	function makeNamedVar(name, value) {
+	function makeNamedVar(name, value, update=false, inline = false) {
 		value = tryMakeNum(value);
+		let scopedName = getCurrentState().id + name;
 		if (value instanceof GLSLVar) {
-
-			appendSources(`${value.type} ${name} = ${value.name}; \n`);
-			let newVal = new GLSLVar(value.type, name, value.dims);
-			addVecComponents(newVal, name);
-			return newVal;
+			if (inline) {
+				return value.toString();
+			} else {
+				if(update) {
+					appendSources(`${scopedName} = ${value.name}; \n`);
+				} else {
+					appendSources(`${value.type} ${scopedName} = ${value.name}; \n`);
+				}
+				let newVal = new GLSLVar(value.type, scopedName, value.dims);
+				addVecComponents(newVal, scopedName);
+				return newVal;
+			}
 		} 
 		return value;
 	}
