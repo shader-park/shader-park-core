@@ -21,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bnanner/shader-park-core.git"
+    "url": "git+https://github.com/shader-park/shader-park-core.git"
   },
   "keywords": [
     "glsl",
@@ -39,9 +39,9 @@
   "author": "Torin Blankensmith, Peter Whidden",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/bnanner/shader-park-core/issues"
+    "url": "https://github.com/shader-park/shader-park-core/issues"
   },
-  "homepage": "https://github.com/bnanner/shader-park-core#readme",
+  "homepage": "https://github.com/shader-park/shader-park-core#readme",
   "dependencies": {
     "escodegen": "^1.11.1",
     "esprima": "^4.0.1",
