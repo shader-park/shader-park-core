@@ -840,11 +840,17 @@ export function sculptToGLSL(userProvidedSrc) {
 	*/
 
 	let error = undefined;
-	eval( generatedJSFuncsSource + userProvidedSrc );
 	
 	function getSpherical() {
 		return toSpherical(getSpace());	
 	}
+	
+	// Define any code that needs to reference auto generated from bindings.js code here
+	let postGeneratedFunctions = [
+		getSpherical,
+	].map(el => el.toString()).join('\n');
+
+	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
 	
 	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
