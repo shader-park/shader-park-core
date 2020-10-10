@@ -16281,10 +16281,6 @@
       return getCurrentState().p;
     }
 
-    function getSpherical() {
-      return toSpherical(getSpace());
-    }
-
     function pushState() {
       stateStack.push({
         id: "scope_" + stateCount + "_",
@@ -16589,7 +16585,16 @@
 
 
     var error = undefined;
-    eval(generatedJSFuncsSource + userProvidedSrc);
+
+    function getSpherical() {
+      toSpherical(getSpace());
+    } // Define any code that needs to reference auto generated from bindings.js code here
+
+
+    var postGeneratedFunctions = [getSpherical].map(function (el) {
+      return el.toString();
+    }).join('\n');
+    eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
     var geoFinal = buildGeoSource(geoSrc);
     var colorFinal = buildColorSource(colorSrc, useLighting);
     return {
