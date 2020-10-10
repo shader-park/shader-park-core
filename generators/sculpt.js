@@ -842,7 +842,7 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	let error = undefined;
 	function getSpherical() {
-		toSpherical(getSpace());
+		return toSpherical(getSpace());
 	}
 	
 	// Define any code that needs to reference auto generated from bindings.js code here
