@@ -16281,10 +16281,6 @@
       return getCurrentState().p;
     }
 
-    function getSpherical() {
-      return toSpherical(getSpace());
-    }
-
     function pushState() {
       stateStack.push({
         id: "scope_" + stateCount + "_",
@@ -16589,7 +16585,16 @@
 
 
     var error = undefined;
-    eval(generatedJSFuncsSource + userProvidedSrc);
+
+    function getSpherical() {
+      return toSpherical(getSpace());
+    } // Define any code that needs to reference auto generated from bindings.js code here
+
+
+    var postGeneratedFunctions = [getSpherical].map(function (el) {
+      return el.toString();
+    }).join('\n');
+    eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
     var geoFinal = buildGeoSource(geoSrc);
     var colorFinal = buildColorSource(colorSrc, useLighting);
     return {
@@ -67086,6 +67091,20 @@ vec4 envMapTexelToLinear(vec4 color) {
   }
 
   /**
+   * export for meshing with https://github.com/tdhooper/glsl-marching-cubes
+   * input - sculpt code
+   * output - glsl containing "mapDistance"
+   **/
+
+  function sculptToRawSDF4Meshing(source) {
+    var minimalHeader = "\nprecision highp float;\n#define GLSL_NEED_ROUND\nuniform float w_width;\nuniform float w_height;\nuniform mat4 projectionMatrix;\n#define cameraPosition vec3(0.0,0.0,-1.0)\n#define vUv vec2(0.0)\n#define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)\n#define STEP_SIZE_CONSTANT 0.9\n#define stepSize 0.9\n#define mouse vec3(0.0)\n#define time 0.0\n";
+    var generatedGLSL = sculptToGLSL(source);
+    var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight //+ uniformsToGLSL(generatedGLSL.uniforms) 
+    + sculptureStarterCode + generatedGLSL.geoGLSL;
+    return fullFrag.replace(/surfaceDistance/g, 'mapDistance');
+  }
+
+  /**
    *  TD target for GLSL and  Sculpt/JS api.
    * 
    *  TODO: make these materials 'plug in' to Touch Designer's ' PBR lighting model.
@@ -67127,6 +67146,7 @@ vec4 envMapTexelToLinear(vec4 color) {
   exports.sculptToMinimalGlitchRenderer = sculptToMinimalGlitchRenderer;
   exports.sculptToMinimalRenderer = sculptToMinimalRenderer;
   exports.sculptToOfflineRenderer = sculptToOfflineRenderer;
+  exports.sculptToRawSDF4Meshing = sculptToRawSDF4Meshing;
   exports.sculptToThreeJSMaterial = sculptToThreeJSMaterial;
   exports.sculptToThreeJSMesh = sculptToThreeJSMesh;
   exports.sculptToThreeJSShaderSource = sculptToThreeJSShaderSource;

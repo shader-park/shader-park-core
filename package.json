@@ -14,7 +14,8 @@
     "pretest": "npm run build",
     "toThreeJS": "node converters/convertThreeJS.js",
     "toOffline": "node converters/convertOfflineRenderer.js",
-    "toMinimal": "node converters/convertMinimalRenderer.js"
+    "toMinimal": "node converters/convertMinimalRenderer.js",
+    "toRawSDF4Meshing": "node converters/convertRawSDF4Meshing.js"
   },
   "files": [
     "dist"

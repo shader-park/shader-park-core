@@ -20,6 +20,10 @@ import {
 } from './targets/glitchMinimalRenderer.js'
 
 import {
+    sculptToRawSDF4Meshing
+} from './targets/rawSDF4Meshing.js'
+
+import {
     glslToTouchDesignerShaderSource, 
     sculptToTouchDesignerShaderSource
 } from './targets/touchDesigner.js'
@@ -43,5 +47,6 @@ export {
     glslToTouchDesignerShaderSource,
     sculptToTouchDesignerShaderSource,
     sculptToMinimalRenderer,
-    sculptToMinimalGlitchRenderer
+    sculptToMinimalGlitchRenderer,
+    sculptToRawSDF4Meshing
 }
