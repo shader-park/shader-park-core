@@ -20,8 +20,8 @@ or
 ### CLI usage:  
   
 ```npm run toThreeJS my-sculpture.js```    
-```yarn toOffline my-sculpture.js```    
-```yarn toRawSDF4Meshing my-sculpture.js```    
+```npm run toOffline my-sculpture.js```    
+```npm run toRawSDF4Meshing my-sculpture.js```    
 
 ### For development with SP website:  
 In shader-park-core repo run
