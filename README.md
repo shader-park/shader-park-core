@@ -8,7 +8,7 @@ or
 ```yarn install```
 
 ### Build:
-```npm build```
+```npm run build```
 or
 ```yarn build```
 
