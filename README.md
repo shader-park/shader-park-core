@@ -22,6 +22,8 @@ or
 ```npm run toThreeJS my-sculpture.js```  
 or  
 ```yarn toOffline my-sculpture.js```  
+or 
+```yarn toRawSDF4Meshing my-sculpture.js```  
 
 ### For development with SP website:  
 In shader-park-core repo run
