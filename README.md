@@ -19,11 +19,9 @@ or
 
 ### CLI usage:  
   
-```npm run toThreeJS my-sculpture.js```  
-or  
-```yarn toOffline my-sculpture.js```  
-or 
-```yarn toRawSDF4Meshing my-sculpture.js```  
+```npm run toThreeJS my-sculpture.js```    
+```yarn toOffline my-sculpture.js```    
+```yarn toRawSDF4Meshing my-sculpture.js```    
 
 ### For development with SP website:  
 In shader-park-core repo run
@@ -33,7 +31,7 @@ or
 
 In shader-park-website repo run
 ```npm link shader-park-core```
-or
+or 
 ```yarn link shader-park-core```
 
 ### API usage:  
