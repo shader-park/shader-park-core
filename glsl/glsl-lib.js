@@ -42,7 +42,7 @@ const float PI = 3.14159265;
 const float TAU = PI*2.0;
 const float TWO_PI = TAU;
 
-const float max_dist = 4.0;
+const float max_dist = 100.0;
 const float intersection_threshold = 0.00007;
 
 struct Material {
@@ -622,7 +622,7 @@ vec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat) {
 float simpleLighting(vec3 p, vec3 normal, vec3 lightdir) {
     // Simple phong-like shading
     float value = clamp(dot(normal, normalize(lightdir)),0.0, 1.0);
-	return value * 0.3 + 0.7;
+    return value * 0.3 + 0.7;
 }
 
 float specularLighting(vec3 p, vec3 normal, vec3 lightDirection, float shine) {
@@ -657,19 +657,19 @@ float occlusion(vec3 p,vec3 n) {
 export const fragFooter = `
 // For advanced users //
 void main() {
-	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
-	vec3 rayDirection = getRayDirection();
-	rayOrigin -= rayDirection*2.5;
-	float t = intersect(rayOrigin, rayDirection, stepSize);
-	if(t < 2.5) {
-		vec3 p = (rayOrigin + rayDirection*t);
-		//vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0);
-		vec3 normal = calcNormal(p);
+
+    vec3 rayOrigin = cameraPosition - sculptureCenter;
+    vec3 rayDirection = getRayDirection();
+    float t = intersect(rayOrigin, rayDirection, stepSize);
+    if(t < max_dist) {
+        vec3 p = (rayOrigin + rayDirection*t);
+        //vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0); //could be used to set FragDepth
+        vec3 normal = calcNormal(p);
         vec3 col = shade(p, normal);
-		gl_FragColor = vec4(col, opacity);
-		
-	} else {
-		discard;
-	}
+        gl_FragColor = vec4(col, opacity);
+        
+    } else {
+        discard;
+    }
 }
 `;
