@@ -16278,7 +16278,7 @@
     }
 
     function getSpace() {
-      return getCurrentState().p;
+      return makeVarWithDims(getCurrentState().p.name, 3);
     }
 
     function pushState() {
