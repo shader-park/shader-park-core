@@ -66884,6 +66884,13 @@ vec4 envMapTexelToLinear(vec4 color) {
     return material;
   }
   function sculptToThreeJSMesh(source, payload) {
+    if (typeof source === "function") {
+      source = source.toString();
+      source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
+    } else if (!(typeof source === "string")) {
+      throw "sculptToThreeJSMesh requires the source code to be a function, or a string";
+    }
+
     return makeBasicMesh(sculptToThreeJSMaterial(source, payload));
   }
 
