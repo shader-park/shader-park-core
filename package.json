@@ -46,7 +46,7 @@
   "dependencies": {
     "escodegen": "^1.11.1",
     "esprima": "^4.0.1",
-    "three": "^0.113.2"
+    "three": "^0.122.0"
   },
   "devDependencies": {
     "@babel/core": "^7.5.4",
