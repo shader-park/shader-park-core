@@ -14,10 +14,12 @@ vec3 shade(vec3 p, vec3 normal) {
 export const defaultVertexSource = `
 varying vec4 worldPos;
 //varying vec2 vUv;
+varying vec3 sculptureCenter;
 void main()
 {
     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
     worldPos = modelMatrix*vec4(position,1.0);
+    sculptureCenter = (modelMatrix * vec4(0., 0., 0., 1.)).xyz;
     //vUv = uv;
     gl_Position = projectionMatrix * mvPosition;
 }
@@ -30,12 +32,15 @@ uniform sampler2D msdf;
 
 //varying vec2 vUv;
 varying vec4 worldPos;
+
+
 `;
 
 export const usePBRHeader = '#define USE_PBR\n';
 export const useHemisphereLight = '#define HEMISPHERE_LIGHT\n'
 
 export const sculptureStarterCode = `
+varying vec3 sculptureCenter;
 float surfaceDistance(vec3 p);
 
 const float PI = 3.14159265;

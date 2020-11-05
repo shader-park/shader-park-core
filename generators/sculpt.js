@@ -163,7 +163,7 @@ export function baseUniforms() {
 	return [
 		{name:'time', type: 'float', value: 0.0},
 		{name:'opacity', type: 'float', value: 1.0},
-		{name:'sculptureCenter', type: 'vec3', value: [0,0,0]},
+		// {name:'sculptureCenter', type: 'vec3', value: [0,0,0]},
 		{name:'mouse', type: 'vec3', value: [0.5,0.5,0.5]},
 		{name:'stepSize', type: 'float', value: 0.85}
 	];
