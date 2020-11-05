@@ -8,7 +8,7 @@ import {
     fragFooter,
 } from '../glsl/glsl-lib.js'
 
-import { Texture, Vector2, Vector3, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide} from 'three';
+import { Texture, Vector2, Vector3, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide, SphereBufferGeometry} from 'three';
 
 /**
  *  Three targets are provided for both GLSL and Sculpt/JS api.
@@ -82,11 +82,42 @@ export function sculptToThreeJSMesh(source, payload) {
     return makeBasicMesh(sculptToThreeJSMaterial(source, payload));
 }
 
+// uniformCallback 
+export function createSculpture(source, uniformCallback=() => {return {}}, params={}) {
+    if (typeof source === "function") {
+        source = source.toString();
+        source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
+    } else if (!(typeof source === "string")) {
+        throw "sculptToThreeJSMesh requires the source code to be a function, or a string"
+    }
+
+    let radius = ('radius' in params)? params.radius: 2;
+    let segments = ('segments' in params)? params.segments: 8;
+    let material = sculptToThreeJSMaterial(source);
+    material.uniforms['opacity'].value = 1.0;
+    material.uniforms['mouse'].value = new Vector3();
+    let mesh = new Mesh(new SphereBufferGeometry( radius, segments, segments ), material);
+
+    mesh.onBeforeRender = function( renderer, scene, camera, geometry, material, group ) {
+        let uniformsToUpdate = uniformCallback();
+        if (!(typeof uniformsToUpdate === "object")) {
+            throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update"
+        }
+
+        for (const [uniform, value] of Object.entries(uniformsToUpdate)) {
+            material.uniforms[uniform].value = value;
+        }
+        // material.uniforms['sculptureCenter'].value = geometry.position;
+    }
+
+    return mesh;
+}
+
 function uniformDescriptionToThreeJSFormat(unifs, payload) {
     
     let finalUniforms = {};
     
-    if (payload !== undefined && payload.msdfTexture !== undefined) {
+    if (payload && payload !== undefined && payload.msdfTexture !== undefined) {
         finalUniforms["msdf"] = { value: payload.msdfTexture || new Texture() };
     }
     

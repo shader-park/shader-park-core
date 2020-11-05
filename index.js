@@ -4,7 +4,8 @@ import {
     glslToThreeJSMesh,
     sculptToThreeJSShaderSource,
     sculptToThreeJSMaterial,
-    sculptToThreeJSMesh
+    sculptToThreeJSMesh,
+    createSculpture
 } from './targets/threeJS.js'
 
 import {
@@ -42,6 +43,7 @@ export {
     sculptToThreeJSShaderSource,
     sculptToThreeJSMaterial,
     sculptToThreeJSMesh,
+    createSculpture,
     glslToOfflineRenderer,
     sculptToOfflineRenderer,
     glslToTouchDesignerShaderSource,
