@@ -141,7 +141,7 @@ function replaceSliderInput(syntaxTree) {
 			
 			let d = syntaxTree['declarations'][0];
 			let name = d.id.name;
-			if (d && d.init && d.init.callee !== undefined && d.init.callee.name === 'input') {
+			if (d && d.init && d.init.callee !== undefined && (d.init.callee.name === 'input' || d.init.callee.name === 'input2D')) {
 				d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
 			}
 		}
@@ -822,6 +822,28 @@ export function sculptToGLSL(userProvidedSrc) {
 		uniforms.push({name, type:'float', value, min, max});
 		return new float(name, true);
 	}
+
+
+	
+	function input2D(name, value={x: 0.0, y: 0.0}, min = {x: 0.0, y: 0.0}, max = {x: 1.0, y: 1.0}) {
+		if(typeof value === 'number' && typeof min === 'number' && typeof max === 'object') {
+			// syntax input2D(.2, 1.2);
+			let x = value;
+			let y = min;
+			uniforms.push({name, type:'vec2', value: {x, y}, min: {x:0, y:0}, max: {x:1, y:1} });
+			return new vec2(name, true);
+		}
+		if (typeof value !== 'object' || typeof min !== 'object' || typeof max !== 'object') {
+			compileError('input2D: value, min, and max must be a vec2');
+		} 
+		
+		let xyExist = [value, min, max].reduce((acc, curr) => acc && ('x' in curr) && ('y' in curr));
+		if(!xyExist) {
+			compileError('input2D: value, min, and max must be a vec2');
+		}
+		uniforms.push({name, type:'vec2', value, min, max});
+		return new vec2(name, true);
+	}
 	
 	/*
 	function input2(name, x, y) {
@@ -854,7 +876,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	
 	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
-
+	
 	return {
 		uniforms: uniforms,
 		stepSizeConstant: stepSizeConstant,

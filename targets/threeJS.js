@@ -120,14 +120,15 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
     if (payload && payload !== undefined && payload.msdfTexture !== undefined) {
         finalUniforms["msdf"] = { value: payload.msdfTexture || new Texture() };
     }
-    
     unifs.forEach(uniform => {
-        if (typeof uniform.value === 'number') {
+        if (uniform.type === 'float') {
             finalUniforms[uniform.name] = {value: uniform.value};
-        } else if (uniform.value.length === 2) {
-            finalUniforms[uniform.name] = {value: new Vector2(uniform.value[0], uniform.value[1])};
-        } else if (uniform.value.length === 3) {
-            finalUniforms[uniform.name] = {value: new Vector3(uniform.value[0], uniform.value[1], uniform.value[2])};
+        } else if (uniform.type === 'vec2') {
+            finalUniforms[uniform.name] = {value: new Vector2(uniform.value.x, uniform.value.y)};
+        } else if (uniform.type === 'vec3') {
+            finalUniforms[uniform.name] = {value: new Vector3(uniform.value.x, uniform.value.y, uniform.value.z)};
+        } else if (uniform.type === 'vec4') {
+            finalUniforms[uniform.name] = {value: new Vector4(uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w)};
         }
     });
     return finalUniforms;

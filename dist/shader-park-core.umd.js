@@ -15787,7 +15787,7 @@
         var d = syntaxTree['declarations'][0];
         var name = d.id.name;
 
-        if (d && d.init && d.init.callee !== undefined && d.init.callee.name === 'input') {
+        if (d && d.init && d.init.callee !== undefined && (d.init.callee.name === 'input' || d.init.callee.name === 'input2D')) {
           d.init.arguments.unshift({
             type: "Literal",
             value: name,
@@ -16563,6 +16563,65 @@
         max: max
       });
       return new float(name, true);
+    }
+
+    function input2D(name) {
+      var value = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+        x: 0.0,
+        y: 0.0
+      };
+      var min = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {
+        x: 0.0,
+        y: 0.0
+      };
+      var max = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {
+        x: 1.0,
+        y: 1.0
+      };
+
+      if (typeof value === 'number' && typeof min === 'number' && _typeof(max) === 'object') {
+        // syntax input2D(.2, 1.2);
+        var x = value;
+        var y = min;
+        uniforms.push({
+          name: name,
+          type: 'vec2',
+          value: {
+            x: x,
+            y: y
+          },
+          min: {
+            x: 0,
+            y: 0
+          },
+          max: {
+            x: 1,
+            y: 1
+          }
+        });
+        return new vec2(name, true);
+      }
+
+      if (_typeof(value) !== 'object' || _typeof(min) !== 'object' || _typeof(max) !== 'object') {
+        compileError('input2D: value, min, and max must be a vec2');
+      }
+
+      var xyExist = [value, min, max].reduce(function (acc, curr) {
+        return acc && 'x' in curr && 'y' in curr;
+      });
+
+      if (!xyExist) {
+        compileError('input2D: value, min, and max must be a vec2');
+      }
+
+      uniforms.push({
+        name: name,
+        type: 'vec2',
+        value: value,
+        min: min,
+        max: max
+      });
+      return new vec2(name, true);
     }
     /*
     function input2(name, x, y) {
@@ -18303,7 +18362,7 @@
 
   } );
 
-  class Vector4 {
+  class Vector4$1 {
 
   	constructor( x = 0, y = 0, z = 0, w = 1 ) {
 
@@ -18956,10 +19015,10 @@
   	this.width = width;
   	this.height = height;
 
-  	this.scissor = new Vector4( 0, 0, width, height );
+  	this.scissor = new Vector4$1( 0, 0, width, height );
   	this.scissorTest = false;
 
-  	this.viewport = new Vector4( 0, 0, width, height );
+  	this.viewport = new Vector4$1( 0, 0, width, height );
 
   	options = options || {};
 
@@ -25688,7 +25747,7 @@
   			if ( vector === undefined ) {
 
   				console.warn( 'THREE.BufferAttribute.copyVector4sArray(): vector is undefined', i );
-  				vector = new Vector4();
+  				vector = new Vector4$1();
 
   			}
 
@@ -35447,7 +35506,7 @@
   	const _shadowMapSize = new Vector2(),
   		_viewportSize = new Vector2(),
 
-  		_viewport = new Vector4(),
+  		_viewport = new Vector4$1(),
 
   		_depthMaterials = [],
   		_distanceMaterials = [],
@@ -35880,9 +35939,9 @@
 
   		let locked = false;
 
-  		const color = new Vector4();
+  		const color = new Vector4$1();
   		let currentColorMask = null;
-  		const currentColorClear = new Vector4( 0, 0, 0, 0 );
+  		const currentColorClear = new Vector4$1( 0, 0, 0, 0 );
 
   		return {
 
@@ -36228,8 +36287,8 @@
   	let currentTextureSlot = null;
   	let currentBoundTextures = {};
 
-  	const currentScissor = new Vector4();
-  	const currentViewport = new Vector4();
+  	const currentScissor = new Vector4$1();
+  	const currentViewport = new Vector4$1();
 
   	function createTexture( type, target, count ) {
 
@@ -38565,11 +38624,11 @@
 
   	const cameraL = new PerspectiveCamera();
   	cameraL.layers.enable( 1 );
-  	cameraL.viewport = new Vector4();
+  	cameraL.viewport = new Vector4$1();
 
   	const cameraR = new PerspectiveCamera();
   	cameraR.layers.enable( 2 );
-  	cameraR.viewport = new Vector4();
+  	cameraR.viewport = new Vector4$1();
 
   	const cameras = [ cameraL, cameraR ];
 
@@ -39808,8 +39867,8 @@
   	let _currentCamera = null;
   	let _currentArrayCamera = null;
 
-  	const _currentViewport = new Vector4();
-  	const _currentScissor = new Vector4();
+  	const _currentViewport = new Vector4$1();
+  	const _currentScissor = new Vector4$1();
   	let _currentScissorTest = null;
 
   	//
@@ -39821,8 +39880,8 @@
   	let _opaqueSort = null;
   	let _transparentSort = null;
 
-  	const _viewport = new Vector4( 0, 0, _width, _height );
-  	const _scissor = new Vector4( 0, 0, _width, _height );
+  	const _viewport = new Vector4$1( 0, 0, _width, _height );
+  	const _scissor = new Vector4$1( 0, 0, _width, _height );
   	let _scissorTest = false;
 
   	// frustum
@@ -40128,7 +40187,7 @@
 
   			console.warn( 'WebGLRenderer: .getCurrentViewport() now requires a Vector4 as an argument' );
 
-  			target = new Vector4();
+  			target = new Vector4$1();
 
   		}
 
@@ -42701,7 +42760,7 @@
 
   	normalizeSkinWeights: function () {
 
-  		const vector = new Vector4();
+  		const vector = new Vector4$1();
 
   		const skinWeight = this.geometry.attributes.skinWeight;
 
@@ -42754,8 +42813,8 @@
 
   		const basePosition = new Vector3();
 
-  		const skinIndex = new Vector4();
-  		const skinWeight = new Vector4();
+  		const skinIndex = new Vector4$1();
+  		const skinWeight = new Vector4$1();
 
   		const vector = new Vector3();
   		const matrix = new Matrix4();
@@ -55789,7 +55848,7 @@
 
   	this._viewports = [
 
-  		new Vector4( 0, 0, 1, 1 )
+  		new Vector4$1( 0, 0, 1, 1 )
 
   	];
 
@@ -56016,17 +56075,17 @@
   		// z - Negative z direction
 
   		// positive X
-  		new Vector4( 2, 1, 1, 1 ),
+  		new Vector4$1( 2, 1, 1, 1 ),
   		// negative X
-  		new Vector4( 0, 1, 1, 1 ),
+  		new Vector4$1( 0, 1, 1, 1 ),
   		// positive Z
-  		new Vector4( 3, 1, 1, 1 ),
+  		new Vector4$1( 3, 1, 1, 1 ),
   		// negative Z
-  		new Vector4( 1, 1, 1, 1 ),
+  		new Vector4$1( 1, 1, 1, 1 ),
   		// positive Y
-  		new Vector4( 3, 0, 1, 1 ),
+  		new Vector4$1( 3, 0, 1, 1 ),
   		// negative Y
-  		new Vector4( 1, 0, 1, 1 )
+  		new Vector4$1( 1, 0, 1, 1 )
   	];
 
   	this._cubeDirections = [
@@ -56828,7 +56887,7 @@
   						break;
 
   					case 'v4':
-  						material.uniforms[ name ].value = new Vector4().fromArray( uniform.value );
+  						material.uniforms[ name ].value = new Vector4$1().fromArray( uniform.value );
   						break;
 
   					case 'm3':
@@ -66287,7 +66346,7 @@
 
   } );
 
-  Object.assign( Vector4.prototype, {
+  Object.assign( Vector4$1.prototype, {
 
   	fromAttribute: function ( attribute, index, offset ) {
 
@@ -67730,17 +67789,21 @@
     }
 
     unifs.forEach(function (uniform) {
-      if (typeof uniform.value === 'number') {
+      if (uniform.type === 'float') {
         finalUniforms[uniform.name] = {
           value: uniform.value
         };
-      } else if (uniform.value.length === 2) {
+      } else if (uniform.type === 'vec2') {
         finalUniforms[uniform.name] = {
-          value: new Vector2(uniform.value[0], uniform.value[1])
+          value: new Vector2(uniform.value.x, uniform.value.y)
         };
-      } else if (uniform.value.length === 3) {
+      } else if (uniform.type === 'vec3') {
         finalUniforms[uniform.name] = {
-          value: new Vector3(uniform.value[0], uniform.value[1], uniform.value[2])
+          value: new Vector3(uniform.value.x, uniform.value.y, uniform.value.z)
+        };
+      } else if (uniform.type === 'vec4') {
+        finalUniforms[uniform.name] = {
+          value: new Vector4(uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w)
         };
       }
     });
