@@ -48,7 +48,7 @@ const float TAU = PI*2.0;
 const float TWO_PI = TAU;
 
 const float max_dist = 100.0;
-const float intersection_threshold = 0.00007;
+const float intersection_threshold = 0.00001;
 
 struct Material {
     vec3 albedo;
@@ -501,12 +501,12 @@ vec4 sphericalDistribution( vec3 p, float n )
 
 // Compute intersection of ray and SDF. You probably won't need to modify this.
 float intersect(vec3 ro, vec3 rd, float stepFraction) {
-	float t = 0.0;
+    float t = 0.0;
 	for(int i = 0; i < 300; ++i) {
-		float h = surfaceDistance(ro+rd*t);
+		float h = surfaceDistance((ro+rd*t));
 		if(h < intersection_threshold || t > max_dist) break;
 		t += h*STEP_SIZE_CONSTANT;
-	}
+    }
 	return t;
 }
 
@@ -663,13 +663,14 @@ export const fragFooter = `
 // For advanced users //
 void main() {
 
-    vec3 rayOrigin = cameraPosition - sculptureCenter;
+    vec3 rayOrigin = (cameraPosition - sculptureCenter) / max(intersection_threshold, _scale);
     vec3 rayDirection = getRayDirection();
     float t = intersect(rayOrigin, rayDirection, stepSize);
     if(t < max_dist) {
         vec3 p = (rayOrigin + rayDirection*t);
         //vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0); //could be used to set FragDepth
         vec3 normal = calcNormal(p);
+        // p *= _scale;
         vec3 col = shade(p, normal);
         gl_FragColor = vec4(col, opacity);
         
