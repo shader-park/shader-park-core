@@ -92,10 +92,13 @@ export function createSculpture(source, uniformCallback=() => {return {}}, param
     }
 
     let radius = ('radius' in params)? params.radius: 2;
+
     let segments = ('segments' in params)? params.segments: 8;
     let material = sculptToThreeJSMaterial(source);
+    
     material.uniforms['opacity'].value = 1.0;
     material.uniforms['mouse'].value = new Vector3();
+    material.uniforms['_scale'].value = radius;
     let mesh = new Mesh(new SphereBufferGeometry( radius, segments, segments ), material);
 
     mesh.onBeforeRender = function( renderer, scene, camera, geometry, material, group ) {
