@@ -35,7 +35,7 @@ import {
     defaultFragSourceGLSL
 } from './glsl/glsl-lib.js'
 
-console.log('using shader-park version: 0.0.14');
+console.log('using shader-park version: 0.0.15');
 
 /// Generate code for various targets
 
