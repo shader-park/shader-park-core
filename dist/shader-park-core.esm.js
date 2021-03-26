@@ -67948,7 +67948,7 @@ function sculptToMinimalGlitchRenderer(canvas, source) {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Index_Buffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-  var vertCode = 'attribute vec3 coordinates;' + 'void main(void) {' + ' gl_Position = vec4(coordinates, 1.0);' + '}';
+  var vertCode = 'attribute vec3 coordinates;' + 'varying vec3 sculptureCenter;' + 'void main(void) {' + ' sculptureCenter = vec3(0.0);' + ' gl_Position = vec4(coordinates, 1.0);' + '}';
   var vertShader = gl.createShader(gl.VERTEX_SHADER);
   gl.shaderSource(vertShader, vertCode);
   gl.compileShader(vertShader);
@@ -67974,11 +67974,15 @@ function sculptToMinimalGlitchRenderer(canvas, source) {
   gl.enable(gl.DEPTH_TEST);
   var oTime = Date.now();
   var loc = gl.getUniformLocation(shaderProgram, "time");
+
+  var _scale = gl.getUniformLocation(shaderProgram, "_scale");
+
   var wloc = gl.getUniformLocation(shaderProgram, "w_width");
   var hloc = gl.getUniformLocation(shaderProgram, "w_height");
   var opac = gl.getUniformLocation(shaderProgram, "opacity");
   var mouseloc = gl.getUniformLocation(shaderProgram, "mouse");
   gl.uniform1f(opac, 1.0);
+  gl.uniform1f(_scale, 1.0);
   canvas.addEventListener("mousemove", function (e) {
     var devicePixelRatio = window.devicePixelRatio || 1;
     var canvasX = (e.pageX - canvas.offsetLeft) * devicePixelRatio;
