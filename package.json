@@ -1,6 +1,6 @@
 {
   "name": "shader-park-core",
-  "version": "0.0.15",
+  "version": "0.0.17",
   "description": "core glsl and js framework for shader-park",
   "main": "dist/shader-park-core.esm.js",
   "csj": "dist/shader-park-core.cjs.js",
@@ -11,7 +11,7 @@
   "scripts": {
     "build": "rollup -c --no-treeshake",
     "watch": "rollup -c -w --no-treeshake",
-    "publish" : "yarn publish --access public",
+    "publish": "yarn publish --access public",
     "pretest": "npm run build",
     "toThreeJS": "node converters/convertThreeJS.js",
     "toOffline": "node converters/convertOfflineRenderer.js",
@@ -47,15 +47,15 @@
   "dependencies": {
     "escodegen": "^1.11.1",
     "esprima": "^4.0.1",
-    "three": "^0.122.0"
+    "three": "^0.126.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.5.4",
-    "@babel/preset-env": "^7.5.4",
-    "@rollup/plugin-commonjs": "^11.0.2",
+    "@babel/core": "^7.13.13",
+    "@babel/preset-env": "^7.13.12",
+    "@rollup/plugin-commonjs": "^18.0.0",
     "@rollup/plugin-json": "^4.0.2",
-    "@rollup/plugin-node-resolve": "^7.1.1",
-    "rollup": "^1.15.6",
-    "rollup-plugin-babel": "^4.3.3"
+    "@rollup/plugin-node-resolve": "^11.2.1",
+    "rollup": "^2.42.4",
+    "rollup-plugin-babel": "^4.4.0"
   }
 }
