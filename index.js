@@ -15,11 +15,12 @@ import {
 } from './targets/offlineRenderer.js'
 
 import {
+    sculptToMinimalHTMLRenderer
+} from './targets/minimalHTMLRenderer.js'
+
+import {
     sculptToMinimalRenderer
 } from './targets/minimalRenderer.js'
-import {
-    sculptToMinimalGlitchRenderer
-} from './targets/glitchMinimalRenderer.js'
 
 import {
     sculptToRawSDF4Meshing
@@ -52,7 +53,7 @@ export {
     sculptToOfflineRenderer,
     glslToTouchDesignerShaderSource,
     sculptToTouchDesignerShaderSource,
+    sculptToMinimalHTMLRenderer,
     sculptToMinimalRenderer,
-    sculptToMinimalGlitchRenderer,
     sculptToRawSDF4Meshing
 }
