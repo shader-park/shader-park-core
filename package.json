@@ -7,7 +7,7 @@
   "module": "dist/shader-park-core.esm.js",
   "browser": "dist/shader-park-core.umd.js",
   "bundle": "dist/shader-park-core.bundle.js",
-  "private": true,
+  "private": false,
   "scripts": {
     "build": "rollup -c --no-treeshake",
     "watch": "rollup -c -w --no-treeshake",
