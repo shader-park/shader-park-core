@@ -5,7 +5,8 @@ import {
     sculptToThreeJSShaderSource,
     sculptToThreeJSMaterial,
     sculptToThreeJSMesh,
-    createSculpture
+    createSculpture,
+    createSculptureWithGeometry
 } from './targets/threeJS.js'
 
 import {
@@ -33,6 +34,8 @@ import {
     defaultFragSourceGLSL
 } from './glsl/glsl-lib.js'
 
+console.log('using shader-park version: 0.0.13');
+
 /// Generate code for various targets
 
 export {
@@ -43,6 +46,7 @@ export {
     sculptToThreeJSShaderSource,
     sculptToThreeJSMaterial,
     sculptToThreeJSMesh,
+    createSculptureWithGeometry,
     createSculpture,
     glslToOfflineRenderer,
     sculptToOfflineRenderer,

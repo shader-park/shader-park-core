@@ -67739,6 +67739,17 @@ function sculptToThreeJSMesh(source, payload) {
   }
 
   return makeBasicMesh(sculptToThreeJSMaterial(source, payload));
+}
+function createSculptureWithGeometry(geometry, source) {
+  var uniformCallback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {
+    return {};
+  };
+  var params = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+  geometry.computeBoundingSphere();
+  var radius = 'radius' in params ? params.radius : geometry.boundingSphere.radius;
+  params.radius = radius;
+  params.geometry = geometry;
+  return createSculpture(source, uniformCallback, params);
 } // uniformCallback 
 
 function createSculpture(source) {
@@ -67756,11 +67767,17 @@ function createSculpture(source) {
 
   var radius = 'radius' in params ? params.radius : 2;
   var segments = 'segments' in params ? params.segments : 8;
+  var geometry = new SphereBufferGeometry(radius, segments, segments);
+
+  if ('geometry' in params) {
+    geometry = params.geometry;
+  }
+
   var material = sculptToThreeJSMaterial(source);
   material.uniforms['opacity'].value = 1.0;
   material.uniforms['mouse'].value = new Vector3();
   material.uniforms['_scale'].value = radius;
-  var mesh = new Mesh(new SphereBufferGeometry(radius, segments, segments), material);
+  var mesh = new Mesh(geometry, material);
 
   mesh.onBeforeRender = function (renderer, scene, camera, geometry, material, group) {
     var uniformsToUpdate = uniformCallback();
@@ -68036,7 +68053,10 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
+console.log('using shader-park version: 0.0.13'); /// Generate code for various targets
+
 exports.createSculpture = createSculpture;
+exports.createSculptureWithGeometry = createSculptureWithGeometry;
 exports.defaultFragSourceGLSL = defaultFragSourceGLSL;
 exports.glslToOfflineRenderer = glslToOfflineRenderer;
 exports.glslToThreeJSMaterial = glslToThreeJSMaterial;

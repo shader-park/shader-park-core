@@ -82,6 +82,14 @@ export function sculptToThreeJSMesh(source, payload) {
     return makeBasicMesh(sculptToThreeJSMaterial(source, payload));
 }
 
+export function createSculptureWithGeometry(geometry, source, uniformCallback=() => {return {}}, params={}) {
+    geometry.computeBoundingSphere();
+    let radius = ('radius' in params)? params.radius: geometry.boundingSphere.radius;
+    params.radius = radius;
+    params.geometry = geometry;
+    return createSculpture(source, uniformCallback, params);
+}
+
 // uniformCallback 
 export function createSculpture(source, uniformCallback=() => {return {}}, params={}) {
     if (typeof source === "function") {
@@ -94,12 +102,16 @@ export function createSculpture(source, uniformCallback=() => {return {}}, param
     let radius = ('radius' in params)? params.radius: 2;
 
     let segments = ('segments' in params)? params.segments: 8;
+    let geometry = new SphereBufferGeometry( radius, segments, segments );
+    if('geometry' in params) {
+        geometry = params.geometry;
+    }
     let material = sculptToThreeJSMaterial(source);
     
     material.uniforms['opacity'].value = 1.0;
     material.uniforms['mouse'].value = new Vector3();
     material.uniforms['_scale'].value = radius;
-    let mesh = new Mesh(new SphereBufferGeometry( radius, segments, segments ), material);
+    let mesh = new Mesh(geometry, material);
 
     mesh.onBeforeRender = function( renderer, scene, camera, geometry, material, group ) {
         let uniformsToUpdate = uniformCallback();
