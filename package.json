@@ -11,6 +11,7 @@
   "scripts": {
     "build": "rollup -c --no-treeshake",
     "watch": "rollup -c -w --no-treeshake",
+    "publish" : "yarn publish --access public",
     "pretest": "npm run build",
     "toThreeJS": "node converters/convertThreeJS.js",
     "toOffline": "node converters/convertOfflineRenderer.js",
