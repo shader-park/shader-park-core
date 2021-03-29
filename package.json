@@ -13,6 +13,7 @@
     "watch": "rollup -c -w --no-treeshake",
     "publish": "yarn publish --access public",
     "pretest": "npm run build",
+    "test": "mocha --reporter spec",
     "toThreeJS": "node converters/convertThreeJS.js",
     "toOffline": "node converters/convertOfflineRenderer.js",
     "toMinimal": "node converters/convertMinimalRenderer.js",
@@ -55,6 +56,10 @@
     "@rollup/plugin-commonjs": "^18.0.0",
     "@rollup/plugin-json": "^4.0.2",
     "@rollup/plugin-node-resolve": "^11.2.1",
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2",
+    "png-js": "^1.0.0",
+    "puppeteer": "^8.0.0",
     "rollup": "^2.42.4",
     "rollup-plugin-babel": "^4.4.0"
   }
