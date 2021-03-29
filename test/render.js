@@ -21,7 +21,8 @@ describe('Compiling, rendering, checking pixels', () => {
     let browser;
     let server;
 
-    before(async () => {
+    before(async function() {
+        this.timeout(15000);
         server = http.createServer((req, res) => {
             fs.readFile('./' + req.url, (err,data) => {
                 if (err) {
