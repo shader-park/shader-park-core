@@ -12,7 +12,6 @@
     "build": "rollup -c --no-treeshake",
     "watch": "rollup -c -w --no-treeshake",
     "publish": "publish --access public",
-    "pretest": "npm run build",
     "test": "mocha --reporter spec",
     "toThreeJS": "node converters/convertThreeJS.js",
     "toOffline": "node converters/convertOfflineRenderer.js",
