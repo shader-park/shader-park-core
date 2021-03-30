@@ -89,7 +89,7 @@ let fullFrag =
     var compiled = gl.getShaderParameter(fragShader, gl.COMPILE_STATUS);
     console.log('Shader compiled successfully: ' + compiled);
     var compilationLog = gl.getShaderInfoLog(fragShader);
-    console.log('Shader compiler log: ' + compilationLog);
+    if (!compiled) console.log('Shader compiler log: ' + compilationLog);
     var shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertShader);
     gl.attachShader(shaderProgram, fragShader);

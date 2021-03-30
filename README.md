@@ -1,6 +1,7 @@
 
 Compiles sculpt to threejs/glsl, sculpt-renderer/glsl, unity/hlsl  
  
+[![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)
  
 ### Setup:
 ```npm install```
