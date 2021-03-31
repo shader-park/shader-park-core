@@ -25,7 +25,7 @@ precision highp float;
 uniform float w_width;
 uniform float w_height;
 uniform mat4 projectionMatrix;
-#define cameraPosition vec3(0.0,0.0,-1.0)
+#define cameraPosition vec3(0.0,0.0,-2.0)
 #define vUv vec2(0.0)
 #define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)
 `;
@@ -111,6 +111,9 @@ uniform mat4 projectionMatrix;
     let mouseloc = gl.getUniformLocation(shaderProgram, "mouse");
     gl.uniform1f(opac,1.0);
     gl.uniform1f(_scale, 1.0);
+
+    let userUniformUpdateFuncs = assignUniforms(updateUniforms);
+
     canvas.addEventListener("mousemove", function(e) {
         let devicePixelRatio = window.devicePixelRatio || 1;
         let canvasX = (e.pageX - canvas.offsetLeft) * devicePixelRatio;
@@ -118,6 +121,10 @@ uniform mat4 projectionMatrix;
         gl.uniform3f(mouseloc, 2.0*canvasX/canvas.width-1.0, 2.0*(1.0-canvasY/canvas.height)-1.0, -0.5);
     }, false);
     function updateDraw() {
+        if(typeof updateUniforms === 'function' ){
+            callUniformFuncs(userUniformUpdateFuncs, updateUniforms());
+        }
+
         gl.uniform1f(loc, (Date.now()-oTime)*0.001);
         let devicePixelRatio = window.devicePixelRatio || 1;
         let wwidth = window.innerWidth*devicePixelRatio;
@@ -130,4 +137,51 @@ uniform mat4 projectionMatrix;
         window.requestAnimationFrame(updateDraw);
     }
     updateDraw();
+
+    // loops through a dictionary and calls the function sotred in the value
+    function callUniformFuncs(uniformFuncs, updatedUniforms) {
+        if(typeof updatedUniforms !== 'object') {
+            console.error('updateUniforms must be a function that returns a dictionary of uniform names and values');
+            return;
+        }
+        Object.entries(uniformFuncs).forEach(keys => {
+            let [key, uniformUpdateFunc] = keys;
+            if (key in updatedUniforms) {
+                uniformUpdateFunc(updatedUniforms[key]);
+            }
+        });
+    }
+
+    function assignUniforms(updateUniforms) {
+        if(typeof updateUniforms !== 'function') {
+            console.error('updateUniforms must be a function that returns a dictionary of uniform names and values');
+            return {};
+        }
+        let userUniformUpdateFuncs = {};
+        let uniformsDict = updateUniforms();
+        if(uniformsDict !== undefined && typeof uniformsDict === 'object') {
+            Object.entries(uniformsDict).forEach(keys => {
+                let [key, val] = keys;
+                const unifLocation = gl.getUniformLocation(shaderProgram, key);
+                if(typeof val === 'number') {
+                    userUniformUpdateFuncs[key] = (unif) => gl.uniform1f(unifLocation, unif);
+                } else if (Array.isArray(val)) {
+                    if(val.length === 1) {
+                        userUniformUpdateFuncs[key] = (unif) => gl.uniform1f(unifLocation, unif[0]);
+                    } else if(val.length === 2) {
+                        userUniformUpdateFuncs[key] = (unif) => gl.uniform2iv(unifLocation, unif);
+                    } else if(val.length === 3) {
+                        userUniformUpdateFuncs[key] = (unif) => gl.uniform3iv(unifLocation, unif);
+                    } else if(val.length === 4) {
+                        userUniformUpdateFuncs[key] = (unif) => gl.uniform4iv(unifLocation, unif);
+                    } else {
+                        console.error('Uniforms must be either a float or an array with length 1, 2, 3 or 4');
+                    }
+                } else {
+                    console.error('Uniforms must be either a float or an array with length 1, 2, 3 or 4');
+                }
+            });
+        }
+        return userUniformUpdateFuncs;
+    }    
 }

@@ -65812,7 +65812,7 @@ function sculptToMinimalRenderer(canvas, source, updateUniforms) {
     throw "sculptToMinimalRenderer requires the source code to be a function, or a string";
   }
 
-  var minimalHeader = "\nprecision highp float;\n#define GLSL_NEED_ROUND\nuniform float w_width;\nuniform float w_height;\nuniform mat4 projectionMatrix;\n#define cameraPosition vec3(0.0,0.0,-1.0)\n#define vUv vec2(0.0)\n#define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)\n";
+  var minimalHeader = "\nprecision highp float;\n#define GLSL_NEED_ROUND\nuniform float w_width;\nuniform float w_height;\nuniform mat4 projectionMatrix;\n#define cameraPosition vec3(0.0,0.0,-2.0)\n#define vUv vec2(0.0)\n#define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)\n";
   var generatedGLSL = sculptToGLSL(source);
   var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + generatedGLSL.stepSizeConstant + ';\n' + sculptureStarterCode + generatedGLSL.geoGLSL + '\n' + generatedGLSL.colorGLSL + '\n' + fragFooter;
 
@@ -65875,6 +65875,7 @@ function sculptToMinimalRenderer(canvas, source, updateUniforms) {
   var mouseloc = gl.getUniformLocation(shaderProgram, "mouse");
   gl.uniform1f(opac, 1.0);
   gl.uniform1f(_scale, 1.0);
+  var userUniformUpdateFuncs = assignUniforms(updateUniforms);
   canvas.addEventListener("mousemove", function (e) {
     var devicePixelRatio = window.devicePixelRatio || 1;
     var canvasX = (e.pageX - canvas.offsetLeft) * devicePixelRatio;
@@ -65883,6 +65884,10 @@ function sculptToMinimalRenderer(canvas, source, updateUniforms) {
   }, false);
 
   function updateDraw() {
+    if (typeof updateUniforms === 'function') {
+      callUniformFuncs(userUniformUpdateFuncs, updateUniforms());
+    }
+
     gl.uniform1f(loc, (Date.now() - oTime) * 0.001);
     var devicePixelRatio = window.devicePixelRatio || 1;
     var wwidth = window.innerWidth * devicePixelRatio;
@@ -65895,7 +65900,74 @@ function sculptToMinimalRenderer(canvas, source, updateUniforms) {
     window.requestAnimationFrame(updateDraw);
   }
 
-  updateDraw();
+  updateDraw(); // loops through a dictionary and calls the function sotred in the value
+
+  function callUniformFuncs(uniformFuncs, updatedUniforms) {
+    if (_typeof(updatedUniforms) !== 'object') {
+      console.error('updateUniforms must be a function that returns a dictionary of uniform names and values');
+      return;
+    }
+
+    Object.entries(uniformFuncs).forEach(function (keys) {
+      var _keys = _slicedToArray(keys, 2),
+          key = _keys[0],
+          uniformUpdateFunc = _keys[1];
+
+      if (key in updatedUniforms) {
+        uniformUpdateFunc(updatedUniforms[key]);
+      }
+    });
+  }
+
+  function assignUniforms(updateUniforms) {
+    if (typeof updateUniforms !== 'function') {
+      console.error('updateUniforms must be a function that returns a dictionary of uniform names and values');
+      return {};
+    }
+
+    var userUniformUpdateFuncs = {};
+    var uniformsDict = updateUniforms();
+
+    if (uniformsDict !== undefined && _typeof(uniformsDict) === 'object') {
+      Object.entries(uniformsDict).forEach(function (keys) {
+        var _keys2 = _slicedToArray(keys, 2),
+            key = _keys2[0],
+            val = _keys2[1];
+
+        var unifLocation = gl.getUniformLocation(shaderProgram, key);
+
+        if (typeof val === 'number') {
+          userUniformUpdateFuncs[key] = function (unif) {
+            return gl.uniform1f(unifLocation, unif);
+          };
+        } else if (Array.isArray(val)) {
+          if (val.length === 1) {
+            userUniformUpdateFuncs[key] = function (unif) {
+              return gl.uniform1f(unifLocation, unif[0]);
+            };
+          } else if (val.length === 2) {
+            userUniformUpdateFuncs[key] = function (unif) {
+              return gl.uniform2iv(unifLocation, unif);
+            };
+          } else if (val.length === 3) {
+            userUniformUpdateFuncs[key] = function (unif) {
+              return gl.uniform3iv(unifLocation, unif);
+            };
+          } else if (val.length === 4) {
+            userUniformUpdateFuncs[key] = function (unif) {
+              return gl.uniform4iv(unifLocation, unif);
+            };
+          } else {
+            console.error('Uniforms must be either a float or an array with length 1, 2, 3 or 4');
+          }
+        } else {
+          console.error('Uniforms must be either a float or an array with length 1, 2, 3 or 4');
+        }
+      });
+    }
+
+    return userUniformUpdateFuncs;
+  }
 }
 
 /**
