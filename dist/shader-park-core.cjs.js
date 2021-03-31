@@ -66017,7 +66017,7 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park version: 0.0.17'); /// Generate code for various targets
+console.log('using shader-park version: 0.0.18'); /// Generate code for various targets
 
 exports.createSculpture = createSculpture;
 exports.createSculptureWithGeometry = createSculptureWithGeometry;

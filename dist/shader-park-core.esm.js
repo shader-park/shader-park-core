@@ -66013,6 +66013,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park version: 0.0.17'); /// Generate code for various targets
+console.log('using shader-park version: 0.0.18'); /// Generate code for various targets
 
 export { createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource };
