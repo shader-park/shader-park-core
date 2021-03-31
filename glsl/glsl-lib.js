@@ -14,10 +14,12 @@ vec3 shade(vec3 p, vec3 normal) {
 export const defaultVertexSource = `
 varying vec4 worldPos;
 //varying vec2 vUv;
+varying vec3 sculptureCenter;
 void main()
 {
     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
     worldPos = modelMatrix*vec4(position,1.0);
+    sculptureCenter = (modelMatrix * vec4(0., 0., 0., 1.)).xyz;
     //vUv = uv;
     gl_Position = projectionMatrix * mvPosition;
 }
@@ -30,20 +32,23 @@ uniform sampler2D msdf;
 
 //varying vec2 vUv;
 varying vec4 worldPos;
+
+
 `;
 
 export const usePBRHeader = '#define USE_PBR\n';
 export const useHemisphereLight = '#define HEMISPHERE_LIGHT\n'
 
 export const sculptureStarterCode = `
+varying vec3 sculptureCenter;
 float surfaceDistance(vec3 p);
 
 const float PI = 3.14159265;
 const float TAU = PI*2.0;
 const float TWO_PI = TAU;
 
-const float max_dist = 4.0;
-const float intersection_threshold = 0.00007;
+const float max_dist = 100.0;
+const float intersection_threshold = 0.00001;
 
 struct Material {
     vec3 albedo;
@@ -496,12 +501,12 @@ vec4 sphericalDistribution( vec3 p, float n )
 
 // Compute intersection of ray and SDF. You probably won't need to modify this.
 float intersect(vec3 ro, vec3 rd, float stepFraction) {
-	float t = 0.0;
+    float t = 0.0;
 	for(int i = 0; i < 300; ++i) {
-		float h = surfaceDistance(ro+rd*t);
+		float h = surfaceDistance((ro+rd*t));
 		if(h < intersection_threshold || t > max_dist) break;
 		t += h*STEP_SIZE_CONSTANT;
-	}
+    }
 	return t;
 }
 
@@ -622,7 +627,7 @@ vec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat) {
 float simpleLighting(vec3 p, vec3 normal, vec3 lightdir) {
     // Simple phong-like shading
     float value = clamp(dot(normal, normalize(lightdir)),0.0, 1.0);
-	return value * 0.3 + 0.7;
+    return value * 0.3 + 0.7;
 }
 
 float specularLighting(vec3 p, vec3 normal, vec3 lightDirection, float shine) {
@@ -657,19 +662,20 @@ float occlusion(vec3 p,vec3 n) {
 export const fragFooter = `
 // For advanced users //
 void main() {
-	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
-	vec3 rayDirection = getRayDirection();
-	rayOrigin -= rayDirection*2.5;
-	float t = intersect(rayOrigin, rayDirection, stepSize);
-	if(t < 2.5) {
-		vec3 p = (rayOrigin + rayDirection*t);
-		//vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0);
-		vec3 normal = calcNormal(p);
+
+    vec3 rayOrigin = (cameraPosition - sculptureCenter) / max(intersection_threshold, _scale);
+    vec3 rayDirection = getRayDirection();
+    float t = intersect(rayOrigin, rayDirection, stepSize);
+    if(t < max_dist) {
+        vec3 p = (rayOrigin + rayDirection*t);
+        //vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0); //could be used to set FragDepth
+        vec3 normal = calcNormal(p);
+        // p *= _scale;
         vec3 col = shade(p, normal);
-		gl_FragColor = vec4(col, opacity);
-		
-	} else {
-		discard;
-	}
+        gl_FragColor = vec4(col, opacity);
+        
+    } else {
+        discard;
+    }
 }
 `;

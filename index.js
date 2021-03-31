@@ -4,7 +4,9 @@ import {
     glslToThreeJSMesh,
     sculptToThreeJSShaderSource,
     sculptToThreeJSMaterial,
-    sculptToThreeJSMesh
+    sculptToThreeJSMesh,
+    createSculpture,
+    createSculptureWithGeometry
 } from './targets/threeJS.js'
 
 import {
@@ -13,11 +15,16 @@ import {
 } from './targets/offlineRenderer.js'
 
 import {
+    sculptToMinimalHTMLRenderer
+} from './targets/minimalHTMLRenderer.js'
+
+import {
     sculptToMinimalRenderer
 } from './targets/minimalRenderer.js'
+
 import {
-    sculptToMinimalGlitchRenderer
-} from './targets/glitchMinimalRenderer.js'
+    sculptToRawSDF4Meshing
+} from './targets/rawSDF4Meshing.js'
 
 import {
     glslToTouchDesignerShaderSource, 
@@ -27,6 +34,8 @@ import {
 import {
     defaultFragSourceGLSL
 } from './glsl/glsl-lib.js'
+
+console.log('using shader-park version: 0.0.17');
 
 /// Generate code for various targets
 
@@ -38,10 +47,13 @@ export {
     sculptToThreeJSShaderSource,
     sculptToThreeJSMaterial,
     sculptToThreeJSMesh,
+    createSculptureWithGeometry,
+    createSculpture,
     glslToOfflineRenderer,
     sculptToOfflineRenderer,
     glslToTouchDesignerShaderSource,
     sculptToTouchDesignerShaderSource,
+    sculptToMinimalHTMLRenderer,
     sculptToMinimalRenderer,
-    sculptToMinimalGlitchRenderer
+    sculptToRawSDF4Meshing
 }

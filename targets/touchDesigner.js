@@ -21,6 +21,8 @@ uniform float uShininess;
 uniform float uShadowStrength;
 uniform vec3 uShadowColor;
 uniform vec3 cameraPosition;
+uniform vec3 sculptureCenter;
+
 
 in Vertex
 {

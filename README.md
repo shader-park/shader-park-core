@@ -1,6 +1,7 @@
 
 Compiles sculpt to threejs/glsl, sculpt-renderer/glsl, unity/hlsl  
  
+[![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)
  
 ### Setup:
 ```npm install```
@@ -8,7 +9,7 @@ or
 ```yarn install```
 
 ### Build:
-```npm build```
+```npm run build```
 or
 ```yarn build```
 
@@ -19,9 +20,9 @@ or
 
 ### CLI usage:  
   
-```npm run toThreeJS my-sculpture.js```  
-or  
-```yarn toOffline my-sculpture.js```  
+```npm run toThreeJS my-sculpture.js```    
+```npm run toOffline my-sculpture.js```    
+```npm run toRawSDF4Meshing my-sculpture.js```    
 
 ### For development with SP website:  
 In shader-park-core repo run
@@ -31,7 +32,7 @@ or
 
 In shader-park-website repo run
 ```npm link shader-park-core```
-or
+or 
 ```yarn link shader-park-core```
 
 ### API usage:  

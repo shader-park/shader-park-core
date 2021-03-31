@@ -141,7 +141,7 @@ function replaceSliderInput(syntaxTree) {
 			
 			let d = syntaxTree['declarations'][0];
 			let name = d.id.name;
-			if (d && d.init && d.init.callee !== undefined && d.init.callee.name === 'input') {
+			if (d && d.init && d.init.callee !== undefined && (d.init.callee.name === 'input' || d.init.callee.name === 'input2D')) {
 				d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
 			}
 		}
@@ -163,7 +163,8 @@ export function baseUniforms() {
 	return [
 		{name:'time', type: 'float', value: 0.0},
 		{name:'opacity', type: 'float', value: 1.0},
-		{name:'sculptureCenter', type: 'vec3', value: [0,0,0]},
+		{name:'_scale', type: 'float', value: 1.0},
+		// {name:'sculptureCenter', type: 'vec3', value: [0,0,0]},
 		{name:'mouse', type: 'vec3', value: [0.5,0.5,0.5]},
 		{name:'stepSize', type: 'float', value: 0.85}
 	];
@@ -542,7 +543,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function getSpace() {
-		return getCurrentState().p;
+		return makeVarWithDims(getCurrentState().p.name, 3);
 	}
 
 	function pushState() {
@@ -822,6 +823,28 @@ export function sculptToGLSL(userProvidedSrc) {
 		uniforms.push({name, type:'float', value, min, max});
 		return new float(name, true);
 	}
+
+
+	
+	function input2D(name, value={x: 0.0, y: 0.0}, min = {x: 0.0, y: 0.0}, max = {x: 1.0, y: 1.0}) {
+		if(typeof value === 'number' && typeof min === 'number' && typeof max === 'object') {
+			// syntax input2D(.2, 1.2);
+			let x = value;
+			let y = min;
+			uniforms.push({name, type:'vec2', value: {x, y}, min: {x:0, y:0}, max: {x:1, y:1} });
+			return new vec2(name, true);
+		}
+		if (typeof value !== 'object' || typeof min !== 'object' || typeof max !== 'object') {
+			compileError('input2D: value, min, and max must be a vec2');
+		} 
+		
+		let xyExist = [value, min, max].reduce((acc, curr) => acc && ('x' in curr) && ('y' in curr));
+		if(!xyExist) {
+			compileError('input2D: value, min, and max must be a vec2');
+		}
+		uniforms.push({name, type:'vec2', value, min, max});
+		return new vec2(name, true);
+	}
 	
 	/*
 	function input2(name, x, y) {
@@ -840,15 +863,21 @@ export function sculptToGLSL(userProvidedSrc) {
 	*/
 
 	let error = undefined;
-	eval( generatedJSFuncsSource + userProvidedSrc );
 	
 	function getSpherical() {
 		return toSpherical(getSpace());	
 	}
 	
+	// Define any code that needs to reference auto generated from bindings.js code here
+	let postGeneratedFunctions = [
+		getSpherical,
+	].map(el => el.toString()).join('\n');
+
+	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
+	
 	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
-
+	
 	return {
 		uniforms: uniforms,
 		stepSizeConstant: stepSizeConstant,
