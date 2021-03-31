@@ -65800,7 +65800,7 @@ function sculptToMinimalHTMLRenderer(spCode) {
  * output - a fully self-contained lightweight html file which renders the sculpture
  **/
 
-function sculptToMinimalRenderer(canvas, source) {
+function sculptToMinimalRenderer(canvas, source, updateUniforms) {
   if (typeof source === "function") {
     source = source.toString();
     source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
