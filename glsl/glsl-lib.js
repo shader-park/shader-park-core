@@ -11,7 +11,7 @@ vec3 shade(vec3 p, vec3 normal) {
 }
 `;
 
-export const defaultVertexSource = `
+export const threeJSVertexSource = `
 varying vec4 worldPos;
 //varying vec2 vUv;
 varying vec3 sculptureCenter;
@@ -25,6 +25,14 @@ void main()
 }
 `;
 
+export const minimalVertexSource = `
+attribute vec3 coordinates;
+varying vec3 sculptureCenter;
+void main(void) {
+     sculptureCenter = vec3(0.0);
+     gl_Position = vec4(coordinates, 1.0);
+}`;
+
 export const threeHeader = `
 #define GLSL_NEED_ROUND
 uniform mat4 projectionMatrix;
@@ -33,11 +41,21 @@ uniform sampler2D msdf;
 //varying vec2 vUv;
 varying vec4 worldPos;
 
+`;
 
+export const minimalHeader = `
+precision highp float;
+#define GLSL_NEED_ROUND
+uniform float w_width;
+uniform float w_height;
+uniform mat4 projectionMatrix;
+#define cameraPosition vec3(0.0,0.0,-2.0)
+#define vUv vec2(0.0)
+#define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)
 `;
 
 export const usePBRHeader = '#define USE_PBR\n';
-export const useHemisphereLight = '#define HEMISPHERE_LIGHT\n'
+export const useHemisphereLight = '#define HEMISPHERE_LIGHT\n';
 
 export const sculptureStarterCode = `
 varying vec3 sculptureCenter;

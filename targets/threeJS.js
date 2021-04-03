@@ -1,6 +1,6 @@
 import {sculptToGLSL, baseUniforms, uniformsToGLSL} from '../generators/sculpt.js'
 import {
-    defaultVertexSource, 
+    threeJSVertexSource, 
     threeHeader,
     usePBRHeader,
     useHemisphereLight,
@@ -24,7 +24,7 @@ export function glslToThreeJSShaderSource(source) {
     return {
         uniforms: baseUniforms(),
         frag: threeHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + fragFooter,
-        vert: defaultVertexSource
+        vert: threeJSVertexSource
     }
 }
 
@@ -58,7 +58,7 @@ export function sculptToThreeJSShaderSource(source) {
     return {
         uniforms: src.uniforms,
         frag: frg,
-        vert: defaultVertexSource,
+        vert: threeJSVertexSource,
         error: src.error,
         geoGLSL: src.geoGLSL,
         colorGLSL: src.colorGLSL

@@ -15,8 +15,10 @@ describe('Compiling, rendering, checking pixels', () => {
 
     const pageX = 400;
     const pageY = 300;
-    const testDir = './examples/'
-    const ouputDir = 'out/';
+    const testSculptDir = 'test/sculptExamples/';
+    const testGLSLDir = 'test/glslExamples/';
+    const outDir = 'test/out/';
+    const libPath = '../../dist/shader-park-core.esm.js';
 
     let browser;
     let server;
@@ -42,46 +44,62 @@ describe('Compiling, rendering, checking pixels', () => {
         browser = await puppeteer.launch();
     });
 
-    testFiles = fs.readdirSync(testDir).map(filePath => {
-        const pieces = filePath.split('.');
-        return pieces[pieces.length - 2];
-    });
-
-    console.log('Testing examples: ', testFiles);
-
-    testFiles.forEach(fileName => {
-        const src = fs.readFileSync(testDir + fileName + '.js').toString();
-        fs.writeFileSync('./' + ouputDir + fileName + '.html', converters.sculptToMinimalHTMLRenderer(src));
-    });
-
-    testFiles.forEach(fname => {
-        it(`Example: '${fname}'`, async () => {
-            await verifyRender(fname);
-        }).timeout(12000);
-        it(`Check pixels '${fname}'`, (done) => {
-            pngJS.decode(`${ouputDir}${fname}.png`, function(pixels) {
-                // pixels is a 1d array (in rgba order) of decoded pixel data
-                let sum = 0;
-                for (const v of pixels) {
-                    sum += v;
-                }
-                const avg = sum/pixels.length;
-                //console.log(`${fname} average pixel value : ${avg}`);
-                assert.isAbove(avg, 2, 'average pixel value is less than 2. This may mean the rendered image is all white/blank.');
-                assert.isBelow(avg, 254, 'average pixel value greater than 254. This may mean the rendering has failed.');
-                done();
-            });
-        });
-    });
-
     after(async () => {
         server.close();
         await browser.close();
-    });  
+    });
 
-    async function verifyRender(fname) {
-        const pagename = `http://localhost:${port}/${ouputDir}${fname}.html`;
-        const outpath = `${ouputDir}${fname}.png`;
+    // Test GLSL minimal renderer
+
+    const glslFiles = generateHTMLFiles(testGLSLDir, outDir, 'glsl', converters.glslToMinimalHTMLRenderer);
+    testExamples(glslFiles, outDir);
+
+    // Test sculpt minimal renderer
+
+    const sculptFiles = generateHTMLFiles(testSculptDir, outDir, 'js', converters.sculptToMinimalHTMLRenderer);
+    testExamples(sculptFiles, outDir);
+
+    function generateHTMLFiles(inputDir, outputDir, fileType, convertFunc) {
+        const testFiles = fs.readdirSync(inputDir).map(filePath => {
+            const pieces = filePath.split('.');
+            return pieces[pieces.length - 2];
+        });
+    
+        console.log(`Testing ${fileType} examples: `, testFiles);
+    
+        testFiles.forEach(fileName => {
+            const src = fs.readFileSync(inputDir + fileName + '.' + fileType).toString();
+            fs.writeFileSync('./' + outputDir + fileName + '.html', convertFunc(src, libPath));
+        });
+
+        return testFiles;
+    }
+
+    function testExamples(files, outputDir) {
+        files.forEach(fname => {
+            it(`Example: '${fname}'`, async () => {
+                await verifyRender(fname, outputDir);
+            }).timeout(12000);
+            it(`Check pixels '${fname}'`, (done) => {
+                pngJS.decode(`${outputDir}${fname}.png`, function(pixels) {
+                    // pixels is a 1d array (in rgba order) of decoded pixel data
+                    let sum = 0;
+                    for (const v of pixels) {
+                        sum += v;
+                    }
+                    const avg = sum/pixels.length;
+                    //console.log(`${fname} average pixel value : ${avg}`);
+                    assert.isAbove(avg, 2, 'average pixel value is less than 2. This may mean the rendered image is all white/blank.');
+                    assert.isBelow(avg, 254, 'average pixel value greater than 254. This may mean the rendering has failed.');
+                    done();
+                });
+            });
+        });
+    }
+
+    async function verifyRender(fname, outputDir) {
+        const pagename = `http://localhost:${port}/${outputDir}${fname}.html`;
+        const outpath = `${outputDir}${fname}.png`;
         const page = await browser.newPage();
         await page.setViewport({ width: pageX, height: pageY });
         const pageErrors = [];
@@ -92,13 +110,22 @@ describe('Compiling, rendering, checking pixels', () => {
         page.on('error', (e) => {
             errors.push(e);
         });
+        const logs = [];
+        page.on('console', (msg) => {
+            logs.push(msg);
+        });
         await page.goto(pagename);
         await page.screenshot({ path: outpath, fullPage: true });
-        for (let perr of pageErrors) {
+        for (const perr of pageErrors) {
             assert.fail(`Page javascript error: ${perr}`);
         }
-        for (let err of errors) {
+        for (const err of errors) {
             assert.fail(`error: ${err}`);
+        }
+        for (const msg of logs) {
+            if (msg.type() === 'error') {
+                assert.fail(`console error: ${msg.text()}`);
+            }
         }
         await page.close();
     }

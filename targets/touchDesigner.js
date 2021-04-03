@@ -1,6 +1,6 @@
 import {sculptToGLSL, baseUniforms, uniformsToGLSL} from '../generators/sculpt.js'
 import {
-    defaultVertexSource, 
+    minimalVertexSource, 
     usePBRHeader,
     useHemisphereLight,
     sculptureStarterCode
@@ -145,7 +145,7 @@ export function glslToTouchDesignerShaderSource(source) {
     return {
         uniforms: baseUniforms(),
         frag: TDHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + TDFooter,
-        vert: defaultVertexSource
+        vert: minimalVertexSource
     }
 }
 
@@ -170,7 +170,7 @@ export function sculptToTouchDesignerShaderSource(source) {
     return {
         uniforms: src.uniforms,
         frag: frg,
-        vert: defaultVertexSource,
+        vert: minimalVertexSource,
         error: src.error,
         geoGLSL: src.geoGLSL,
         colorGLSL: src.colorGLSL

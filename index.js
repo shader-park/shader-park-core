@@ -15,12 +15,14 @@ import {
 } from './targets/offlineRenderer.js'
 
 import {
-    sculptToMinimalHTMLRenderer
-} from './targets/minimalHTMLRenderer.js'
+    sculptToMinimalRenderer,
+    glslToMinimalRenderer
+} from './targets/minimalRenderer.js'
 
 import {
-    sculptToMinimalRenderer
-} from './targets/minimalRenderer.js'
+    sculptToMinimalHTMLRenderer,
+    glslToMinimalHTMLRenderer,
+} from './targets/minimalHTMLRenderer.js'
 
 import {
     sculptToRawSDF4Meshing
@@ -35,7 +37,7 @@ import {
     defaultFragSourceGLSL
 } from './glsl/glsl-lib.js'
 
-console.log('using shader-park version: 0.0.18');
+console.log('using shader-park version: 0.0.19');
 
 /// Generate code for various targets
 
@@ -53,7 +55,9 @@ export {
     sculptToOfflineRenderer,
     glslToTouchDesignerShaderSource,
     sculptToTouchDesignerShaderSource,
-    sculptToMinimalHTMLRenderer,
     sculptToMinimalRenderer,
+    sculptToMinimalHTMLRenderer,
+    glslToMinimalRenderer,
+    glslToMinimalHTMLRenderer,
     sculptToRawSDF4Meshing
 }
