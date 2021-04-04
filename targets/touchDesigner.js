@@ -144,7 +144,7 @@ void main()
 export function glslToTouchDesignerShaderSource(source) {
     return {
         uniforms: baseUniforms(),
-        frag: TDHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + TDFooter,
+        frag: TDHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + 'const int MAX_ITERATIONS = 300;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + TDFooter,
         vert: minimalVertexSource
     }
 }
@@ -160,6 +160,7 @@ export function sculptToTouchDesignerShaderSource(source) {
         + useHemisphereLight
         + uniformsToGLSL(src.uniforms) 
         + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
+		+ 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
         + sculptureStarterCode 
         + src.geoGLSL 
         + '\n' 

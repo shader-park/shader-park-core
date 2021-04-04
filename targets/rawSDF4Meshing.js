@@ -23,6 +23,7 @@ uniform mat4 projectionMatrix;
 #define vUv vec2(0.0)
 #define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)
 #define STEP_SIZE_CONSTANT 0.9
+#define MAX_ITERATIONS 300
 #define stepSize 0.9
 #define mouse vec3(0.0)
 #define time 0.0

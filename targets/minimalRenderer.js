@@ -15,6 +15,7 @@ export function glslToMinimalRenderer(canvas, source, updateUniforms) {
     + useHemisphereLight
     + uniformsToGLSL(baseUniforms()) 
     + 'const float STEP_SIZE_CONSTANT = 0.9;\n'
+    + 'const int MAX_ITERATIONS = 300;\n'
     + sculptureStarterCode 
     + source
     + fragFooter;
@@ -41,6 +42,7 @@ export function sculptToMinimalRenderer(canvas, source, updateUniforms) {
         + useHemisphereLight
         + uniformsToGLSL(generatedGLSL.uniforms) 
         + 'const float STEP_SIZE_CONSTANT = ' + generatedGLSL.stepSizeConstant + ';\n'
+        + 'const int MAX_ITERATIONS = ' + generatedGLSL.maxIterations + ';\n'
         + sculptureStarterCode 
         + generatedGLSL.geoGLSL 
         + '\n' 
@@ -121,7 +123,7 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
 
     const userUniformUpdateFuncs = assignUniforms(updateUniforms);
 
-    canvas.addEventListener("mousemove", function(e) {
+    canvas.addEventListener("pointermove", function(e) {
         const devicePixelRatio = window.devicePixelRatio || 1;
         const canvasX = (e.pageX - canvas.offsetLeft) * devicePixelRatio;
         const canvasY = (e.pageY - canvas.offsetTop) * devicePixelRatio;

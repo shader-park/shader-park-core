@@ -196,6 +196,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	let uniforms = baseUniforms();
 
 	let stepSizeConstant = 0.85;
+	let maxIterations = 300;
 
 	////////////////////////////////////////////////////////////
 	// Generates JS from headers referenced in the bindings.js
@@ -284,6 +285,13 @@ export function sculptToGLSL(userProvidedSrc) {
 			compileError("setGeometryQuality accepts only a constant number between 0 and 100. Was given: '" + val.type + "'");
 		}
 		stepSizeConstant = 1-0.01*val*0.995;
+	}
+
+	function setMaxIterations(val) {
+		if (typeof val !== 'number' || val < 0) {
+			compileError("setMaxIterations accepts only a constant number >= 0. Was given: '" + val.type + "'");
+		}
+		maxIterations = val;
 	}
 
 	function getCurrentState() {
@@ -881,6 +889,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	return {
 		uniforms: uniforms,
 		stepSizeConstant: stepSizeConstant,
+		maxIterations: maxIterations,
 		geoGLSL: geoFinal,
 		colorGLSL: colorFinal,
 		error: error

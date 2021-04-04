@@ -50,6 +50,7 @@ export function sculptToOfflineRenderer(source) {
     //console.log(filteredStarter);
     return cppHeader + glslToGLM(
         'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + 'f;\n' 
+        + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
         + sculptureStarterCode 
         + src.geoGLSL 
         + src.colorGLSL) 
