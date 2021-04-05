@@ -291,7 +291,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		if (typeof val !== 'number' || val < 0) {
 			compileError("setMaxIterations accepts only a constant number >= 0. Was given: '" + val.type + "'");
 		}
-		maxIterations = val;
+		maxIterations = Math.round(val);
 	}
 
 	function getCurrentState() {
