@@ -520,8 +520,7 @@ vec4 sphericalDistribution( vec3 p, float n )
 // Compute intersection of ray and SDF. You probably won't need to modify this.
 float intersect(vec3 ro, vec3 rd, float stepFraction) {
     float t = 0.0;
-	for(int i = 0; i < 400; ++i) {
-        if(i >= MAX_ITERATIONS) break;
+	for(int i = 0; i < MAX_ITERATIONS; ++i) {
 		float h = surfaceDistance((ro+rd*t));
 		if(h < intersection_threshold || t > max_dist) break;
 		t += h*STEP_SIZE_CONSTANT;
