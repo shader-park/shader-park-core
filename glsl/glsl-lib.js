@@ -589,7 +589,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 }
 
 // adapted from https://learnopengl.com/PBR/Lighting
-vec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat) {
+vec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat, vec3 backgroundColor) {
 
     vec3 V = -getRayDirection();
     vec3 F0 = vec3(0.04); 
@@ -632,8 +632,7 @@ vec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat) {
     /// there should probably be a way to disable it //
     float lt = 1.0-max(dot(N,V),0.0);
     lt = pow(lt,6.0);
-    vec3 background = vec3(1.0,1.0,1.0);
-    color += 16.0*lt*(0.2+mat.albedo)*mat.metallic*background*(1.3-mat.roughness);
+    color += 16.0*lt*(0.2+mat.albedo)*mat.metallic*backgroundColor*(1.3-mat.roughness);
     ///
     
     color = color / (color + vec3(1.0));

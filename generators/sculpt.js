@@ -31,6 +31,7 @@ vec3 shade(vec3 p, vec3 normal) {
     float d = 100.0;
     vec3 op = p;
 	vec3 lightDirection = vec3(0.0, 1.0, 0.0);
+	vec3 backgroundColor = vec3(1.0, 1.0, 1.0);
 	vec3 mouseIntersect = vec3(0.0,1.0,0.0);
 	#ifdef USE_PBR
 	Material material = Material(vec3(1.0),0.5,0.7,1.0);
@@ -48,10 +49,11 @@ ${lgt}
 		worldPos.xyz,
 		normal,
 		lightDirection,
-		scope_0_material
+		scope_0_material,
+		backgroundColor
 		);
 	#else
-	return scope_0_material.albedo*simpleLighting(p, normal, lightDirection);*occ;
+	return scope_0_material.albedo*simpleLighting(p, normal, lightDirection, );*occ;
 	#endif
 }`;
 }
@@ -803,6 +805,19 @@ export function sculptToGLSL(userProvidedSrc) {
 				+ collapseToString(z) + ");\n");
 		}
 	}
+
+	function backgroundColor(x, y, z) {
+		if (y === undefined || z === undefined) {
+			appendColorSource("backgroundColor = " + collapseToString(x) + ";\n");
+		} else {
+			ensureScalar("backgroundColor", x);
+			ensureScalar("backgroundColor", y);
+			ensureScalar("backgroundColor", z);
+			appendColorSource("backgroundColor = vec3( " + collapseToString(x) + ", "
+				+ collapseToString(y) + ", "
+				+ collapseToString(z) + ");\n");
+		}
+	}
 	// should this also be 'op'? 
 	function noLighting() {
 		useLighting = false;
@@ -852,6 +867,10 @@ export function sculptToGLSL(userProvidedSrc) {
 		}
 		uniforms.push({name, type:'vec2', value, min, max});
 		return new vec2(name, true);
+	}
+
+	function getFragCoord() {
+		return makeVarWithDims('gl_fragCoord', 3);
 	}
 	
 	/*
