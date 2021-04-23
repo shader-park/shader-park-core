@@ -16614,11 +16614,10 @@ function sculptToGLSL(userProvidedSrc) {
       max: max
     });
     return new vec2(name, true);
-  }
+  } // function getFragCoord() {
+  // 	return makeVarWithDims('gl_fragCoord', 3);
+  // }
 
-  function getFragCoord() {
-    return makeVarWithDims('gl_fragCoord', 3);
-  }
   /*
   function input2(name, x, y) {
   	console.log('input2',name, x, y);
