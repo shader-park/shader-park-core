@@ -12,7 +12,7 @@ import {
 import * as escodegen from 'escodegen';
 import * as esprima from 'esprima';
 
-function buildGeoSource(geo) {
+function buildGeoSource(geo, enable2DFlag) {
 	return `
 float surfaceDistance(vec3 p) {
 	vec3 normal = vec3(0.0,1.0,0.0);
@@ -20,6 +20,7 @@ float surfaceDistance(vec3 p) {
     float d = 100.0;
     vec3 op = p;
 ${geo}
+${enable2DFlag? '':'d = 0.0;'}
     return scope_0_d;
 }`;
 }
@@ -168,7 +169,8 @@ export function baseUniforms() {
 		{name:'_scale', type: 'float', value: 1.0},
 		// {name:'sculptureCenter', type: 'vec3', value: [0,0,0]},
 		{name:'mouse', type: 'vec3', value: [0.5,0.5,0.5]},
-		{name:'stepSize', type: 'float', value: 0.85}
+		{name:'stepSize', type: 'float', value: 0.85},
+		{name:'resolution', type: 'vec2', value: [800, 600]}
 	];
 }
 
@@ -194,6 +196,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	let primCount = 0;
 	let stateCount = 0;
 	let useLighting = true;
+	let enable2DFlag = false;
 	let stateStack = [];
 	let uniforms = baseUniforms();
 
@@ -872,7 +875,24 @@ export function sculptToGLSL(userProvidedSrc) {
 	function getPixelCoord() {
 		return makeVarWithDims('gl_FragCoord.xy', 2, true);
 	}
-	
+
+	function getResolution() {
+		return makeVarWithDims('resolution', 2, true);
+	}
+
+	function get2DCoords() {
+		return makeVarWithDims('vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)', 2, false)
+	}
+
+	function enable2D() {
+		setMaxIterations(0);
+		noLighting();
+		enable2DFlag = true;
+		return get2DCoords();
+	}
+
+
+
 	/*
 	function input2(name, x, y) {
 		console.log('input2',name, x, y);
@@ -890,7 +910,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	*/
 
 	let error = undefined;
-	
+
 	function getSpherical() {
 		return toSpherical(getSpace());	
 	}
@@ -902,8 +922,9 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
 	
-	let geoFinal = buildGeoSource(geoSrc);
+	let geoFinal = buildGeoSource(geoSrc, enable2DFlag);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
+
 	
 	return {
 		uniforms: uniforms,

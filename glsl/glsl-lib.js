@@ -46,12 +46,10 @@ varying vec4 worldPos;
 export const minimalHeader = `
 precision highp float;
 #define GLSL_NEED_ROUND
-uniform float w_width;
-uniform float w_height;
 uniform mat4 projectionMatrix;
 #define cameraPosition vec3(0.0,0.0,-2.0)
 #define vUv vec2(0.0)
-#define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)
+#define worldPos vec4(vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)*1.75,0.0,0.0)
 `;
 
 export const usePBRHeader = '#define USE_PBR\n';

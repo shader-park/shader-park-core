@@ -114,8 +114,7 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
     const oTime = Date.now();
     const loc = gl.getUniformLocation(shaderProgram, "time");
     const _scale = gl.getUniformLocation(shaderProgram, "_scale");
-    const wloc = gl.getUniformLocation(shaderProgram, "w_width");
-    const hloc = gl.getUniformLocation(shaderProgram, "w_height");
+    const resolution = gl.getUniformLocation(shaderProgram, "resolution");
     const opac = gl.getUniformLocation(shaderProgram, "opacity");
     const mouseloc = gl.getUniformLocation(shaderProgram, "mouse");
     gl.uniform1f(opac,1.0);
@@ -138,8 +137,7 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
         const devicePixelRatio = window.devicePixelRatio || 1;
         const wwidth = window.innerWidth*devicePixelRatio;
         const wheight = window.innerHeight*devicePixelRatio;
-        gl.uniform1f(wloc, wwidth);
-        gl.uniform1f(hloc, wheight);
+        gl.uniform2fv(resolution, [wwidth, wheight]);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.viewport(0,0,canvas.width,canvas.height);
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT,0);
