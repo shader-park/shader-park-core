@@ -16622,8 +16622,8 @@
       return new vec2(name, true);
     }
 
-    function getFragCoord() {
-      return makeVarWithDims('gl_fragCoord', 3, true);
+    function getPixelCoord() {
+      return makeVarWithDims('gl_FragCoord.xy', 2, true);
     }
     /*
     function input2(name, x, y) {
