@@ -12,7 +12,7 @@ import {
 import * as escodegen from 'escodegen';
 import * as esprima from 'esprima';
 
-function buildGeoSource(geo, enable2DFlag) {
+function buildGeoSource(geo) {
 	return `
 float surfaceDistance(vec3 p) {
 	vec3 normal = vec3(0.0,1.0,0.0);
@@ -20,7 +20,6 @@ float surfaceDistance(vec3 p) {
     float d = 100.0;
     vec3 op = p;
 ${geo}
-${enable2DFlag? '':'d = 0.0;'}
     return scope_0_d;
 }`;
 }
@@ -919,10 +918,13 @@ export function sculptToGLSL(userProvidedSrc) {
 	let postGeneratedFunctions = [
 		getSpherical,
 	].map(el => el.toString()).join('\n');
-
-	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
 	
-	let geoFinal = buildGeoSource(geoSrc, enable2DFlag);
+	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc );
+	
+	if(enable2DFlag) {
+		setSDF(0);
+	}
+	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
 
 	

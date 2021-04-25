@@ -15656,8 +15656,8 @@
 
   var esprima$1 = /*@__PURE__*/getDefaultExportFromCjs(esprima);
 
-  function buildGeoSource(geo, enable2DFlag) {
-    return "\nfloat surfaceDistance(vec3 p) {\n\tvec3 normal = vec3(0.0,1.0,0.0);\n\tvec3 mouseIntersect = vec3(0.0,1.0,0.0);\n    float d = 100.0;\n    vec3 op = p;\n".concat(geo, "\n").concat(enable2DFlag ? '' : 'd = 0.0;', "\n    return scope_0_d;\n}");
+  function buildGeoSource(geo) {
+    return "\nfloat surfaceDistance(vec3 p) {\n\tvec3 normal = vec3(0.0,1.0,0.0);\n\tvec3 mouseIntersect = vec3(0.0,1.0,0.0);\n    float d = 100.0;\n    vec3 op = p;\n".concat(geo, "\n    return scope_0_d;\n}");
   }
 
   function buildColorSource(col, useLighting) {
@@ -16673,7 +16673,12 @@
       return el.toString();
     }).join('\n');
     eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
-    var geoFinal = buildGeoSource(geoSrc, enable2DFlag);
+
+    if (enable2DFlag) {
+      setSDF(0);
+    }
+
+    var geoFinal = buildGeoSource(geoSrc);
     var colorFinal = buildColorSource(colorSrc, useLighting);
     return {
       uniforms: uniforms,
@@ -66083,7 +66088,7 @@
     };
   }
 
-  console.log('using shader-park version: 0.0.21'); /// Generate code for various targets
+  console.log('using shader-park version: 0.0.23'); /// Generate code for various targets
 
   exports.createSculpture = createSculpture;
   exports.createSculptureWithGeometry = createSculptureWithGeometry;
