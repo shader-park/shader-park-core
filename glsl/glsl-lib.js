@@ -40,13 +40,14 @@ uniform sampler2D msdf;
 
 //varying vec2 vUv;
 varying vec4 worldPos;
-
+varying vec3 sculptureCenter;
 `;
 
 export const minimalHeader = `
 precision highp float;
 #define GLSL_NEED_ROUND
 uniform mat4 projectionMatrix;
+varying vec3 sculptureCenter;
 #define cameraPosition vec3(0.0,0.0,-2.0)
 #define vUv vec2(0.0)
 #define worldPos vec4(vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)*1.75,0.0,0.0)
@@ -56,7 +57,6 @@ export const usePBRHeader = '#define USE_PBR\n';
 export const useHemisphereLight = '#define HEMISPHERE_LIGHT\n';
 
 export const sculptureStarterCode = `
-varying vec3 sculptureCenter;
 float surfaceDistance(vec3 p);
 
 const float PI = 3.14159265;

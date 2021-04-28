@@ -21,7 +21,7 @@ uniform float uShininess;
 uniform float uShadowStrength;
 uniform vec3 uShadowColor;
 uniform vec3 cameraPosition;
-uniform vec3 sculptureCenter;
+
 
 in Vertex
 {
@@ -29,7 +29,10 @@ in Vertex
 	vec3 worldSpacePos;
 	vec3 worldSpaceNorm;
 	flat int cameraIndex;
+	vec3 sculptureCenter;
 } iVert;
+
+#define sculptureCenter iVert.sculptureCenter;
 #define GLSL_NEED_ROUND
 #define worldPos iVert.worldSpacePos
 layout(location = 0) out vec4 oFragColor[TD_NUM_COLOR_BUFFERS];

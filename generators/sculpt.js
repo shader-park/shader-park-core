@@ -880,7 +880,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function get2DCoords() {
-		return makeVarWithDims('vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)', 2, false)
+		return makeVarWithDims('vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)', 2, false);
 	}
 
 	function enable2D() {
