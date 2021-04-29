@@ -36,6 +36,7 @@ in Vertex
 #define GLSL_NEED_ROUND
 #define worldPos iVert.worldSpacePos
 layout(location = 0) out vec4 oFragColor[TD_NUM_COLOR_BUFFERS];
+out float depthTexture;
 `;
 
 let TDFooter = `
@@ -123,6 +124,7 @@ void main()
 	vec3 rayDirection = getRayDirection();
 	rayOrigin -= rayDirection*2.0;
 	float t = intersect(rayOrigin, rayDirection, stepSize);
+	depthTexture = t;
 	if(t < 2.5) {
 		vec3 p = (rayOrigin + rayDirection*t);
 		vec3 normal = calcNormal(p);
