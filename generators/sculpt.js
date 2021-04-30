@@ -204,6 +204,41 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	////////////////////////////////////////////////////////////
 	// Generates JS from headers referenced in the bindings.js
+
+	//
+	function box(arg_0, arg_1, arg_2) {
+		if(arg_1 !== undefined) {
+			ensureScalar('box', arg_0);
+			ensureScalar('box', arg_1);
+			ensureScalar('box', arg_2);
+			applyMode(`box(${getCurrentState().p}, ${collapseToString(arg_0)}, ${collapseToString(arg_1)}, ${collapseToString(arg_2)})`);
+		} else if (arg_0.type === 'vec3') {
+			applyMode(`box(${getCurrentState().p}, ${collapseToString(arg_0)})`);
+		} else {
+			compileError("'box' accepts either an x, y, z, or a vec3");
+		}
+	}
+
+	function torus(arg_0, arg_1) {
+		overloadVec2GeomFunc('torus', arg_0, arg_1);
+	}
+
+	function cylinder(arg_0, arg_1) {
+		overloadVec2GeomFunc('cylinder', arg_0, arg_1);
+	}
+
+	function overloadVec2GeomFunc(funcName, arg_0, arg_1) {
+		if(arg_1 !== undefined) {
+			ensureScalar(funcName, arg_0);
+			ensureScalar(funcName, arg_1);
+			applyMode(`${funcName}(${getCurrentState().p}, ${collapseToString(arg_0)}, ${collapseToString(arg_1)})`);
+		} else if (arg_0.type === 'vec2') {
+			applyMode(`${funcName}(${getCurrentState().p}, ${collapseToString(arg_0)})`);
+		} else {
+			compileError(`'${funcName}' accepts either an x, y or a vec2`);
+		}
+	}
+
 	let primitivesJS = "";
 	for (let [funcName, body] of Object.entries(geometryFunctions)) {
 		let argList = body['args'];
@@ -253,7 +288,33 @@ export function sculptToGLSL(userProvidedSrc) {
 			}
 			wrapperSrc += "\")\", " + returnType + ");\n}\n";
 		}
+		
 		return wrapperSrc;
+		
+	}
+
+	function mix(arg_0, arg_1, arg_2) {
+		ensureSameDims('mix', arg_0, arg_1);
+		if (arg_2.dims !== 1 && arg_2.dims !== arg_0.dims) {
+			compileError(`'mix' third argument must be float or match dim of first args`);
+		}
+		ensureScalar('mix', arg_2);
+		arg_0 = tryMakeNum(arg_0);
+		arg_1 = tryMakeNum(arg_1);
+		arg_2 = tryMakeNum(arg_2);
+		return new makeVarWithDims(`mix(${arg_0}, ${arg_1}, ${arg_2})`, arg_0.dims);
+	}
+
+
+	function ensureSameDims(funcName, ...args) {
+		let dims = args.map(arg => arg.dim);
+		const initialDim = dims[0];
+		for(let i = 1; i < dims.length; i++) {
+			let next = dims[i];
+			if(initialDim !== next) {
+				compileError(`'${funcName}' argument dimensions do not match`);
+			}
+		}
 	}
 
 	let mathFunctionsJS = generateGLSLWrapper(mathFunctions);

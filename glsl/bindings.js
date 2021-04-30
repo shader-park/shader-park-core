@@ -4,9 +4,6 @@
 export const geometryFunctions = {
     sphere: { args: [1] },
     line: { args: [3,3,1] },
-    box: { args: [1,1,1] },
-    torus: { args: [1,1] },
-    cylinder: { args: [1,1] },
     cone: { args: [1,1] },
     roundCone: { args: [3,3,1,1] },
     plane: { args: [1,1,1,1] },
@@ -58,7 +55,6 @@ export const glslBuiltInOther = {
     max: { args: [1,1], ret:1 },
     atan: { args: [1,1], ret:1 },
     clamp: { args: [1,1,1], ret:1 },
-    mix: { args: [1,1,1], ret:1 },
     step: { args: [1, 1], ret: 1 },
     smoothstep: { args: [1,1,1], ret:1 },
     // also overload length for vec3 and vec2?
@@ -70,3 +66,7 @@ export const glslBuiltInOther = {
     reflect: { args: [3,3], ret:3 },
     refract: { args: [3,3], ret:3 },
 };
+
+// let arg = {
+//     'mix' : (a, b, c) => (a.dim === b.dim && (c.dim === 1 || c.dim === a.dim))? a.dim: -1,
+// };

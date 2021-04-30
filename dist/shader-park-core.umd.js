@@ -1680,15 +1680,6 @@
     line: {
       args: [3, 3, 1]
     },
-    box: {
-      args: [1, 1, 1]
-    },
-    torus: {
-      args: [1, 1]
-    },
-    cylinder: {
-      args: [1, 1]
-    },
     cone: {
       args: [1, 1]
     },
@@ -1783,10 +1774,6 @@
       args: [1, 1, 1],
       ret: 1
     },
-    mix: {
-      args: [1, 1, 1],
-      ret: 1
-    },
     step: {
       args: [1, 1],
       ret: 1
@@ -1824,7 +1811,9 @@
       args: [3, 3],
       ret: 3
     }
-  };
+  }; // let arg = {
+  //     'mix' : (a, b, c) => (a.dim === b.dim && (c.dim === 1 || c.dim === a.dim))? a.dim: -1,
+  // };
 
   var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -15840,6 +15829,40 @@
     var stepSizeConstant = 0.85;
     var maxIterations = 300; ////////////////////////////////////////////////////////////
     // Generates JS from headers referenced in the bindings.js
+    //
+
+    function box(arg_0, arg_1, arg_2) {
+      if (arg_1 !== undefined) {
+        ensureScalar('box', arg_0);
+        ensureScalar('box', arg_1);
+        ensureScalar('box', arg_2);
+        applyMode("box(".concat(getCurrentState().p, ", ").concat(collapseToString(arg_0), ", ").concat(collapseToString(arg_1), ", ").concat(collapseToString(arg_2), ")"));
+      } else if (arg_0.type === 'vec3') {
+        applyMode("box(".concat(getCurrentState().p, ", ").concat(collapseToString(arg_0), ")"));
+      } else {
+        compileError("'box' accepts either an x, y, z, or a vec3");
+      }
+    }
+
+    function torus(arg_0, arg_1) {
+      overloadVec2GeomFunc('torus', arg_0, arg_1);
+    }
+
+    function cylinder(arg_0, arg_1) {
+      overloadVec2GeomFunc('cylinder', arg_0, arg_1);
+    }
+
+    function overloadVec2GeomFunc(funcName, arg_0, arg_1) {
+      if (arg_1 !== undefined) {
+        ensureScalar(funcName, arg_0);
+        ensureScalar(funcName, arg_1);
+        applyMode("".concat(funcName, "(").concat(getCurrentState().p, ", ").concat(collapseToString(arg_0), ", ").concat(collapseToString(arg_1), ")"));
+      } else if (arg_0.type === 'vec2') {
+        applyMode("".concat(funcName, "(").concat(getCurrentState().p, ", ").concat(collapseToString(arg_0), ")"));
+      } else {
+        compileError("'".concat(funcName, "' accepts either an x, y or a vec2"));
+      }
+    }
 
     var primitivesJS = "";
 
@@ -15937,6 +15960,39 @@
       }
 
       return wrapperSrc;
+    }
+
+    function mix(arg_0, arg_1, arg_2) {
+      ensureSameDims('mix', arg_0, arg_1);
+
+      if (arg_2.dims !== 1 && arg_2.dims !== arg_0.dims) {
+        compileError("'mix' third argument must be float or match dim of first args");
+      }
+
+      ensureScalar('mix', arg_2);
+      arg_0 = tryMakeNum(arg_0);
+      arg_1 = tryMakeNum(arg_1);
+      arg_2 = tryMakeNum(arg_2);
+      return new makeVarWithDims("mix(".concat(arg_0, ", ").concat(arg_1, ", ").concat(arg_2, ")"), arg_0.dims);
+    }
+
+    function ensureSameDims(funcName) {
+      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        args[_key - 1] = arguments[_key];
+      }
+
+      var dims = args.map(function (arg) {
+        return arg.dim;
+      });
+      var initialDim = dims[0];
+
+      for (var i = 1; i < dims.length; i++) {
+        var next = dims[i];
+
+        if (initialDim !== next) {
+          compileError("'".concat(funcName, "' argument dimensions do not match"));
+        }
+      }
     }
 
     var mathFunctionsJS = generateGLSLWrapper(mathFunctions);
@@ -66061,8 +66117,8 @@
    *  TODO: make these materials 'plug in' to Touch Designer's ' PBR lighting model.
    */
 
-  var TDHeader = "\nuniform vec4 uDiffuseColor;\nuniform vec4 uAmbientColor;\nuniform vec3 uSpecularColor;\nuniform float uShininess;\nuniform float uShadowStrength;\nuniform vec3 uShadowColor;\nuniform vec3 cameraPosition;\n\n\nin Vertex\n{\n\tvec4 color;\n\tvec3 worldSpacePos;\n\tvec3 worldSpaceNorm;\n\tflat int cameraIndex;\n\tvec3 sculptureCenter;\n} iVert;\n\n#define sculptureCenter iVert.sculptureCenter;\n#define GLSL_NEED_ROUND\n#define worldPos iVert.worldSpacePos\nlayout(location = 0) out vec4 oFragColor[TD_NUM_COLOR_BUFFERS];\n";
-  var TDFooter = "\nvoid main()\n{\n\t// This allows things such as order independent transparency\n\t// and Dual-Paraboloid rendering to work properly\n\tTDCheckDiscard();\n\n\tvec4 outcol = vec4(0.0, 0.0, 0.0, 0.0);\n\tvec3 diffuseSum = vec3(0.0, 0.0, 0.0);\n\tvec3 specularSum = vec3(0.0, 0.0, 0.0);\n\n\tvec3 worldSpaceNorm = normalize(iVert.worldSpaceNorm.xyz);\n\tvec3 normal = normalize(worldSpaceNorm.xyz);\n\n\tvec3 viewVec = normalize(uTDMats[iVert.cameraIndex].camInverse[3].xyz - iVert.worldSpacePos.xyz );\n\n\t// Flip the normals on backfaces\n\t// On most GPUs this function just return gl_FrontFacing.\n\t// However, some Intel GPUs on macOS have broken gl_FrontFacing behavior.\n\t// When one of those GPUs is detected, an alternative way\n\t// of determing front-facing is done using the position\n\t// and normal for this pixel.\n\tif (!TDFrontFacing(iVert.worldSpacePos.xyz, worldSpaceNorm.xyz))\n\t{\n\t\tnormal = -normal;\n\t}\n\n\t// Your shader will be recompiled based on the number\n\t// of lights in your scene, so this continues to work\n\t// even if you change your lighting setup after the shader\n\t// has been exported from the Phong MAT\n\tfor (int i = 0; i < TD_NUM_LIGHTS; i++)\n\t{\n\t\tvec3 diffuseContrib = vec3(0);\n\t\tvec3 specularContrib = vec3(0);\n\t\tTDLighting(diffuseContrib,\n\t\t\tspecularContrib,\n\t\t\ti,\n\t\t\tiVert.worldSpacePos.xyz,\n\t\t\tnormal,\n\t\t\tuShadowStrength, uShadowColor,\n\t\t\tviewVec,\n\t\t\tuShininess);\n\t\tdiffuseSum += diffuseContrib;\n\t\tspecularSum += specularContrib;\n\t}\n\n\t// Final Diffuse Contribution\n\tdiffuseSum *= uDiffuseColor.rgb * iVert.color.rgb;\n\tvec3 finalDiffuse = diffuseSum;\n\toutcol.rgb += finalDiffuse;\n\n\t// Final Specular Contribution\n\tvec3 finalSpecular = vec3(0.0);\n\tspecularSum *= uSpecularColor;\n\tfinalSpecular += specularSum;\n\n\toutcol.rgb += finalSpecular;\n\n\t// Ambient Light Contribution\n\toutcol.rgb += vec3(uTDGeneral.ambientColor.rgb * uAmbientColor.rgb * iVert.color.rgb);\n\n\n\t// Apply fog, this does nothing if fog is disabled\n\toutcol = TDFog(outcol, iVert.worldSpacePos.xyz, iVert.cameraIndex);\n\n\t// Alpha Calculation\n\tfloat alpha = uDiffuseColor.a * iVert.color.a ;\n\n\t// Dithering, does nothing if dithering is disabled\n\toutcol = TDDither(outcol);\n\n\toutcol.rgb *= alpha;\n\n\t// Modern GL removed the implicit alpha test, so we need to apply\n\t// it manually here. This function does nothing if alpha test is disabled.\n\tTDAlphaTest(alpha);\n\n\toutcol.a = alpha;\n\t//oFragColor[0] = TDOutputSwizzle(outcol);\n\n\tvec3 rayOrigin = worldPos.xyz-sculptureCenter;\n\tvec3 rayDirection = getRayDirection();\n\trayOrigin -= rayDirection*2.0;\n\tfloat t = intersect(rayOrigin, rayDirection, stepSize);\n\tif(t < 2.5) {\n\t\tvec3 p = (rayOrigin + rayDirection*t);\n\t\tvec3 normal = calcNormal(p);\n\t\tvec3 c = shade(p, normal);\n\t\toFragColor[0] = TDOutputSwizzle(vec4(c, 1.0));\n\t\t\n\t} else {\n\t\tdiscard;\n\t}\n\n\t// TD_NUM_COLOR_BUFFERS will be set to the number of color buffers\n\t// active in the render. By default we want to output zero to every\n\t// buffer except the first one.\n\tfor (int i = 1; i < TD_NUM_COLOR_BUFFERS; i++)\n\t{\n\t\toFragColor[i] = vec4(0.0);\n\t}\n}\n";
+  var TDHeader = "\nuniform vec4 uDiffuseColor;\nuniform vec4 uAmbientColor;\nuniform vec3 uSpecularColor;\nuniform float uShininess;\nuniform float uShadowStrength;\nuniform vec3 uShadowColor;\nuniform vec3 cameraPosition;\n\n\nin Vertex\n{\n\tvec4 color;\n\tvec3 worldSpacePos;\n\tvec3 worldSpaceNorm;\n\tflat int cameraIndex;\n\tvec3 sculptureCenter;\n} iVert;\n\n#define sculptureCenter iVert.sculptureCenter;\n#define GLSL_NEED_ROUND\n#define worldPos iVert.worldSpacePos\nlayout(location = 0) out vec4 oFragColor[TD_NUM_COLOR_BUFFERS];\nout float depthTexture;\n";
+  var TDFooter = "\nvoid main()\n{\n\t// This allows things such as order independent transparency\n\t// and Dual-Paraboloid rendering to work properly\n\tTDCheckDiscard();\n\n\tvec4 outcol = vec4(0.0, 0.0, 0.0, 0.0);\n\tvec3 diffuseSum = vec3(0.0, 0.0, 0.0);\n\tvec3 specularSum = vec3(0.0, 0.0, 0.0);\n\n\tvec3 worldSpaceNorm = normalize(iVert.worldSpaceNorm.xyz);\n\tvec3 normal = normalize(worldSpaceNorm.xyz);\n\n\tvec3 viewVec = normalize(uTDMats[iVert.cameraIndex].camInverse[3].xyz - iVert.worldSpacePos.xyz );\n\n\t// Flip the normals on backfaces\n\t// On most GPUs this function just return gl_FrontFacing.\n\t// However, some Intel GPUs on macOS have broken gl_FrontFacing behavior.\n\t// When one of those GPUs is detected, an alternative way\n\t// of determing front-facing is done using the position\n\t// and normal for this pixel.\n\tif (!TDFrontFacing(iVert.worldSpacePos.xyz, worldSpaceNorm.xyz))\n\t{\n\t\tnormal = -normal;\n\t}\n\n\t// Your shader will be recompiled based on the number\n\t// of lights in your scene, so this continues to work\n\t// even if you change your lighting setup after the shader\n\t// has been exported from the Phong MAT\n\tfor (int i = 0; i < TD_NUM_LIGHTS; i++)\n\t{\n\t\tvec3 diffuseContrib = vec3(0);\n\t\tvec3 specularContrib = vec3(0);\n\t\tTDLighting(diffuseContrib,\n\t\t\tspecularContrib,\n\t\t\ti,\n\t\t\tiVert.worldSpacePos.xyz,\n\t\t\tnormal,\n\t\t\tuShadowStrength, uShadowColor,\n\t\t\tviewVec,\n\t\t\tuShininess);\n\t\tdiffuseSum += diffuseContrib;\n\t\tspecularSum += specularContrib;\n\t}\n\n\t// Final Diffuse Contribution\n\tdiffuseSum *= uDiffuseColor.rgb * iVert.color.rgb;\n\tvec3 finalDiffuse = diffuseSum;\n\toutcol.rgb += finalDiffuse;\n\n\t// Final Specular Contribution\n\tvec3 finalSpecular = vec3(0.0);\n\tspecularSum *= uSpecularColor;\n\tfinalSpecular += specularSum;\n\n\toutcol.rgb += finalSpecular;\n\n\t// Ambient Light Contribution\n\toutcol.rgb += vec3(uTDGeneral.ambientColor.rgb * uAmbientColor.rgb * iVert.color.rgb);\n\n\n\t// Apply fog, this does nothing if fog is disabled\n\toutcol = TDFog(outcol, iVert.worldSpacePos.xyz, iVert.cameraIndex);\n\n\t// Alpha Calculation\n\tfloat alpha = uDiffuseColor.a * iVert.color.a ;\n\n\t// Dithering, does nothing if dithering is disabled\n\toutcol = TDDither(outcol);\n\n\toutcol.rgb *= alpha;\n\n\t// Modern GL removed the implicit alpha test, so we need to apply\n\t// it manually here. This function does nothing if alpha test is disabled.\n\tTDAlphaTest(alpha);\n\n\toutcol.a = alpha;\n\t//oFragColor[0] = TDOutputSwizzle(outcol);\n\n\tvec3 rayOrigin = worldPos.xyz-sculptureCenter;\n\tvec3 rayDirection = getRayDirection();\n\trayOrigin -= rayDirection*2.0;\n\tfloat t = intersect(rayOrigin, rayDirection, stepSize);\n\tdepthTexture = t;\n\tif(t < 2.5) {\n\t\tvec3 p = (rayOrigin + rayDirection*t);\n\t\tvec3 normal = calcNormal(p);\n\t\tvec3 c = shade(p, normal);\n\t\toFragColor[0] = TDOutputSwizzle(vec4(c, 1.0));\n\t\t\n\t} else {\n\t\tdiscard;\n\t}\n\n\t// TD_NUM_COLOR_BUFFERS will be set to the number of color buffers\n\t// active in the render. By default we want to output zero to every\n\t// buffer except the first one.\n\tfor (int i = 1; i < TD_NUM_COLOR_BUFFERS; i++)\n\t{\n\t\toFragColor[i] = vec4(0.0);\n\t}\n}\n";
   function glslToTouchDesignerShaderSource(source) {
     return {
       uniforms: baseUniforms(),
@@ -66088,7 +66144,7 @@
     };
   }
 
-  console.log('using shader-park version: 0.0.23'); /// Generate code for various targets
+  console.log('using shader-park version: 0.0.25'); /// Generate code for various targets
 
   exports.createSculpture = createSculpture;
   exports.createSculptureWithGeometry = createSculptureWithGeometry;
