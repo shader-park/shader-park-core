@@ -14,13 +14,16 @@ import {
  */
 
 let TDHeader = `
-uniform vec4 uDiffuseColor;
-uniform vec4 uAmbientColor;
-uniform vec3 uSpecularColor;
-uniform float uShininess;
 uniform float uShadowStrength;
 uniform vec3 uShadowColor;
+uniform vec4 uBaseColor;
+uniform float uMetallic;
+uniform float uRoughness;
+uniform float uSpecularLevel;
+uniform float uAmbientOcclusion;
 uniform vec3 cameraPosition;
+uniform sampler2D sBaseColorMap;
+uniform float useTDLighting;
 
 
 in Vertex
@@ -29,6 +32,7 @@ in Vertex
 	vec3 worldSpacePos;
 	vec3 worldSpaceNorm;
 	flat int cameraIndex;
+	vec2 texCoord0;
 	vec3 sculptureCenter;
 } iVert;
 
@@ -46,101 +50,124 @@ void main()
 	// and Dual-Paraboloid rendering to work properly
 	TDCheckDiscard();
 
+	// Raymarching
+	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
+	vec3 rayDirection = getRayDirection();
+	rayOrigin -= rayDirection*2.0;
+	float t = intersect(rayOrigin, rayDirection, stepSize);
+    depthTexture = t;
+
 	vec4 outcol = vec4(0.0, 0.0, 0.0, 0.0);
 	vec3 diffuseSum = vec3(0.0, 0.0, 0.0);
 	vec3 specularSum = vec3(0.0, 0.0, 0.0);
 
 	vec3 worldSpaceNorm = normalize(iVert.worldSpaceNorm.xyz);
-	vec3 normal = normalize(worldSpaceNorm.xyz);
-
-	vec3 viewVec = normalize(uTDMats[iVert.cameraIndex].camInverse[3].xyz - iVert.worldSpacePos.xyz );
-
-	// Flip the normals on backfaces
-	// On most GPUs this function just return gl_FrontFacing.
-	// However, some Intel GPUs on macOS have broken gl_FrontFacing behavior.
-	// When one of those GPUs is detected, an alternative way
-	// of determing front-facing is done using the position
-	// and normal for this pixel.
-	if (!TDFrontFacing(iVert.worldSpacePos.xyz, worldSpaceNorm.xyz))
-	{
-		normal = -normal;
-	}
-
-	// Your shader will be recompiled based on the number
-	// of lights in your scene, so this continues to work
-	// even if you change your lighting setup after the shader
-	// has been exported from the Phong MAT
-	for (int i = 0; i < TD_NUM_LIGHTS; i++)
-	{
-		vec3 diffuseContrib = vec3(0);
-		vec3 specularContrib = vec3(0);
-		TDLighting(diffuseContrib,
-			specularContrib,
-			i,
-			iVert.worldSpacePos.xyz,
-			normal,
-			uShadowStrength, uShadowColor,
-			viewVec,
-			uShininess);
-		diffuseSum += diffuseContrib;
-		specularSum += specularContrib;
-	}
-
-	// Final Diffuse Contribution
-	diffuseSum *= uDiffuseColor.rgb * iVert.color.rgb;
-	vec3 finalDiffuse = diffuseSum;
-	outcol.rgb += finalDiffuse;
-
-	// Final Specular Contribution
-	vec3 finalSpecular = vec3(0.0);
-	specularSum *= uSpecularColor;
-	finalSpecular += specularSum;
-
-	outcol.rgb += finalSpecular;
-
-	// Ambient Light Contribution
-	outcol.rgb += vec3(uTDGeneral.ambientColor.rgb * uAmbientColor.rgb * iVert.color.rgb);
-
-
-	// Apply fog, this does nothing if fog is disabled
-	outcol = TDFog(outcol, iVert.worldSpacePos.xyz, iVert.cameraIndex);
-
-	// Alpha Calculation
-	float alpha = uDiffuseColor.a * iVert.color.a ;
-
-	// Dithering, does nothing if dithering is disabled
-	outcol = TDDither(outcol);
-
-	outcol.rgb *= alpha;
-
-	// Modern GL removed the implicit alpha test, so we need to apply
-	// it manually here. This function does nothing if alpha test is disabled.
-	TDAlphaTest(alpha);
-
-	outcol.a = alpha;
-	//oFragColor[0] = TDOutputSwizzle(outcol);
-
-	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
-	vec3 rayDirection = getRayDirection();
-	rayOrigin -= rayDirection*2.0;
-	float t = intersect(rayOrigin, rayDirection, stepSize);
-	depthTexture = t;
+	// vec3 normal = normalize(worldSpaceNorm.xyz);
 	if(t < 2.5) {
 		vec3 p = (rayOrigin + rayDirection*t);
 		vec3 normal = calcNormal(p);
-		vec3 c = shade(p, normal);
-		oFragColor[0] = TDOutputSwizzle(vec4(c, 1.0));
-		
+		vec3 raymarchedColor = shade(p, normal);
+	
+		vec3 baseColor = uBaseColor.rgb;
+
+		// 0.08 is the value for dielectric specular that
+		// Substance Designer uses for it's top-end.
+		float specularLevel = 0.08 * uSpecularLevel;
+		float metallic = uMetallic;
+
+		float roughness = uRoughness;
+
+		float ambientOcclusion = uAmbientOcclusion;
+
+		vec3 finalBaseColor = baseColor.rgb * iVert.color.rgb;
+
+		vec2 texCoord0 = iVert.texCoord0.st;
+		vec4 baseColorMap = texture(sBaseColorMap, texCoord0.st);
+		finalBaseColor *= baseColorMap.rgb;
+
+
+		// A roughness of exactly 0 is not allowed
+		roughness = max(roughness, 0.0001);
+
+		vec3 pbrDiffuseColor = finalBaseColor * (1.0 - metallic);
+		vec3 pbrSpecularColor = mix(vec3(specularLevel), finalBaseColor, metallic);
+
+		vec3 viewVec = normalize(uTDMats[iVert.cameraIndex].camInverse[3].xyz - iVert.worldSpacePos.xyz );
+
+
+		// Your shader will be recompiled based on the number
+		// of lights in your scene, so this continues to work
+		// even if you change your lighting setup after the shader
+		// has been exported from the Phong MAT
+		for (int i = 0; i < TD_NUM_LIGHTS; i++)
+		{
+			TDPBRResult res;
+			res = TDLightingPBR(i,
+								pbrDiffuseColor,
+								pbrSpecularColor,
+								iVert.worldSpacePos.xyz,
+								normal,
+								uShadowStrength, uShadowColor,
+								viewVec,
+								roughness);
+			diffuseSum += res.diffuse;
+			specularSum += res.specular;
+		}
+
+		// Environment lights
+		for (int i = 0; i < TD_NUM_ENV_LIGHTS; i++)
+		{
+			TDPBRResult res;
+			res = TDEnvLightingPBR(i,
+						pbrDiffuseColor,
+						pbrSpecularColor,
+						normal,
+						viewVec,
+						roughness,
+						ambientOcclusion);
+			diffuseSum += res.diffuse;
+			specularSum += res.specular;
+		}
+		// Final Diffuse Contribution
+		vec3 finalDiffuse = diffuseSum;
+		outcol.rgb += finalDiffuse;
+
+		// Final Specular Contribution
+		vec3 finalSpecular = vec3(0.0);
+		finalSpecular += specularSum;
+
+		outcol.rgb += finalSpecular;
+
+
+		// Apply fog, this does nothing if fog is disabled
+		outcol = TDFog(outcol, iVert.worldSpacePos.xyz, iVert.cameraIndex);
+
+		// Alpha Calculation
+		float alpha = uBaseColor.a * iVert.color.a ;
+
+		// Dithering, does nothing if dithering is disabled
+		outcol = TDDither(outcol);
+
+		outcol.rgb *= alpha;
+
+		// Modern GL removed the implicit alpha test, so we need to apply
+		// it manually here. This function does nothing if alpha test is disabled.
+		TDAlphaTest(alpha);
+
+		outcol.a = alpha;
+		outcol = mix(vec4(raymarchedColor, 1.0), outcol, useTDLighting);
+		oFragColor[0] = TDOutputSwizzle(outcol);
+
+
+		// TD_NUM_COLOR_BUFFERS will be set to the number of color buffers
+		// active in the render. By default we want to output zero to every
+		// buffer except the first one.
+		for (int i = 1; i < TD_NUM_COLOR_BUFFERS; i++)
+		{
+			oFragColor[i] = vec4(0.0);
+		}
 	} else {
 		discard;
-	}
-
-	// TD_NUM_COLOR_BUFFERS will be set to the number of color buffers
-	// active in the render. By default we want to output zero to every
-	// buffer except the first one.
-	for (int i = 1; i < TD_NUM_COLOR_BUFFERS; i++)
-	{
-		oFragColor[i] = vec4(0.0);
 	}
 }
 `;
