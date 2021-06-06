@@ -1,4 +1,4 @@
-### Library powering [Shaderpark](shaderpark.com)     
+### Library powering [Shaderpark](https://shaderpark.com)     
 [![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)  
 
   
