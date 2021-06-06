@@ -1,10 +1,28 @@
 ### Library powering [Shaderpark](https://shaderpark.com)     
 [![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)  
 
-  
-Compiles sculpt to threejs/glsl, sculpt-renderer/glsl, unity/hlsl  
+Shaderpark simplifies creating procedural graphics using javascript.  
+With just a few lines of code, create shaders which are:
+- Animated
+- Interactive
+- 2D or 3D (with PBR)
+
+### Example
+(TODO)
+
+### Install   
+`npm i shader-park-core`
+
+### Easily integrated with:
+- webpages
+- threejs
+- touchdesigner
+- unity (under development)
+
+
+Live edit, remix and share your creations on [shaderpark.com](https://shaderpark.com)
  
-### [Usage Examples](https://github.com/shader-park/shader-park-examples)
+### [Examples/Templates Repo](https://github.com/shader-park/shader-park-examples)
 
  
 ### Dev Setup:
