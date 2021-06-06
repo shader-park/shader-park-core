@@ -1,9 +1,13 @@
+### Library powering [Shaderpark](https://shaderpark.com)     
+[![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)  
 
+  
 Compiles sculpt to threejs/glsl, sculpt-renderer/glsl, unity/hlsl  
  
-[![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)
+### [Usage Examples](https://github.com/shader-park/shader-park-examples)
+
  
-### Setup:
+### Dev Setup:
 ```npm install```
 or
 ```yarn install```
