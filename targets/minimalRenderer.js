@@ -70,8 +70,8 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
             canvas.height = height;
         }
     }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    // resizeCanvas();
+    // window.addEventListener('resize', resizeCanvas);
     const gl = canvas.getContext('webgl');
     const vertices = [
         -1.0,1.0,0.0,
