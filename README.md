@@ -7,17 +7,17 @@ With just a few lines of code, create shaders which are:
 - Interactive
 - 2D or 3D (with PBR)
 
-### Example
-(TODO)
-
-### Install   
-`npm i shader-park-core`
-
 ### Easily integrated with:
 - webpages
 - threejs
 - touchdesigner
 - unity (under development)
+
+### Example
+(TODO)
+
+### Install   
+`npm i shader-park-core`
 
 
 Live edit, remix and share your creations on [shaderpark.com](https://shaderpark.com)
