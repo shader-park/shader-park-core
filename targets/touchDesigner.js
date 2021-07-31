@@ -199,9 +199,7 @@ export function sculptToTouchDesignerShaderSource(source) {
         + '\n' 
         + TDFooter;
 	
-	let sdf = 
-			uniformsToGLSL(src.uniforms) 
-			+ 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
+	let sdf = 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
 			+ 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
 			+ sculptureStarterCode 
 			+ src.geoGLSL ;

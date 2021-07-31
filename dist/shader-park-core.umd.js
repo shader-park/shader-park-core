@@ -66704,7 +66704,7 @@
     }
 
     var frg = TDHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(src.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL + '\n' + src.colorGLSL + '\n' + TDFooter;
-    var sdf = uniformsToGLSL(src.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL;
+    var sdf = 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL;
     return {
       uniforms: src.uniforms,
       frag: frg,
@@ -66717,7 +66717,7 @@
     };
   }
 
-  console.log('using shader-park version: 0.0.28.1'); /// Generate code for various targets
+  console.log('using shader-park version: 0.0.28.2'); /// Generate code for various targets
 
   exports.createSculpture = createSculpture;
   exports.createSculptureWithGeometry = createSculptureWithGeometry;
