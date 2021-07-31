@@ -66706,11 +66706,11 @@ function sculptToTouchDesignerShaderSource(source) {
     error: src.error,
     geoGLSL: src.geoGLSL,
     colorGLSL: src.colorGLSL,
-    sdf: src.sdf,
+    sdf: sdf,
     glslUniforms: uniformsToGLSL(src.uniforms)
   };
 }
 
-console.log('using shader-park version: 0.0.28'); /// Generate code for various targets
+console.log('using shader-park version: 0.0.28.1'); /// Generate code for various targets
 
 export { createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource };

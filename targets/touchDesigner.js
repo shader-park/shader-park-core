@@ -213,7 +213,7 @@ export function sculptToTouchDesignerShaderSource(source) {
         error: src.error,
         geoGLSL: src.geoGLSL,
         colorGLSL: src.colorGLSL,
-		sdf: src.sdf,
+		sdf: sdf,
 		glslUniforms: uniformsToGLSL(src.uniforms) 
     };
 }
