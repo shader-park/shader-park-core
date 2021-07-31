@@ -198,6 +198,13 @@ export function sculptToTouchDesignerShaderSource(source) {
         + src.colorGLSL 
         + '\n' 
         + TDFooter;
+	
+	let sdf = 
+			uniformsToGLSL(src.uniforms) 
+			+ 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
+			+ 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
+			+ sculptureStarterCode 
+			+ src.geoGLSL ;
 
     return {
         uniforms: src.uniforms,
@@ -205,6 +212,8 @@ export function sculptToTouchDesignerShaderSource(source) {
         vert: minimalVertexSource,
         error: src.error,
         geoGLSL: src.geoGLSL,
-        colorGLSL: src.colorGLSL
+        colorGLSL: src.colorGLSL,
+		sdf: src.sdf,
+		glslUniforms: uniformsToGLSL(src.uniforms) 
     };
 }
