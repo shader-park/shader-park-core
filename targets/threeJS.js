@@ -102,10 +102,12 @@ export function createSculpture(source, uniformCallback=() => {return {}}, param
 
     let radius = ('radius' in params)? params.radius: 2;
 
-    let segments = ('segments' in params)? params.segments: 8;
-    let geometry = new SphereBufferGeometry( radius, segments, segments );
-    if('geometry' in params) {
+    let geometry;
+    if ('geometry' in params) {
         geometry = params.geometry;
+    } else {
+        let segments = ('segments' in params)? params.segments: 8;
+        geometry = new SphereBufferGeometry( radius, segments, segments );   
     }
     let material = sculptToThreeJSMaterial(source);
     
