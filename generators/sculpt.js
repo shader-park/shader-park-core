@@ -554,30 +554,29 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	// Modes (prepend these with GEO or something to indicate they are geometry modes?)
-	// Also 'mix' name needs to be changed to avoid collision with built in
 
 	function union() {
-		stateStack[stateStack.length-1].mode = modes.UNION;
+		getCurrentState().mode = modes.UNION;
 	}
 
 	function difference() {
-		stateStack[stateStack.length-1].mode = modes.DIFFERENCE;
+		getCurrentState().mode = modes.DIFFERENCE;
 	}
 
 	function intersect() {
-		stateStack[stateStack.length-1].mode = modes.INTERSECT;
+		getCurrentState().mode = modes.INTERSECT;
 	}
 
 	function blend(amount) {
-		stateStack[stateStack.length-1].mode = modes.BLEND;
+		getCurrentState().mode = modes.BLEND;
 		ensureScalar("blend",amount);
-		stateStack[stateStack.length-1].blendAmount = amount;
+		getCurrentState().blendAmount = amount;
 	}
 
 	function mixGeo(amount) {
-		stateStack[stateStack.length-1].mode = modes.MIXGEO;
+		getCurrentState().mode = modes.MIXGEO;
 		ensureScalar("mixGeo",amount);
-		stateStack[stateStack.length-1].mixAmount = amount;
+		getCurrentState().mixAmount = amount;
 	}
 
 	function getMode() {
@@ -626,14 +625,14 @@ export function sculptToGLSL(userProvidedSrc) {
 			blendAmount: 0.0,
 			mixAmount: 0.0,
 		});
-		appendSources("float " + getCurrentDist() + " = 100.0;\n");
+		appendSources("float " + getCurrentDist() + " = 0.0;\n");
 		let lastP = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"p" : "p";
 		let lastMat = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"currentMaterial" : "material";
 		appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
 		appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
 		appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
-		stateStack[stateStack.length-1].p = vec3(stateStack[stateStack.length-1].id+"p", null, null, true);
-                stateCount++;
+		getCurrentState().p = vec3(getCurrentPos(), null, null, true);
+		stateCount++;
 	}
 
 	function popState() {
