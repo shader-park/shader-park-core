@@ -508,6 +508,11 @@ export function sculptToGLSL(userProvidedSrc) {
 	};
 	const additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
 
+	const materialModes = {
+		NORMAL: 20, // F it let's start at 20 why not
+		MIXMAT: 21
+	};
+
 	let time = new float("time", true);
 	let mouse = new vec3("mouse", null, null, true);
 	let normal = new vec3("normal", null, null, true);
@@ -553,6 +558,16 @@ export function sculptToGLSL(userProvidedSrc) {
 		}
 	}
 
+	function mixMat(amount) {
+		getCurrentState().materialMode = materialModes.MIXMAT;
+		ensureScalar("mixMat", amount);
+		getCurrentState().matMixAmount = amount;
+	}
+
+	function resetMixColor() {
+		getCurrentState().materialMode = materialModes.NORMAL;
+	}
+
 	// Modes (prepend these with GEO or something to indicate they are geometry modes?)
 
 	function union() {
@@ -569,7 +584,7 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	function blend(amount) {
 		getCurrentState().mode = modes.BLEND;
-		ensureScalar("blend",amount);
+		ensureScalar("blend", amount);
 		getCurrentState().blendAmount = amount;
 	}
 
@@ -580,7 +595,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function getMode() {
-		switch (getCurrentState().mode) {
+		switch (getCurrentMode()) {
 			case modes.UNION:
 				return ["add"];
 				break;
@@ -594,7 +609,7 @@ export function sculptToGLSL(userProvidedSrc) {
 				return ["smoothAdd",getCurrentState().blendAmount];
 				break;
 			case modes.MIXGEO:
-				return ["mix",getCurrentState().mixAmount];
+				return ["mix", getCurrentState().mixAmount];
 				break;
 			default:
 				return ["add"];
@@ -602,14 +617,19 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function applyMode(prim, finalCol) {
-		let cmode = getMode();
 		let primName = "prim_" + primCount;
 		primCount += 1;
 		appendSources("float " + primName + " = " + prim + ";\n");
-		if (additiveModes.includes(getCurrentState().mode)) {
+		if (additiveModes.includes(getCurrentMode())) {
 			let selectedCC = finalCol !== undefined ? finalCol : getCurrentMaterial();
-			appendColorSource("if (" + primName + " < "+ getCurrentDist() + ") { " + getMainMaterial() + " = " + selectedCC + "; }\n" );
+			if (getCurrentState().materialMode === materialModes.NORMAL) {
+				appendColorSource("if (" + primName + " < "+ getCurrentDist() + ") { " + getMainMaterial() + " = " + selectedCC + "; }\n" );
+			} else if (getCurrentState().materialMode === materialModes.MIXMAT) {
+				appendColorSource(getMainMaterial() + " = blendMaterial(" + selectedCC + ", " + 
+				getMainMaterial() + ", " + collapseToString(getCurrentState().matMixAmount) + ");\n" );
+			}
 		}
+		let cmode = getMode();
 		appendSources(getCurrentDist() + " = "+ cmode[0] + "( " + primName + ", " + getCurrentDist() +  " " +
 			(cmode.length > 1 ? "," + collapseToString(cmode[1]) : "") + " );\n");
 	}
@@ -622,10 +642,12 @@ export function sculptToGLSL(userProvidedSrc) {
 		stateStack.push({
 			id: "scope_" + stateCount + "_",
 			mode: modes.UNION,
+			materialMode: materialModes.NORMAL,
+			matMixAmount: 0.0,
 			blendAmount: 0.0,
 			mixAmount: 0.0,
 		});
-		appendSources("float " + getCurrentDist() + " = 0.0;\n");
+		appendSources("float " + getCurrentDist() + " = 100.0;\n");
 		let lastP = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"p" : "p";
 		let lastMat = stateStack.length > 1 ? stateStack[stateStack.length-2].id+"currentMaterial" : "material";
 		appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
@@ -986,7 +1008,6 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
-
 	
 	return {
 		uniforms: uniforms,
