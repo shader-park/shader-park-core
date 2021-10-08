@@ -1,19 +1,3 @@
-function _typeof(obj) {
-  "@babel/helpers - typeof";
-
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    _typeof = function (obj) {
-      return typeof obj;
-    };
-  } else {
-    _typeof = function (obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
-}
-
 var REACT_ELEMENT_TYPE;
 
 function _jsx(type, props, key, children) {
@@ -55,29 +39,142 @@ function _jsx(type, props, key, children) {
   return {
     $$typeof: REACT_ELEMENT_TYPE,
     type: type,
-    key: key === undefined ? null : '' + key,
+    key: key === undefined ? null : "" + key,
     ref: null,
     props: props,
     _owner: null
   };
 }
 
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    var symbols = Object.getOwnPropertySymbols(object);
+
+    if (enumerableOnly) {
+      symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      });
+    }
+
+    keys.push.apply(keys, symbols);
+  }
+
+  return keys;
+}
+
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+
+    if (i % 2) {
+      ownKeys(Object(source), true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+  }
+
+  return target;
+}
+
+function _typeof(obj) {
+  "@babel/helpers - typeof";
+
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
+
+  return _typeof(obj);
+}
+
+function _wrapRegExp() {
+  _wrapRegExp = function (re, groups) {
+    return new BabelRegExp(re, undefined, groups);
+  };
+
+  var _super = RegExp.prototype;
+
+  var _groups = new WeakMap();
+
+  function BabelRegExp(re, flags, groups) {
+    var _this = new RegExp(re, flags);
+
+    _groups.set(_this, groups || _groups.get(re));
+
+    return _setPrototypeOf(_this, BabelRegExp.prototype);
+  }
+
+  _inherits(BabelRegExp, RegExp);
+
+  BabelRegExp.prototype.exec = function (str) {
+    var result = _super.exec.call(this, str);
+
+    if (result) result.groups = buildGroups(result, this);
+    return result;
+  };
+
+  BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
+    if (typeof substitution === "string") {
+      var groups = _groups.get(this);
+
+      return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
+        return "$" + groups[name];
+      }));
+    } else if (typeof substitution === "function") {
+      var _this = this;
+
+      return _super[Symbol.replace].call(this, str, function () {
+        var args = arguments;
+
+        if (typeof args[args.length - 1] !== "object") {
+          args = [].slice.call(args);
+          args.push(buildGroups(args, _this));
+        }
+
+        return substitution.apply(this, args);
+      });
+    } else {
+      return _super[Symbol.replace].call(this, str, substitution);
+    }
+  };
+
+  function buildGroups(result, re) {
+    var g = _groups.get(re);
+
+    return Object.keys(g).reduce(function (groups, name) {
+      groups[name] = result[g[name]];
+      return groups;
+    }, Object.create(null));
+  }
+
+  return _wrapRegExp.apply(this, arguments);
+}
+
 function _asyncIterator(iterable) {
   var method;
 
   if (typeof Symbol !== "undefined") {
-    if (Symbol.asyncIterator) {
-      method = iterable[Symbol.asyncIterator];
-      if (method != null) return method.call(iterable);
-    }
-
-    if (Symbol.iterator) {
-      method = iterable[Symbol.iterator];
-      if (method != null) return method.call(iterable);
-    }
+    if (Symbol.asyncIterator) method = iterable[Symbol.asyncIterator];
+    if (method == null && Symbol.iterator) method = iterable[Symbol.iterator];
   }
 
-  throw new TypeError("Object is not async iterable");
+  if (method == null) method = iterable["@@asyncIterator"];
+  if (method == null) method = iterable["@@iterator"];
+  if (method == null) throw new TypeError("Object is not async iterable");
+  return method.call(iterable);
 }
 
 function _AwaitValue(value) {
@@ -163,11 +260,9 @@ function _AsyncGenerator(gen) {
   }
 }
 
-if (typeof Symbol === "function" && Symbol.asyncIterator) {
-  _AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-    return this;
-  };
-}
+_AsyncGenerator.prototype[typeof Symbol === "function" && Symbol.asyncIterator || "@@asyncIterator"] = function () {
+  return this;
+};
 
 _AsyncGenerator.prototype.next = function (arg) {
   return this._invoke("next", arg);
@@ -208,11 +303,9 @@ function _asyncGeneratorDelegate(inner, awaitWrap) {
 
   ;
 
-  if (typeof Symbol === "function" && Symbol.iterator) {
-    iter[Symbol.iterator] = function () {
-      return this;
-    };
-  }
+  iter[typeof Symbol !== "undefined" && Symbol.iterator || "@@iterator"] = function () {
+    return this;
+  };
 
   iter.next = function (value) {
     if (waiting) {
@@ -396,40 +489,6 @@ function _objectSpread(target) {
   return target;
 }
 
-function ownKeys(object, enumerableOnly) {
-  var keys = Object.keys(object);
-
-  if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    if (enumerableOnly) symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    });
-    keys.push.apply(keys, symbols);
-  }
-
-  return keys;
-}
-
-function _objectSpread2(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i] != null ? arguments[i] : {};
-
-    if (i % 2) {
-      ownKeys(Object(source), true).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
-  }
-
-  return target;
-}
-
 function _inherits(subClass, superClass) {
   if (typeof superClass !== "function" && superClass !== null) {
     throw new TypeError("Super expression must either be null or a function");
@@ -550,19 +609,17 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _getRequireWildcardCache() {
+function _getRequireWildcardCache(nodeInterop) {
   if (typeof WeakMap !== "function") return null;
-  var cache = new WeakMap();
-
-  _getRequireWildcardCache = function () {
-    return cache;
-  };
-
-  return cache;
+  var cacheBabelInterop = new WeakMap();
+  var cacheNodeInterop = new WeakMap();
+  return (_getRequireWildcardCache = function (nodeInterop) {
+    return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
+  })(nodeInterop);
 }
 
-function _interopRequireWildcard(obj) {
-  if (obj && obj.__esModule) {
+function _interopRequireWildcard(obj, nodeInterop) {
+  if (!nodeInterop && obj && obj.__esModule) {
     return obj;
   }
 
@@ -572,7 +629,7 @@ function _interopRequireWildcard(obj) {
     };
   }
 
-  var cache = _getRequireWildcardCache();
+  var cache = _getRequireWildcardCache(nodeInterop);
 
   if (cache && cache.has(obj)) {
     return cache.get(obj);
@@ -582,7 +639,7 @@ function _interopRequireWildcard(obj) {
   var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
 
   for (var key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
       var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
 
       if (desc && (desc.get || desc.set)) {
@@ -840,18 +897,21 @@ function _maybeArrayLike(next, arr, i) {
 }
 
 function _iterableToArray(iter) {
-  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+  if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
 }
 
 function _iterableToArrayLimit(arr, i) {
-  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+  var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
+
+  if (_i == null) return;
   var _arr = [];
   var _n = true;
   var _d = false;
-  var _e = undefined;
+
+  var _s, _e;
 
   try {
-    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+    for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
       _arr.push(_s.value);
 
       if (i && _arr.length === i) break;
@@ -871,10 +931,12 @@ function _iterableToArrayLimit(arr, i) {
 }
 
 function _iterableToArrayLimitLoose(arr, i) {
-  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+  var _i = arr && (typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]);
+
+  if (_i == null) return;
   var _arr = [];
 
-  for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
+  for (_i = _i.call(arr), _step; !(_step = _i.next()).done;) {
     _arr.push(_step.value);
 
     if (i && _arr.length === i) break;
@@ -909,9 +971,9 @@ function _nonIterableRest() {
 }
 
 function _createForOfIteratorHelper(o, allowArrayLike) {
-  var it;
+  var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
 
-  if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+  if (!it) {
     if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
       if (it) o = it;
       var i = 0;
@@ -944,7 +1006,7 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
       err;
   return {
     s: function () {
-      it = o[Symbol.iterator]();
+      it = it.call(o);
     },
     n: function () {
       var step = it.next();
@@ -966,28 +1028,24 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
 }
 
 function _createForOfIteratorHelperLoose(o, allowArrayLike) {
-  var it;
+  var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
+  if (it) return (it = it.call(o)).next.bind(it);
 
-  if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
-    if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
-      if (it) o = it;
-      var i = 0;
-      return function () {
-        if (i >= o.length) return {
-          done: true
-        };
-        return {
-          done: false,
-          value: o[i++]
-        };
+  if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+    if (it) o = it;
+    var i = 0;
+    return function () {
+      if (i >= o.length) return {
+        done: true
       };
-    }
-
-    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+      return {
+        done: false,
+        value: o[i++]
+      };
+    };
   }
 
-  it = o[Symbol.iterator]();
-  return it.next.bind(it);
+  throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
 function _skipFirstGeneratorNext(fn) {
@@ -1600,71 +1658,6 @@ function _classPrivateMethodSet() {
   throw new TypeError("attempted to reassign private method");
 }
 
-function _wrapRegExp(re, groups) {
-  _wrapRegExp = function (re, groups) {
-    return new BabelRegExp(re, undefined, groups);
-  };
-
-  var _RegExp = _wrapNativeSuper(RegExp);
-
-  var _super = RegExp.prototype;
-
-  var _groups = new WeakMap();
-
-  function BabelRegExp(re, flags, groups) {
-    var _this = _RegExp.call(this, re, flags);
-
-    _groups.set(_this, groups || _groups.get(re));
-
-    return _this;
-  }
-
-  _inherits(BabelRegExp, _RegExp);
-
-  BabelRegExp.prototype.exec = function (str) {
-    var result = _super.exec.call(this, str);
-
-    if (result) result.groups = buildGroups(result, this);
-    return result;
-  };
-
-  BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
-    if (typeof substitution === "string") {
-      var groups = _groups.get(this);
-
-      return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
-        return "$" + groups[name];
-      }));
-    } else if (typeof substitution === "function") {
-      var _this = this;
-
-      return _super[Symbol.replace].call(this, str, function () {
-        var args = [];
-        args.push.apply(args, arguments);
-
-        if (typeof args[args.length - 1] !== "object") {
-          args.push(buildGroups(args, _this));
-        }
-
-        return substitution.apply(this, args);
-      });
-    } else {
-      return _super[Symbol.replace].call(this, str, substitution);
-    }
-  };
-
-  function buildGroups(result, re) {
-    var g = _groups.get(re);
-
-    return Object.keys(g).reduce(function (groups, name) {
-      groups[name] = result[g[name]];
-      return groups;
-    }, Object.create(null));
-  }
-
-  return _wrapRegExp.apply(this, arguments);
-}
-
 // Numbers represent type - 
 // 1:float 2:vec2 3:vec3 4:vec4
 var geometryFunctions = {
@@ -1847,7 +1840,7 @@ function commonjsRequire (path) {
 	throw new Error('Could not dynamically require "' + path + '". Please configure the dynamicRequireTargets or/and ignoreDynamicRequires option of @rollup/plugin-commonjs appropriately for this require call to work.');
 }
 
-const name$1="estraverse";const description$1="ECMAScript JS AST traversal functions";const homepage$1="https://github.com/estools/estraverse";const main$1="estraverse.js";const version$1="4.3.0";const engines$1={node:">=4.0"};const maintainers$1=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository$1={type:"git",url:"http://github.com/estools/estraverse.git"};const devDependencies$1={"babel-preset-env":"^1.6.1","babel-register":"^6.3.13",chai:"^2.1.1",espree:"^1.11.0",gulp:"^3.8.10","gulp-bump":"^0.2.2","gulp-filter":"^2.0.0","gulp-git":"^1.0.1","gulp-tag-version":"^1.3.0",jshint:"^2.5.6",mocha:"^2.1.0"};const license$1="BSD-2-Clause";const scripts$1={test:"npm run-script lint && npm run-script unit-test",lint:"jshint estraverse.js","unit-test":"mocha --compilers js:babel-register"};var require$$0 = {name:name$1,description:description$1,homepage:homepage$1,main:main$1,version:version$1,engines:engines$1,maintainers:maintainers$1,repository:repository$1,devDependencies:devDependencies$1,license:license$1,scripts:scripts$1};
+const _from$1="estraverse@^4.2.0";const _id$2="estraverse@4.3.0";const _inBundle$1=false;const _integrity$1="sha512-39nnKffWz8xN1BU/2c79n9nB9HDzo0niYUqx6xyqUnyoAnQyyWpOTdZEeiCch8BBu515t4wp9ZmgVfVhn9EBpw==";const _location$1="/estraverse";const _phantomChildren$1={};const _requested$1={type:"range",registry:true,raw:"estraverse@^4.2.0",name:"estraverse",escapedName:"estraverse",rawSpec:"^4.2.0",saveSpec:null,fetchSpec:"^4.2.0"};const _requiredBy$1=["/escodegen"];const _resolved$1="https://registry.npmjs.org/estraverse/-/estraverse-4.3.0.tgz";const _shasum$1="398ad3f3c5a24948be7725e83d11a7de28cdbd1d";const _spec$1="estraverse@^4.2.0";const _where$1="/Users/peterwhidden/Documents/sp-test/shader-park-core/node_modules/escodegen";const bugs$1={url:"https://github.com/estools/estraverse/issues"};const bundleDependencies$1=false;const deprecated$1=false;const description$1="ECMAScript JS AST traversal functions";const devDependencies$1={"babel-preset-env":"^1.6.1","babel-register":"^6.3.13",chai:"^2.1.1",espree:"^1.11.0",gulp:"^3.8.10","gulp-bump":"^0.2.2","gulp-filter":"^2.0.0","gulp-git":"^1.0.1","gulp-tag-version":"^1.3.0",jshint:"^2.5.6",mocha:"^2.1.0"};const engines$1={node:">=4.0"};const homepage$1="https://github.com/estools/estraverse";const license$1="BSD-2-Clause";const main$1="estraverse.js";const maintainers$1=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",url:"http://github.com/Constellation"}];const name$1="estraverse";const repository$1={type:"git",url:"git+ssh://git@github.com/estools/estraverse.git"};const scripts$1={lint:"jshint estraverse.js",test:"npm run-script lint && npm run-script unit-test","unit-test":"mocha --compilers js:babel-register"};const version$1="4.3.0";var require$$0 = {_from:_from$1,_id:_id$2,_inBundle:_inBundle$1,_integrity:_integrity$1,_location:_location$1,_phantomChildren:_phantomChildren$1,_requested:_requested$1,_requiredBy:_requiredBy$1,_resolved:_resolved$1,_shasum:_shasum$1,_spec:_spec$1,_where:_where$1,bugs:bugs$1,bundleDependencies:bundleDependencies$1,deprecated:deprecated$1,description:description$1,devDependencies:devDependencies$1,engines:engines$1,homepage:homepage$1,license:license$1,main:main$1,maintainers:maintainers$1,name:name$1,repository:repository$1,scripts:scripts$1,version:version$1};
 
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -6300,7 +6293,7 @@ var sourceMap = {
 	SourceNode: SourceNode
 };
 
-const name="escodegen";const description="ECMAScript code generator";const homepage="http://github.com/estools/escodegen";const main="escodegen.js";const bin={esgenerate:"./bin/esgenerate.js",escodegen:"./bin/escodegen.js"};const files=["LICENSE.BSD","README.md","bin","escodegen.js","package.json"];const version="1.14.1";const engines={node:">=4.0"};const maintainers=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository={type:"git",url:"http://github.com/estools/escodegen.git"};const dependencies={estraverse:"^4.2.0",esutils:"^2.0.2",esprima:"^4.0.1",optionator:"^0.8.1"};const optionalDependencies={"source-map":"~0.6.1"};const devDependencies={acorn:"^7.1.0",bluebird:"^3.4.7","bower-registry-client":"^1.0.0",chai:"^3.5.0","commonjs-everywhere":"^0.9.7",gulp:"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1",semver:"^5.1.0"};const license="BSD-2-Clause";const scripts={test:"gulp travis","unit-test":"gulp test",lint:"gulp lint",release:"node tools/release.js","build-min":"./node_modules/.bin/cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",build:"./node_modules/.bin/cjsify -a path: tools/entry-point.js > escodegen.browser.js"};var require$$3 = {name:name,description:description,homepage:homepage,main:main,bin:bin,files:files,version:version,engines:engines,maintainers:maintainers,repository:repository,dependencies:dependencies,optionalDependencies:optionalDependencies,devDependencies:devDependencies,license:license,scripts:scripts};
+const _from="escodegen@1.14.1";const _id$1="escodegen@1.14.1";const _inBundle=false;const _integrity="sha512-Bmt7NcRySdIfNPfU2ZoXDrrXsG9ZjvDxcAlMfDUgRBjLOWTuIACXPBFJH7Z+cLb40JeQco5toikyc9t9P8E9SQ==";const _location="/escodegen";const _phantomChildren={};const _requested={type:"version",registry:true,raw:"escodegen@1.14.1",name:"escodegen",escapedName:"escodegen",rawSpec:"1.14.1",saveSpec:null,fetchSpec:"1.14.1"};const _requiredBy=["/"];const _resolved="https://registry.npmjs.org/escodegen/-/escodegen-1.14.1.tgz";const _shasum="ba01d0c8278b5e95a9a45350142026659027a457";const _spec="escodegen@1.14.1";const _where="/Users/peterwhidden/Documents/sp-test/shader-park-core";const bin={esgenerate:"bin/esgenerate.js",escodegen:"bin/escodegen.js"};const bugs={url:"https://github.com/estools/escodegen/issues"};const bundleDependencies=false;const dependencies={esprima:"^4.0.1",estraverse:"^4.2.0",esutils:"^2.0.2",optionator:"^0.8.1","source-map":"~0.6.1"};const deprecated=false;const description="ECMAScript code generator";const devDependencies={acorn:"^7.1.0",bluebird:"^3.4.7","bower-registry-client":"^1.0.0",chai:"^3.5.0","commonjs-everywhere":"^0.9.7",gulp:"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1",semver:"^5.1.0"};const engines={node:">=4.0"};const files=["LICENSE.BSD","README.md","bin","escodegen.js","package.json"];const homepage="http://github.com/estools/escodegen";const license="BSD-2-Clause";const main="escodegen.js";const maintainers=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",url:"http://github.com/Constellation"}];const name="escodegen";const optionalDependencies={"source-map":"~0.6.1"};const repository={type:"git",url:"git+ssh://git@github.com/estools/escodegen.git"};const scripts={build:"cjsify -a path: tools/entry-point.js > escodegen.browser.js","build-min":"cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",lint:"gulp lint",release:"node tools/release.js",test:"gulp travis","unit-test":"gulp test"};const version="1.14.1";var require$$3 = {_from:_from,_id:_id$1,_inBundle:_inBundle,_integrity:_integrity,_location:_location,_phantomChildren:_phantomChildren,_requested:_requested,_requiredBy:_requiredBy,_resolved:_resolved,_shasum:_shasum,_spec:_spec,_where:_where,bin:bin,bugs:bugs,bundleDependencies:bundleDependencies,dependencies:dependencies,deprecated:deprecated,description:description,devDependencies:devDependencies,engines:engines,files:files,homepage:homepage,license:license,main:main,maintainers:maintainers,name:name,optionalDependencies:optionalDependencies,repository:repository,scripts:scripts,version:version};
 
 /*
   Copyright (C) 2012-2014 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -16204,6 +16197,11 @@ function sculptToGLSL(userProvidedSrc) {
     MIXGEO: 14
   };
   var additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
+  var materialModes = {
+    NORMAL: 20,
+    // F it let's start at 20 why not
+    MIXMAT: 21
+  };
   var time = new float("time", true);
   var mouse = new vec3("mouse", null, null, true);
   var normal = new vec3("normal", null, null, true);
@@ -16247,36 +16245,45 @@ function sculptToGLSL(userProvidedSrc) {
     } else {
       return val.toString();
     }
+  }
+
+  function mixMat(amount) {
+    getCurrentState().materialMode = materialModes.MIXMAT;
+    ensureScalar("mixMat", amount);
+    getCurrentState().matMixAmount = amount;
+  }
+
+  function resetMixColor() {
+    getCurrentState().materialMode = materialModes.NORMAL;
   } // Modes (prepend these with GEO or something to indicate they are geometry modes?)
-  // Also 'mix' name needs to be changed to avoid collision with built in
 
 
   function union() {
-    stateStack[stateStack.length - 1].mode = modes.UNION;
+    getCurrentState().mode = modes.UNION;
   }
 
   function difference() {
-    stateStack[stateStack.length - 1].mode = modes.DIFFERENCE;
+    getCurrentState().mode = modes.DIFFERENCE;
   }
 
   function intersect() {
-    stateStack[stateStack.length - 1].mode = modes.INTERSECT;
+    getCurrentState().mode = modes.INTERSECT;
   }
 
   function blend(amount) {
-    stateStack[stateStack.length - 1].mode = modes.BLEND;
+    getCurrentState().mode = modes.BLEND;
     ensureScalar("blend", amount);
-    stateStack[stateStack.length - 1].blendAmount = amount;
+    getCurrentState().blendAmount = amount;
   }
 
   function mixGeo(amount) {
-    stateStack[stateStack.length - 1].mode = modes.MIXGEO;
+    getCurrentState().mode = modes.MIXGEO;
     ensureScalar("mixGeo", amount);
-    stateStack[stateStack.length - 1].mixAmount = amount;
+    getCurrentState().mixAmount = amount;
   }
 
   function getMode() {
-    switch (getCurrentState().mode) {
+    switch (getCurrentMode()) {
       case modes.UNION:
         return ["add"];
         break;
@@ -16303,16 +16310,21 @@ function sculptToGLSL(userProvidedSrc) {
   }
 
   function applyMode(prim, finalCol) {
-    var cmode = getMode();
     var primName = "prim_" + primCount;
     primCount += 1;
     appendSources("float " + primName + " = " + prim + ";\n");
 
-    if (additiveModes.includes(getCurrentState().mode)) {
+    if (additiveModes.includes(getCurrentMode())) {
       var selectedCC = finalCol !== undefined ? finalCol : getCurrentMaterial();
-      appendColorSource("if (" + primName + " < " + getCurrentDist() + ") { " + getMainMaterial() + " = " + selectedCC + "; }\n");
+
+      if (getCurrentState().materialMode === materialModes.NORMAL) {
+        appendColorSource("if (" + primName + " < " + getCurrentDist() + ") { " + getMainMaterial() + " = " + selectedCC + "; }\n");
+      } else if (getCurrentState().materialMode === materialModes.MIXMAT) {
+        appendColorSource(getMainMaterial() + " = blendMaterial(" + selectedCC + ", " + getMainMaterial() + ", " + collapseToString(getCurrentState().matMixAmount) + ");\n");
+      }
     }
 
+    var cmode = getMode();
     appendSources(getCurrentDist() + " = " + cmode[0] + "( " + primName + ", " + getCurrentDist() + " " + (cmode.length > 1 ? "," + collapseToString(cmode[1]) : "") + " );\n");
   }
 
@@ -16324,6 +16336,8 @@ function sculptToGLSL(userProvidedSrc) {
     stateStack.push({
       id: "scope_" + stateCount + "_",
       mode: modes.UNION,
+      materialMode: materialModes.NORMAL,
+      matMixAmount: 0.0,
       blendAmount: 0.0,
       mixAmount: 0.0
     });
@@ -16333,7 +16347,7 @@ function sculptToGLSL(userProvidedSrc) {
     appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
     appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
     appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
-    stateStack[stateStack.length - 1].p = vec3(stateStack[stateStack.length - 1].id + "p", null, null, true);
+    getCurrentState().p = vec3(getCurrentPos(), null, null, true);
     stateCount++;
   }
 
@@ -16747,7 +16761,7 @@ var threeHeader = "\n#define GLSL_NEED_ROUND\nuniform mat4 projectionMatrix;\nun
 var minimalHeader = "\nprecision highp float;\n#define GLSL_NEED_ROUND\nuniform mat4 projectionMatrix;\nvarying vec3 sculptureCenter;\n#define cameraPosition vec3(0.0,0.0,-2.0)\n#define vUv vec2(0.0)\n#define worldPos vec4(vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)*1.75,0.0,0.0)\n";
 var usePBRHeader = '#define USE_PBR\n';
 var useHemisphereLight = '#define HEMISPHERE_LIGHT\n';
-var sculptureStarterCode = "\nfloat surfaceDistance(vec3 p);\n\nconst float PI = 3.14159265;\nconst float TAU = PI*2.0;\nconst float TWO_PI = TAU;\n\nconst float max_dist = 100.0;\nconst float intersection_threshold = 0.00001;\n\nstruct Material {\n    vec3 albedo;\n    float metallic;\n    float roughness;\n    float ao;\n};\n\n// Trig functions normalized to the range 0.0-1.0\nfloat nsin(float x) {\n    return sin(x)*0.5+0.5;\n}\n\nfloat ncos(float x) {\n    return cos(x)*0.5+0.5;\n}\n\n#ifdef GLSL_NEED_ROUND\nfloat round(float x) {\n    return floor(x+0.5);\n}\nvec2 round(vec2 x) {\n    return floor(x+0.5);\n}\nvec3 round(vec3 x) {\n    return floor(x+0.5);\n}\nvec4 round(vec4 x) {\n    return floor(x+0.5);\n}\n#endif\n\nfloat softSquare(float x, int pw) {\n    return 1.0/(pow(tan(x),float(pw+1)*2.0)+1.0);\n}\n\n// Simple oscillators \n\nfloat osc(float freq, float amp, float base, float phase) {\n    return base+amp*sin(TWO_PI*(freq*time+phase));\n}\n\nfloat osc(float freq, float amp, float base) {\n    return osc(freq, amp, base, 0.0);\n}\n\nfloat osc(float freq, float amp) {\n    return osc(freq, amp, 1.0);\n}\n\nfloat osc(float freq) {\n    return osc(freq, 0.5);\n}\n\nfloat osc() {\n    return osc(1.0);\n}\n\n// Color Conversion\n// https://www.shadertoy.com/view/lsS3Wc\nvec3 hsv2rgb( vec3 c )\n{\n    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );\n    return c.z * mix( vec3(1.0), rgb, c.y);\n}\n\nvec3 rgb2hsv( vec3 c)\n{\n    const float eps = 0.0000001;\n    vec4 k = vec4(0.0, -1.0/3.0, 2.0/3.0, -1.0);\n    vec4 p = mix(vec4(c.zy, k.wz), vec4(c.yz, k.xy), (c.z<c.y) ? 1.0 : 0.0);\n    vec4 q = mix(vec4(p.xyw, c.x), vec4(c.x, p.yzx), (p.x<c.x) ? 1.0 : 0.0);\n    float d = q.x - min(q.w, q.y);\n    return vec3(abs(q.z + (q.w - q.y) / (6.0*d+eps)), d / (q.x+eps), q.x);\n}\n\n\n// Primitives\n\nfloat line(vec3 p, vec3 a, vec3 b) {\n\tvec3 pa = p-a;\n  \tvec3 ba = b-a;\n\tfloat t = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);\n  \treturn length(pa - ba*t);\n}\n\n//line with radius\nfloat line( vec3 p, vec3 a, vec3 b, float radius ){\n    vec3 pa = p - a, ba = b - a;\n    float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );\n    return length( pa - ba*h ) - radius;\n}\n\nfloat sphere( vec3 p, float size ){\n  return length(p)-size;\n}\n\nfloat uBox( vec3 p, vec3 b ){\n  return length(max(abs(p)-b,0.0));\n}\n\nfloat uRoundBox( vec3 p, vec3 b, float r ){\n  return length(max(abs(p)-b,0.0))-r;\n}\n\nfloat box( vec3 p, vec3 box ){\n  vec3 d = abs(p) - box;\n  return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));\n}\n\nfloat box( vec3 p, float bx, float by, float bz) {\n    vec3 box = vec3(bx,by,bz);\n    vec3 d = abs(p) - box;\n    return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));\n}\n\nfloat roundedBox( vec3 p, vec3 box , float r){\n  return length(max(abs(p)-box,0.0))-r;\n}\n\nfloat torus( vec3 p, vec2 t ){\n  vec2 q = vec2(length(p.xz)-t.x,p.y);\n  return length(q)-t.y;\n}\n\nfloat torus( vec3 p, float tx, float ty ){\n    vec2 q = vec2(length(p.xz)-tx,p.y);\n    return length(q)-ty;\n}\n\nfloat infCylinder( vec3 p, vec3 c )\n{\n  return length(p.xz-c.xy)-c.z;\n}\n\nfloat cylinder( vec3 p, vec2 h )\n{\n  vec2 d = abs(vec2(length(p.xz),p.y)) - h;\n  return min(max(d.x,d.y),0.0) + length(max(d,0.0));\n}\n\nfloat cylinder( vec3 p, float hx, float hy)\n{\n    return cylinder(p, vec2(hx,hy));\n}\n\nfloat cone( vec3 p, vec2 c )\n{\n    // c must be normalized\n    float q = length(p.xy);\n    return dot(c,vec2(q,p.z));\n}\n\nfloat plane( vec3 p, vec4 n )\n{\n  // n must be normalized\n  return dot(p,n.xyz) + n.w;\n}\n\nfloat plane( vec3 p, float nx, float ny, float nz, float nw)\n{\n  // n must be normalized\n  return dot(p,normalize(vec3(nx,ny,nz))) + nw;\n}\n\nfloat hexPrism( vec3 p, vec2 h )\n{\n    vec3 q = abs(p);\n    return max(q.z-h.y,max((q.x*0.866025+q.y*0.5),q.y)-h.x);\n}\n\nfloat triPrism( vec3 p, vec2 h )\n{\n    vec3 q = abs(p);\n    return max(q.z-h.y,max(q.x*0.866025+p.y*0.5,-p.y)-h.x*0.5);\n}\n\nfloat capsule( vec3 p, vec3 a, vec3 b, float r )\n{\n    vec3 pa = p - a, ba = b - a;\n    float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );\n    return length( pa - ba*h ) - r;\n}\n\nfloat triangularPrism( vec3 p, vec2 h ) {\n    vec3 q = abs(p);\n    return max(q.z-h.y,max(q.x*0.866025+p.y*0.5,-p.y)-h.x*0.5);\n}\n\nfloat cappedCone( vec3 p, vec3 c )\n{\n    vec2 q = vec2( length(p.xz), p.y );\n    vec2 v = vec2( c.z*c.y/c.x, -c.z );\n    vec2 w = v - q;\n    vec2 vv = vec2( dot(v,v), v.x*v.x );\n    vec2 qv = vec2( dot(v,w), v.x*w.x );\n    vec2 d = max(qv,0.0)*qv/vv;\n    return sqrt( dot(w,w) - max(d.x,d.y) ) * sign(max(q.y*v.x-q.x*v.y,w.y));\n}\n\nfloat roundCone(vec3 p, vec3 a, vec3 b, float r1, float r2)\n{\n    // sampling independent computations (only depend on shape)\n    vec3  ba = b - a;\n    float l2 = dot(ba,ba);\n    float rr = r1 - r2;\n    float a2 = l2 - rr*rr;\n    float il2 = 1.0/l2;\n    \n    // sampling dependant computations\n    vec3 pa = p - a;\n    float y = dot(pa,ba);\n    float z = y - l2;\n    vec3 rv = pa*l2 - ba*y;\n    float x2 = dot(rv,rv);\n    float y2 = y*y*l2;\n    float z2 = z*z*l2;\n\n    // single square root!\n    float k = sign(rr)*rr*rr*x2;\n    if( sign(z)*a2*z2 > k ) return  sqrt(x2 + z2)        *il2 - r2;\n    if( sign(y)*a2*y2 < k ) return  sqrt(x2 + y2)        *il2 - r1;\n                            return (sqrt(x2*a2*il2)+y*rr)*il2 - r1;\n}\n\nfloat ellipsoid( vec3 p, vec3 r )\n{\n    return (length( p/r ) - 1.0) * min(min(r.x,r.y),r.z);\n}\n\nvec3 toSpherical(vec3 p) {\n    float phi = atan(p.x,p.z);\n    float r = length(p);\n    float theta = acos(-p.y/r);\n    return vec3(r,theta,phi);\n}\n\nvec3 fromSpherical(vec3 p) {\n    return vec3(p.x*sin(p.y)*cos(p.z), p.x*sin(p.y)*sin(p.z), p.x*cos(p.y));\n}\n\nfloat dot2( vec3 v ) { return dot(v,v); }\n\nfloat uTriangle( vec3 p, vec3 a, vec3 b, vec3 c )\n{\n    vec3 ba = b - a; vec3 pa = p - a;\n    vec3 cb = c - b; vec3 pb = p - b;\n    vec3 ac = a - c; vec3 pc = p - c;\n    vec3 nor = cross( ba, ac );\n    return sqrt(\n    (sign(dot(cross(ba,nor),pa)) +\n     sign(dot(cross(cb,nor),pb)) +\n     sign(dot(cross(ac,nor),pc))<2.0)\n     ?\n     min( min(\n     dot2(ba*clamp(dot(ba,pa)/dot2(ba),0.0,1.0)-pa),\n     dot2(cb*clamp(dot(cb,pb)/dot2(cb),0.0,1.0)-pb) ),\n     dot2(ac*clamp(dot(ac,pc)/dot2(ac),0.0,1.0)-pc) )\n     :\n     dot(nor,pa)*dot(nor,pa)/dot2(nor) );\n}\n\nfloat add( float d1, float d2 )\n{\n    return min(d1,d2);\n}\n\nfloat add(float d1, float d2, float d3) {\n   return min(d1, min(d2,d3));\n}\n\nfloat add(float d1, float d2, float d3, float d4) {\n    return min(min(d1,d2),min(d3,d4));\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5) {\n    return min(min(min(d1,d2), min(d3,d4)),d5);\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5, float d6) {\n    return min(min(min(d1,d2),min(d3,d4)),min(d5,d6));\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5, float d6, float d7) {\n    return min(min(min(d1,d2),min(d3,d4)),min(min(d5,d6),d7));\n}\n\nfloat subtract( float d1, float d2 )\n{\n    return max(-d1,d2);\n}\n\nfloat intersect( float d1, float d2 )\n{\n    return max(d1,d2);\n}\n\nfloat shell(float d, float thickness) {\n    return abs(d)-thickness;\n}\n\nvec3 repeat3D(vec3 p, vec3 c )\n{\n    return mod(p,c)-0.5*c;\n}\n\nfloat repeat1D(float p, float size)\n{\n\tfloat halfSize = size * 0.5;\n\tfloat c = floor((p + halfSize) / size);\n  \tp = mod(p + halfSize, size)-halfSize;\n  \treturn c;\n}\n\nmat2 rot2(float a){\n    float c = cos(a); float s = sin(a);\n\treturn mat2(c, s, -s, c);\n}\n\n// polynomial smooth min (k = 0.1) (from IQ)\nfloat smoothAdd( float a, float b, float k )\n{\n    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );\n    return mix( b, a, h ) - k*h*(1.0-h);\n}\n\nfloat smoothSubtract(float a,float b, float k)\n{\n    return -smoothAdd(-a,-b,k);\n}\n\nvec2 _hash( vec2 p ) // replace this by something better\n{\n\tp = vec2( dot(p,vec2(127.1,311.7)),\n\t\t\t  dot(p,vec2(269.5,183.3)) );\n\treturn -1.0 + 2.0*fract(sin(p)*43758.5453123);\n}\n\nfloat noise( vec2 p )\n{\n    const float K1 = 0.366025404; // (sqrt(3)-1)/2;\n    const float K2 = 0.211324865; // (3-sqrt(3))/6;\n\tvec2 i = floor( p + (p.x+p.y)*K1 );\n\t\n    vec2 a = p - i + (i.x+i.y)*K2;\n    vec2 o = step(a.yx,a.xy);    \n    vec2 b = a - o + K2;\n\tvec2 c = a - 1.0 + 2.0*K2;\n    vec3 h = max( 0.5-vec3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );\n\tvec3 n = h*h*h*h*vec3( dot(a,_hash(i+0.0)), dot(b,_hash(i+o)), dot(c,_hash(i+1.0)));\n    return dot( n, vec3(70.0) );\n}\n\nvec3 _hash33(vec3 p3)\n{\n    p3 = fract(p3 * vec3(.1031,.11369,.13787));\n    p3 += dot(p3, p3.yxz+19.19);\n    return -1.0 + 2.0 * fract(vec3((p3.x + p3.y)*p3.z, (p3.x+p3.z)*p3.y, (p3.y+p3.z)*p3.x));\n}\n\n// simplex noise from https://www.shadertoy.com/view/4sc3z2\nfloat noise(vec3 p)\n{\n    const float K1 = 0.333333333;\n    const float K2 = 0.166666667;\n    \n    vec3 i = floor(p + (p.x + p.y + p.z) * K1);\n    vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);\n    \n    // thx nikita: https://www.shadertoy.com/view/XsX3zB\n    vec3 e = step(vec3(0.0), d0 - d0.yzx);\n\tvec3 i1 = e * (1.0 - e.zxy);\n\tvec3 i2 = 1.0 - e.zxy * (1.0 - e);\n    \n    vec3 d1 = d0 - (i1 - 1.0 * K2);\n    vec3 d2 = d0 - (i2 - 2.0 * K2);\n    vec3 d3 = d0 - (1.0 - 3.0 * K2);\n    \n    vec4 h = max(0.6 - vec4(dot(d0, d0), dot(d1, d1), dot(d2, d2), dot(d3, d3)), 0.0);\n    vec4 n = h * h * h * h * vec4(dot(d0, _hash33(i)), dot(d1, _hash33(i + i1)), dot(d2, _hash33(i + i2)), dot(d3, _hash33(i + 1.0)));\n    \n    return dot(vec4(31.316), n);\n}\n\nfloat fractalNoise(vec3 p, float falloff, int iterations) {\n    float v = 0.0;\n    float amp = 1.0;\n    float invFalloff = 1.0/falloff;\n    for (int i=0; i<10; i++) {\n        v += noise(p)*amp;\n\tif (i>=iterations) break;\n        amp *= invFalloff;\n        p *= falloff;\n    }\n    return v;\n} \n\nfloat fractalNoise(vec3 p) {\n    return fractalNoise(p, 2.0, 5);\n}\n\n// Adapted from IQ's usage at https://www.shadertoy.com/view/lllXz4\n// Spherical Fibonnacci points, Benjamin Keinert, Matthias Innmann,\n// Michael Sanger and Marc Stamminger\n\nconst float PHI = 1.61803398875;\n\nvec4 sphericalDistribution( vec3 p, float n )\n{\n    p = normalize(p);\n    float m = 1.0 - 1.0/n;\n\n    float phi = min(atan(p.y, p.x), PI), cosTheta = p.z;\n\n    float k = max(2.0, floor( log(n * PI * sqrt(5.0) * (1.0 - cosTheta*cosTheta))/ log(PHI+1.0)));\n    float Fk = pow(PHI, k)/sqrt(5.0);\n    vec2 F = vec2( round(Fk), round(Fk * PHI) ); // k, k+1\n\n    vec2 ka = 2.0*F/n;\n    vec2 kb = 2.0*PI*( fract((F+1.0)*PHI) - (PHI-1.0) );\n\n    mat2 iB = mat2( ka.y, -ka.x,\n    kb.y, -kb.x ) / (ka.y*kb.x - ka.x*kb.y);\n\n    vec2 c = floor( iB * vec2(phi, cosTheta - m));\n    float d = 8.0;\n    float j = 0.0;\n    vec3 bestQ = vec3(0.0,0.0,8.0);\n    for( int s=0; s<4; s++ )\n    {\n        vec2 uv = vec2( float(s-2*(s/2)), float(s/2) );\n\n        float i = dot(F, uv + c); // all quantities are ingeters (can take a round() for extra safety)\n\n        float phi = 2.0*PI*fract(i*PHI);\n        float cosTheta = m - 2.0*i/n;\n        float sinTheta = sqrt(1.0 - cosTheta*cosTheta);\n\n        vec3 q = vec3( cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta );\n        float squaredDistance = dot(q-p, q-p);\n        if (squaredDistance < d)\n        {\n            d = squaredDistance;\n            j = i;\n            bestQ = q;\n        }\n    }\n    return vec4(bestQ,sqrt(d));\n}\n\n// Compute intersection of ray and SDF. You probably won't need to modify this.\nfloat intersect(vec3 ro, vec3 rd, float stepFraction) {\n    float t = 0.0;\n\tfor(int i = 0; i < MAX_ITERATIONS; ++i) {\n\t\tfloat h = surfaceDistance((ro+rd*t));\n\t\tif(h < intersection_threshold || t > max_dist) break;\n\t\tt += h*STEP_SIZE_CONSTANT;\n    }\n\treturn t;\n}\n\nvec3 getRayDirection() {\n\treturn normalize(worldPos.xyz-cameraPosition);\n}\n\nvec3 mouseIntersection() {\n    vec3 rayDirection = getRayDirection();\n    return mouse+rayDirection*intersect(mouse, rayDirection, 0.8);\n}\n\n// Calculate the normal of a SDF\nvec3 calcNormal( vec3 pos )\n{\n    vec2 e = vec2(1.0,-1.0)*0.0005;\n    return normalize( e.xyy*surfaceDistance( pos + e.xyy ) + \n\t\t      e.yyx*surfaceDistance( pos + e.yyx ) + \n\t\t      e.yxy*surfaceDistance( pos + e.yxy ) + \n\t\t      e.xxx*surfaceDistance( pos + e.xxx ) );\n}\n\n// from https://learnopengl.com/PBR/Lighting\nvec3 fresnelSchlick(float cosTheta, vec3 F0)\n{\n    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);\n}  \n\nfloat DistributionGGX(vec3 N, vec3 H, float roughness)\n{\n    float a      = roughness*roughness;\n    float a2     = a*a;\n    float NdotH  = max(dot(N, H), 0.0);\n    float NdotH2 = NdotH*NdotH;\n\t\n    float num   = a2;\n    float denom = (NdotH2 * (a2 - 1.0) + 1.0);\n    denom = PI * denom * denom;\n\t\n    return num / denom;\n}\n\nfloat GeometrySchlickGGX(float NdotV, float roughness)\n{\n    float r = (roughness + 1.0);\n    float k = (r*r) / 8.0;\n\n    float num   = NdotV;\n    float denom = NdotV * (1.0 - k) + k;\n\t\n    return num / denom;\n}\n\nfloat GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)\n{\n    float NdotV = max(dot(N, V), 0.0);\n    float NdotL = max(dot(N, L), 0.0);\n    float ggx2  = GeometrySchlickGGX(NdotV, roughness);\n    float ggx1  = GeometrySchlickGGX(NdotL, roughness);\n\t\n    return ggx1 * ggx2;\n}\n\n// adapted from https://learnopengl.com/PBR/Lighting\nvec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat, vec3 backgroundColor) {\n\n    vec3 V = -getRayDirection();\n    vec3 F0 = vec3(0.04); \n    F0 = mix(F0, mat.albedo, mat.metallic);\n\t\n    // reflectance equation\n    vec3 Lo = vec3(0.0);\n\n    // calculate per-light radiance\n    vec3 L = normalize(lightdir);\n    vec3 H = normalize(V + L);        \n    \n    // cook-torrance brdf\n    float NDF = DistributionGGX(N, H, mat.roughness);        \n    float G   = GeometrySmith(N, V, L, mat.roughness);      \n    vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);    \n\n    vec3 kS = F;\n    vec3 kD = vec3(1.0) - kS;\n    kD *= 1.0 - mat.metallic;\t  \n    \n    vec3 numerator    = NDF * G * F;\n    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);\n    vec3 specular     = numerator / max(denominator, 0.001);  \n    \n    // add to outgoing radiance Lo\n    float NdotL = max(dot(N, L), 0.0);                \n    Lo += (kD * mat.albedo / PI + specular) * NdotL;  \n  \n    float hemi = 1.0;\n    #ifdef HEMISPHERE_LIGHT\n    // ground is black, taken into account by ambient light\n    hemi = NdotL*1.25;\n    #endif\n\n    vec3 ambient = (vec3(1.2+hemi) * mat.albedo) * mat.ao;\n    vec3 color = ambient + Lo*1.7;\n    \n    /// this section adds edge glow as if there were a white env map ///\n    /// there should probably be a way to disable it //\n    float lt = 1.0-max(dot(N,V),0.0);\n    lt = pow(lt,6.0);\n    color += 16.0*lt*(0.2+mat.albedo)*mat.metallic*backgroundColor*(1.3-mat.roughness);\n    ///\n    \n    color = color / (color + vec3(1.0));\n    color = pow(color, vec3(1.0/2.2));\n   \n    return color;\n}\n\nfloat simpleLighting(vec3 p, vec3 normal, vec3 lightdir) {\n    // Simple phong-like shading\n    float value = clamp(dot(normal, normalize(lightdir)),0.0, 1.0);\n    return value * 0.3 + 0.7;\n}\n\nfloat specularLighting(vec3 p, vec3 normal, vec3 lightDirection, float shine) {\n    float lamb = clamp(dot(normal,normalize(lightDirection)),0.0,1.0);\n    float spec = pow(lamb, exp(10.0*shine));\n    lamb = 0.4*lamb + 0.4 + 0.2*spec;\n    return lamb;\n}\n\nfloat shadow(vec3 p, vec3 lightDirection, float amount) {\n    float t = intersect(p+0.001*lightDirection, lightDirection, stepSize);\n    return t < (max_dist - 0.1) ? 1.0-amount : 1.0;\n}\n\n// From https://www.shadertoy.com/view/XslSWl\nfloat occlusion(vec3 p,vec3 n) { \n    const int AO_SAMPLES = 8;\n    const float INV_AO_SAMPLES = 1.0/float(AO_SAMPLES);\n    const float R = 0.9;\n    const float D = 0.8;\n    float r = 0.0;\n    for(int i = 0; i < AO_SAMPLES; i++) {\n        float f = float(i)*INV_AO_SAMPLES;\n        float h = 0.05+f*R;\n        float d = surfaceDistance(p + n * h) - 0.003;\n        r += clamp(h*D-d,0.0,1.0) * (1.0-f);\n    }    \n    return clamp(1.0-r,0.0,1.0);\n}\n";
+var sculptureStarterCode = "\nfloat surfaceDistance(vec3 p);\n\nconst float PI = 3.14159265;\nconst float TAU = PI*2.0;\nconst float TWO_PI = TAU;\n\nconst float max_dist = 100.0;\nconst float intersection_threshold = 0.00001;\n\nstruct Material {\n    vec3 albedo;\n    float metallic;\n    float roughness;\n    float ao;\n};\n\nMaterial blendMaterial(Material a, Material b, float amount) {\n    return Material(\n        mix(a.albedo, b.albedo, amount), \n        mix(a.metallic, b.metallic, amount), \n        mix(a.roughness, b.roughness, amount), \n        mix(a.ao, b.ao, amount)\n    );\n}\n\n// Trig functions normalized to the range 0.0-1.0\nfloat nsin(float x) {\n    return sin(x)*0.5+0.5;\n}\n\nfloat ncos(float x) {\n    return cos(x)*0.5+0.5;\n}\n\n#ifdef GLSL_NEED_ROUND\nfloat round(float x) {\n    return floor(x+0.5);\n}\nvec2 round(vec2 x) {\n    return floor(x+0.5);\n}\nvec3 round(vec3 x) {\n    return floor(x+0.5);\n}\nvec4 round(vec4 x) {\n    return floor(x+0.5);\n}\n#endif\n\nfloat softSquare(float x, int pw) {\n    return 1.0/(pow(tan(x),float(pw+1)*2.0)+1.0);\n}\n\n// Simple oscillators \n\nfloat osc(float freq, float amp, float base, float phase) {\n    return base+amp*sin(TWO_PI*(freq*time+phase));\n}\n\nfloat osc(float freq, float amp, float base) {\n    return osc(freq, amp, base, 0.0);\n}\n\nfloat osc(float freq, float amp) {\n    return osc(freq, amp, 1.0);\n}\n\nfloat osc(float freq) {\n    return osc(freq, 0.5);\n}\n\nfloat osc() {\n    return osc(1.0);\n}\n\n// Color Conversion\n// https://www.shadertoy.com/view/lsS3Wc\nvec3 hsv2rgb( vec3 c )\n{\n    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );\n    return c.z * mix( vec3(1.0), rgb, c.y);\n}\n\nvec3 rgb2hsv( vec3 c)\n{\n    const float eps = 0.0000001;\n    vec4 k = vec4(0.0, -1.0/3.0, 2.0/3.0, -1.0);\n    vec4 p = mix(vec4(c.zy, k.wz), vec4(c.yz, k.xy), (c.z<c.y) ? 1.0 : 0.0);\n    vec4 q = mix(vec4(p.xyw, c.x), vec4(c.x, p.yzx), (p.x<c.x) ? 1.0 : 0.0);\n    float d = q.x - min(q.w, q.y);\n    return vec3(abs(q.z + (q.w - q.y) / (6.0*d+eps)), d / (q.x+eps), q.x);\n}\n\n\n// Primitives\n\nfloat line(vec3 p, vec3 a, vec3 b) {\n\tvec3 pa = p-a;\n  \tvec3 ba = b-a;\n\tfloat t = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);\n  \treturn length(pa - ba*t);\n}\n\n//line with radius\nfloat line( vec3 p, vec3 a, vec3 b, float radius ){\n    vec3 pa = p - a, ba = b - a;\n    float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );\n    return length( pa - ba*h ) - radius;\n}\n\nfloat sphere( vec3 p, float size ){\n  return length(p)-size;\n}\n\nfloat uBox( vec3 p, vec3 b ){\n  return length(max(abs(p)-b,0.0));\n}\n\nfloat uRoundBox( vec3 p, vec3 b, float r ){\n  return length(max(abs(p)-b,0.0))-r;\n}\n\nfloat box( vec3 p, vec3 box ){\n  vec3 d = abs(p) - box;\n  return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));\n}\n\nfloat box( vec3 p, float bx, float by, float bz) {\n    vec3 box = vec3(bx,by,bz);\n    vec3 d = abs(p) - box;\n    return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));\n}\n\nfloat roundedBox( vec3 p, vec3 box , float r){\n  return length(max(abs(p)-box,0.0))-r;\n}\n\nfloat torus( vec3 p, vec2 t ){\n  vec2 q = vec2(length(p.xz)-t.x,p.y);\n  return length(q)-t.y;\n}\n\nfloat torus( vec3 p, float tx, float ty ){\n    vec2 q = vec2(length(p.xz)-tx,p.y);\n    return length(q)-ty;\n}\n\nfloat infCylinder( vec3 p, vec3 c )\n{\n  return length(p.xz-c.xy)-c.z;\n}\n\nfloat cylinder( vec3 p, vec2 h )\n{\n  vec2 d = abs(vec2(length(p.xz),p.y)) - h;\n  return min(max(d.x,d.y),0.0) + length(max(d,0.0));\n}\n\nfloat cylinder( vec3 p, float hx, float hy)\n{\n    return cylinder(p, vec2(hx,hy));\n}\n\nfloat cone( vec3 p, vec2 c )\n{\n    // c must be normalized\n    float q = length(p.xy);\n    return dot(c,vec2(q,p.z));\n}\n\nfloat plane( vec3 p, vec4 n )\n{\n  // n must be normalized\n  return dot(p,n.xyz) + n.w;\n}\n\nfloat plane( vec3 p, float nx, float ny, float nz, float nw)\n{\n  // n must be normalized\n  return dot(p,normalize(vec3(nx,ny,nz))) + nw;\n}\n\nfloat hexPrism( vec3 p, vec2 h )\n{\n    vec3 q = abs(p);\n    return max(q.z-h.y,max((q.x*0.866025+q.y*0.5),q.y)-h.x);\n}\n\nfloat triPrism( vec3 p, vec2 h )\n{\n    vec3 q = abs(p);\n    return max(q.z-h.y,max(q.x*0.866025+p.y*0.5,-p.y)-h.x*0.5);\n}\n\nfloat capsule( vec3 p, vec3 a, vec3 b, float r )\n{\n    vec3 pa = p - a, ba = b - a;\n    float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );\n    return length( pa - ba*h ) - r;\n}\n\nfloat triangularPrism( vec3 p, vec2 h ) {\n    vec3 q = abs(p);\n    return max(q.z-h.y,max(q.x*0.866025+p.y*0.5,-p.y)-h.x*0.5);\n}\n\nfloat cappedCone( vec3 p, vec3 c )\n{\n    vec2 q = vec2( length(p.xz), p.y );\n    vec2 v = vec2( c.z*c.y/c.x, -c.z );\n    vec2 w = v - q;\n    vec2 vv = vec2( dot(v,v), v.x*v.x );\n    vec2 qv = vec2( dot(v,w), v.x*w.x );\n    vec2 d = max(qv,0.0)*qv/vv;\n    return sqrt( dot(w,w) - max(d.x,d.y) ) * sign(max(q.y*v.x-q.x*v.y,w.y));\n}\n\nfloat roundCone(vec3 p, vec3 a, vec3 b, float r1, float r2)\n{\n    // sampling independent computations (only depend on shape)\n    vec3  ba = b - a;\n    float l2 = dot(ba,ba);\n    float rr = r1 - r2;\n    float a2 = l2 - rr*rr;\n    float il2 = 1.0/l2;\n    \n    // sampling dependant computations\n    vec3 pa = p - a;\n    float y = dot(pa,ba);\n    float z = y - l2;\n    vec3 rv = pa*l2 - ba*y;\n    float x2 = dot(rv,rv);\n    float y2 = y*y*l2;\n    float z2 = z*z*l2;\n\n    // single square root!\n    float k = sign(rr)*rr*rr*x2;\n    if( sign(z)*a2*z2 > k ) return  sqrt(x2 + z2)        *il2 - r2;\n    if( sign(y)*a2*y2 < k ) return  sqrt(x2 + y2)        *il2 - r1;\n                            return (sqrt(x2*a2*il2)+y*rr)*il2 - r1;\n}\n\nfloat ellipsoid( vec3 p, vec3 r )\n{\n    return (length( p/r ) - 1.0) * min(min(r.x,r.y),r.z);\n}\n\nvec3 toSpherical(vec3 p) {\n    float phi = atan(p.x,p.z);\n    float r = length(p);\n    float theta = acos(-p.y/r);\n    return vec3(r,theta,phi);\n}\n\nvec3 fromSpherical(vec3 p) {\n    return vec3(p.x*sin(p.y)*cos(p.z), p.x*sin(p.y)*sin(p.z), p.x*cos(p.y));\n}\n\nfloat dot2( vec3 v ) { return dot(v,v); }\n\nfloat uTriangle( vec3 p, vec3 a, vec3 b, vec3 c )\n{\n    vec3 ba = b - a; vec3 pa = p - a;\n    vec3 cb = c - b; vec3 pb = p - b;\n    vec3 ac = a - c; vec3 pc = p - c;\n    vec3 nor = cross( ba, ac );\n    return sqrt(\n    (sign(dot(cross(ba,nor),pa)) +\n     sign(dot(cross(cb,nor),pb)) +\n     sign(dot(cross(ac,nor),pc))<2.0)\n     ?\n     min( min(\n     dot2(ba*clamp(dot(ba,pa)/dot2(ba),0.0,1.0)-pa),\n     dot2(cb*clamp(dot(cb,pb)/dot2(cb),0.0,1.0)-pb) ),\n     dot2(ac*clamp(dot(ac,pc)/dot2(ac),0.0,1.0)-pc) )\n     :\n     dot(nor,pa)*dot(nor,pa)/dot2(nor) );\n}\n\nfloat add( float d1, float d2 )\n{\n    return min(d1,d2);\n}\n\nfloat add(float d1, float d2, float d3) {\n   return min(d1, min(d2,d3));\n}\n\nfloat add(float d1, float d2, float d3, float d4) {\n    return min(min(d1,d2),min(d3,d4));\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5) {\n    return min(min(min(d1,d2), min(d3,d4)),d5);\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5, float d6) {\n    return min(min(min(d1,d2),min(d3,d4)),min(d5,d6));\n}\n\nfloat add(float d1, float d2, float d3, float d4, float d5, float d6, float d7) {\n    return min(min(min(d1,d2),min(d3,d4)),min(min(d5,d6),d7));\n}\n\nfloat subtract( float d1, float d2 )\n{\n    return max(-d1,d2);\n}\n\nfloat intersect( float d1, float d2 )\n{\n    return max(d1,d2);\n}\n\nfloat shell(float d, float thickness) {\n    return abs(d)-thickness;\n}\n\nvec3 repeat3D(vec3 p, vec3 c )\n{\n    return mod(p,c)-0.5*c;\n}\n\nfloat repeat1D(float p, float size)\n{\n\tfloat halfSize = size * 0.5;\n\tfloat c = floor((p + halfSize) / size);\n  \tp = mod(p + halfSize, size)-halfSize;\n  \treturn c;\n}\n\nmat2 rot2(float a){\n    float c = cos(a); float s = sin(a);\n\treturn mat2(c, s, -s, c);\n}\n\n// polynomial smooth min (k = 0.1) (from IQ)\nfloat smoothAdd( float a, float b, float k )\n{\n    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );\n    return mix( b, a, h ) - k*h*(1.0-h);\n}\n\nfloat smoothSubtract(float a,float b, float k)\n{\n    return -smoothAdd(-a,-b,k);\n}\n\nvec2 _hash( vec2 p ) // replace this by something better\n{\n\tp = vec2( dot(p,vec2(127.1,311.7)),\n\t\t\t  dot(p,vec2(269.5,183.3)) );\n\treturn -1.0 + 2.0*fract(sin(p)*43758.5453123);\n}\n\nfloat noise( vec2 p )\n{\n    const float K1 = 0.366025404; // (sqrt(3)-1)/2;\n    const float K2 = 0.211324865; // (3-sqrt(3))/6;\n\tvec2 i = floor( p + (p.x+p.y)*K1 );\n\t\n    vec2 a = p - i + (i.x+i.y)*K2;\n    vec2 o = step(a.yx,a.xy);    \n    vec2 b = a - o + K2;\n\tvec2 c = a - 1.0 + 2.0*K2;\n    vec3 h = max( 0.5-vec3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );\n\tvec3 n = h*h*h*h*vec3( dot(a,_hash(i+0.0)), dot(b,_hash(i+o)), dot(c,_hash(i+1.0)));\n    return dot( n, vec3(70.0) );\n}\n\nvec3 _hash33(vec3 p3)\n{\n    p3 = fract(p3 * vec3(.1031,.11369,.13787));\n    p3 += dot(p3, p3.yxz+19.19);\n    return -1.0 + 2.0 * fract(vec3((p3.x + p3.y)*p3.z, (p3.x+p3.z)*p3.y, (p3.y+p3.z)*p3.x));\n}\n\n// simplex noise from https://www.shadertoy.com/view/4sc3z2\nfloat noise(vec3 p)\n{\n    const float K1 = 0.333333333;\n    const float K2 = 0.166666667;\n    \n    vec3 i = floor(p + (p.x + p.y + p.z) * K1);\n    vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);\n    \n    // thx nikita: https://www.shadertoy.com/view/XsX3zB\n    vec3 e = step(vec3(0.0), d0 - d0.yzx);\n\tvec3 i1 = e * (1.0 - e.zxy);\n\tvec3 i2 = 1.0 - e.zxy * (1.0 - e);\n    \n    vec3 d1 = d0 - (i1 - 1.0 * K2);\n    vec3 d2 = d0 - (i2 - 2.0 * K2);\n    vec3 d3 = d0 - (1.0 - 3.0 * K2);\n    \n    vec4 h = max(0.6 - vec4(dot(d0, d0), dot(d1, d1), dot(d2, d2), dot(d3, d3)), 0.0);\n    vec4 n = h * h * h * h * vec4(dot(d0, _hash33(i)), dot(d1, _hash33(i + i1)), dot(d2, _hash33(i + i2)), dot(d3, _hash33(i + 1.0)));\n    \n    return dot(vec4(31.316), n);\n}\n\nfloat fractalNoise(vec3 p, float falloff, int iterations) {\n    float v = 0.0;\n    float amp = 1.0;\n    float invFalloff = 1.0/falloff;\n    for (int i=0; i<10; i++) {\n        v += noise(p)*amp;\n\tif (i>=iterations) break;\n        amp *= invFalloff;\n        p *= falloff;\n    }\n    return v;\n} \n\nfloat fractalNoise(vec3 p) {\n    return fractalNoise(p, 2.0, 5);\n}\n\n// Adapted from IQ's usage at https://www.shadertoy.com/view/lllXz4\n// Spherical Fibonnacci points, Benjamin Keinert, Matthias Innmann,\n// Michael Sanger and Marc Stamminger\n\nconst float PHI = 1.61803398875;\n\nvec4 sphericalDistribution( vec3 p, float n )\n{\n    p = normalize(p);\n    float m = 1.0 - 1.0/n;\n\n    float phi = min(atan(p.y, p.x), PI), cosTheta = p.z;\n\n    float k = max(2.0, floor( log(n * PI * sqrt(5.0) * (1.0 - cosTheta*cosTheta))/ log(PHI+1.0)));\n    float Fk = pow(PHI, k)/sqrt(5.0);\n    vec2 F = vec2( round(Fk), round(Fk * PHI) ); // k, k+1\n\n    vec2 ka = 2.0*F/n;\n    vec2 kb = 2.0*PI*( fract((F+1.0)*PHI) - (PHI-1.0) );\n\n    mat2 iB = mat2( ka.y, -ka.x,\n    kb.y, -kb.x ) / (ka.y*kb.x - ka.x*kb.y);\n\n    vec2 c = floor( iB * vec2(phi, cosTheta - m));\n    float d = 8.0;\n    float j = 0.0;\n    vec3 bestQ = vec3(0.0,0.0,8.0);\n    for( int s=0; s<4; s++ )\n    {\n        vec2 uv = vec2( float(s-2*(s/2)), float(s/2) );\n\n        float i = dot(F, uv + c); // all quantities are ingeters (can take a round() for extra safety)\n\n        float phi = 2.0*PI*fract(i*PHI);\n        float cosTheta = m - 2.0*i/n;\n        float sinTheta = sqrt(1.0 - cosTheta*cosTheta);\n\n        vec3 q = vec3( cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta );\n        float squaredDistance = dot(q-p, q-p);\n        if (squaredDistance < d)\n        {\n            d = squaredDistance;\n            j = i;\n            bestQ = q;\n        }\n    }\n    return vec4(bestQ,sqrt(d));\n}\n\n// Compute intersection of ray and SDF. You probably won't need to modify this.\nfloat intersect(vec3 ro, vec3 rd, float stepFraction) {\n    float t = 0.0;\n\tfor(int i = 0; i < MAX_ITERATIONS; ++i) {\n\t\tfloat h = surfaceDistance((ro+rd*t));\n\t\tif(h < intersection_threshold || t > max_dist) break;\n\t\tt += h*STEP_SIZE_CONSTANT;\n    }\n\treturn t;\n}\n\nvec3 getRayDirection() {\n\treturn normalize(worldPos.xyz-cameraPosition);\n}\n\nvec3 mouseIntersection() {\n    vec3 rayDirection = getRayDirection();\n    return mouse+rayDirection*intersect(mouse, rayDirection, 0.8);\n}\n\n// Calculate the normal of a SDF\nvec3 calcNormal( vec3 pos )\n{\n    vec2 e = vec2(1.0,-1.0)*0.0005;\n    return normalize( e.xyy*surfaceDistance( pos + e.xyy ) + \n\t\t      e.yyx*surfaceDistance( pos + e.yyx ) + \n\t\t      e.yxy*surfaceDistance( pos + e.yxy ) + \n\t\t      e.xxx*surfaceDistance( pos + e.xxx ) );\n}\n\n// from https://learnopengl.com/PBR/Lighting\nvec3 fresnelSchlick(float cosTheta, vec3 F0)\n{\n    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);\n}  \n\nfloat DistributionGGX(vec3 N, vec3 H, float roughness)\n{\n    float a      = roughness*roughness;\n    float a2     = a*a;\n    float NdotH  = max(dot(N, H), 0.0);\n    float NdotH2 = NdotH*NdotH;\n\t\n    float num   = a2;\n    float denom = (NdotH2 * (a2 - 1.0) + 1.0);\n    denom = PI * denom * denom;\n\t\n    return num / denom;\n}\n\nfloat GeometrySchlickGGX(float NdotV, float roughness)\n{\n    float r = (roughness + 1.0);\n    float k = (r*r) / 8.0;\n\n    float num   = NdotV;\n    float denom = NdotV * (1.0 - k) + k;\n\t\n    return num / denom;\n}\n\nfloat GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)\n{\n    float NdotV = max(dot(N, V), 0.0);\n    float NdotL = max(dot(N, L), 0.0);\n    float ggx2  = GeometrySchlickGGX(NdotV, roughness);\n    float ggx1  = GeometrySchlickGGX(NdotL, roughness);\n\t\n    return ggx1 * ggx2;\n}\n\n// adapted from https://learnopengl.com/PBR/Lighting\nvec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat, vec3 backgroundColor) {\n\n    vec3 V = -getRayDirection();\n    vec3 F0 = vec3(0.04); \n    F0 = mix(F0, mat.albedo, mat.metallic);\n\t\n    // reflectance equation\n    vec3 Lo = vec3(0.0);\n\n    // calculate per-light radiance\n    vec3 L = normalize(lightdir);\n    vec3 H = normalize(V + L);        \n    \n    // cook-torrance brdf\n    float NDF = DistributionGGX(N, H, mat.roughness);        \n    float G   = GeometrySmith(N, V, L, mat.roughness);      \n    vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);    \n\n    vec3 kS = F;\n    vec3 kD = vec3(1.0) - kS;\n    kD *= 1.0 - mat.metallic;\t  \n    \n    vec3 numerator    = NDF * G * F;\n    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);\n    vec3 specular     = numerator / max(denominator, 0.001);  \n    \n    // add to outgoing radiance Lo\n    float NdotL = max(dot(N, L), 0.0);                \n    Lo += (kD * mat.albedo / PI + specular) * NdotL;  \n  \n    float hemi = 1.0;\n    #ifdef HEMISPHERE_LIGHT\n    // ground is black, taken into account by ambient light\n    hemi = NdotL*1.25;\n    #endif\n\n    vec3 ambient = (vec3(1.2+hemi) * mat.albedo) * mat.ao;\n    vec3 color = ambient + Lo*1.7;\n    \n    /// this section adds edge glow as if there were a white env map ///\n    /// there should probably be a way to disable it //\n    float lt = 1.0-max(dot(N,V),0.0);\n    lt = pow(lt,6.0);\n    color += 16.0*lt*(0.2+mat.albedo)*mat.metallic*backgroundColor*(1.3-mat.roughness);\n    ///\n    \n    color = color / (color + vec3(1.0));\n    color = pow(color, vec3(1.0/2.2));\n   \n    return color;\n}\n\nfloat simpleLighting(vec3 p, vec3 normal, vec3 lightdir) {\n    // Simple phong-like shading\n    float value = clamp(dot(normal, normalize(lightdir)),0.0, 1.0);\n    return value * 0.3 + 0.7;\n}\n\nfloat specularLighting(vec3 p, vec3 normal, vec3 lightDirection, float shine) {\n    float lamb = clamp(dot(normal,normalize(lightDirection)),0.0,1.0);\n    float spec = pow(lamb, exp(10.0*shine));\n    lamb = 0.4*lamb + 0.4 + 0.2*spec;\n    return lamb;\n}\n\nfloat shadow(vec3 p, vec3 lightDirection, float amount) {\n    float t = intersect(p+0.001*lightDirection, lightDirection, stepSize);\n    return t < (max_dist - 0.1) ? 1.0-amount : 1.0;\n}\n\n// From https://www.shadertoy.com/view/XslSWl\nfloat occlusion(vec3 p,vec3 n) { \n    const int AO_SAMPLES = 8;\n    const float INV_AO_SAMPLES = 1.0/float(AO_SAMPLES);\n    const float R = 0.9;\n    const float D = 0.8;\n    float r = 0.0;\n    for(int i = 0; i < AO_SAMPLES; i++) {\n        float f = float(i)*INV_AO_SAMPLES;\n        float h = 0.05+f*R;\n        float d = surfaceDistance(p + n * h) - 0.003;\n        r += clamp(h*D-d,0.0,1.0) * (1.0-f);\n    }    \n    return clamp(1.0-r,0.0,1.0);\n}\n";
 var fragFooter = "\n// For advanced users //\nvoid main() {\n\n    vec3 rayOrigin = (cameraPosition - sculptureCenter) / max(intersection_threshold, _scale);\n    vec3 rayDirection = getRayDirection();\n    float t = intersect(rayOrigin, rayDirection, stepSize);\n    if(t < max_dist) {\n        vec3 p = (rayOrigin + rayDirection*t);\n        //vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0); //could be used to set FragDepth\n        vec3 normal = calcNormal(p);\n        // p *= _scale;\n        vec3 col = shade(p, normal);\n        gl_FragColor = vec4(col, opacity);\n        \n    } else {\n        discard;\n    }\n}\n";
 
 /**
@@ -66332,11 +66346,13 @@ function createSculpture(source) {
   }
 
   var radius = 'radius' in params ? params.radius : 2;
-  var segments = 'segments' in params ? params.segments : 8;
-  var geometry = new SphereGeometry(radius, segments, segments);
+  var geometry;
 
   if ('geometry' in params) {
     geometry = params.geometry;
+  } else {
+    var segments = 'segments' in params ? params.segments : 8;
+    geometry = new SphereGeometry(radius, segments, segments);
   }
 
   var material = sculptToThreeJSMaterial(source);
@@ -66711,6 +66727,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park version: 0.0.28.2'); /// Generate code for various targets
+console.log('using shader-park version: 0.1.0'); /// Generate code for various targets
 
 export { createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource };

@@ -508,6 +508,11 @@ export function sculptToGLSL(userProvidedSrc) {
 	};
 	const additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
 
+	const materialModes = {
+		NORMAL: 20, // F it let's start at 20 why not
+		MIXMAT: 21
+	};
+
 	let time = new float("time", true);
 	let mouse = new vec3("mouse", null, null, true);
 	let normal = new vec3("normal", null, null, true);
@@ -553,35 +558,44 @@ export function sculptToGLSL(userProvidedSrc) {
 		}
 	}
 
+	function mixMat(amount) {
+		getCurrentState().materialMode = materialModes.MIXMAT;
+		ensureScalar("mixMat", amount);
+		getCurrentState().matMixAmount = amount;
+	}
+
+	function resetMixColor() {
+		getCurrentState().materialMode = materialModes.NORMAL;
+	}
+
 	// Modes (prepend these with GEO or something to indicate they are geometry modes?)
-	// Also 'mix' name needs to be changed to avoid collision with built in
 
 	function union() {
-		stateStack[stateStack.length-1].mode = modes.UNION;
+		getCurrentState().mode = modes.UNION;
 	}
 
 	function difference() {
-		stateStack[stateStack.length-1].mode = modes.DIFFERENCE;
+		getCurrentState().mode = modes.DIFFERENCE;
 	}
 
 	function intersect() {
-		stateStack[stateStack.length-1].mode = modes.INTERSECT;
+		getCurrentState().mode = modes.INTERSECT;
 	}
 
 	function blend(amount) {
-		stateStack[stateStack.length-1].mode = modes.BLEND;
-		ensureScalar("blend",amount);
-		stateStack[stateStack.length-1].blendAmount = amount;
+		getCurrentState().mode = modes.BLEND;
+		ensureScalar("blend", amount);
+		getCurrentState().blendAmount = amount;
 	}
 
 	function mixGeo(amount) {
-		stateStack[stateStack.length-1].mode = modes.MIXGEO;
+		getCurrentState().mode = modes.MIXGEO;
 		ensureScalar("mixGeo",amount);
-		stateStack[stateStack.length-1].mixAmount = amount;
+		getCurrentState().mixAmount = amount;
 	}
 
 	function getMode() {
-		switch (getCurrentState().mode) {
+		switch (getCurrentMode()) {
 			case modes.UNION:
 				return ["add"];
 				break;
@@ -595,7 +609,7 @@ export function sculptToGLSL(userProvidedSrc) {
 				return ["smoothAdd",getCurrentState().blendAmount];
 				break;
 			case modes.MIXGEO:
-				return ["mix",getCurrentState().mixAmount];
+				return ["mix", getCurrentState().mixAmount];
 				break;
 			default:
 				return ["add"];
@@ -603,14 +617,19 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function applyMode(prim, finalCol) {
-		let cmode = getMode();
 		let primName = "prim_" + primCount;
 		primCount += 1;
 		appendSources("float " + primName + " = " + prim + ";\n");
-		if (additiveModes.includes(getCurrentState().mode)) {
+		if (additiveModes.includes(getCurrentMode())) {
 			let selectedCC = finalCol !== undefined ? finalCol : getCurrentMaterial();
-			appendColorSource("if (" + primName + " < "+ getCurrentDist() + ") { " + getMainMaterial() + " = " + selectedCC + "; }\n" );
+			if (getCurrentState().materialMode === materialModes.NORMAL) {
+				appendColorSource("if (" + primName + " < "+ getCurrentDist() + ") { " + getMainMaterial() + " = " + selectedCC + "; }\n" );
+			} else if (getCurrentState().materialMode === materialModes.MIXMAT) {
+				appendColorSource(getMainMaterial() + " = blendMaterial(" + selectedCC + ", " + 
+				getMainMaterial() + ", " + collapseToString(getCurrentState().matMixAmount) + ");\n" );
+			}
 		}
+		let cmode = getMode();
 		appendSources(getCurrentDist() + " = "+ cmode[0] + "( " + primName + ", " + getCurrentDist() +  " " +
 			(cmode.length > 1 ? "," + collapseToString(cmode[1]) : "") + " );\n");
 	}
@@ -623,6 +642,8 @@ export function sculptToGLSL(userProvidedSrc) {
 		stateStack.push({
 			id: "scope_" + stateCount + "_",
 			mode: modes.UNION,
+			materialMode: materialModes.NORMAL,
+			matMixAmount: 0.0,
 			blendAmount: 0.0,
 			mixAmount: 0.0,
 		});
@@ -632,8 +653,8 @@ export function sculptToGLSL(userProvidedSrc) {
 		appendSources("vec3 " + getCurrentPos() + " = " + lastP + ";\n");
 		appendColorSource("Material " + getMainMaterial() + " = " + lastMat + ";\n");
 		appendColorSource("Material " + getCurrentMaterial() + " = " + lastMat + ";\n");
-		stateStack[stateStack.length-1].p = vec3(stateStack[stateStack.length-1].id+"p", null, null, true);
-                stateCount++;
+		getCurrentState().p = vec3(getCurrentPos(), null, null, true);
+		stateCount++;
 	}
 
 	function popState() {
@@ -987,7 +1008,6 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 	let geoFinal = buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
-
 	
 	return {
 		uniforms: uniforms,

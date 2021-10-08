@@ -73,6 +73,15 @@ struct Material {
     float ao;
 };
 
+Material blendMaterial(Material a, Material b, float amount) {
+    return Material(
+        mix(a.albedo, b.albedo, amount), 
+        mix(a.metallic, b.metallic, amount), 
+        mix(a.roughness, b.roughness, amount), 
+        mix(a.ao, b.ao, amount)
+    );
+}
+
 // Trig functions normalized to the range 0.0-1.0
 float nsin(float x) {
     return sin(x)*0.5+0.5;
