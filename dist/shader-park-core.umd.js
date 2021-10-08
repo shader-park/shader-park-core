@@ -4,6 +4,22 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global['shader-park-core'] = {}));
 }(this, (function (exports) { 'use strict';
 
+  function _typeof(obj) {
+    "@babel/helpers - typeof";
+
+    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+      _typeof = function (obj) {
+        return typeof obj;
+      };
+    } else {
+      _typeof = function (obj) {
+        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+      };
+    }
+
+    return _typeof(obj);
+  }
+
   var REACT_ELEMENT_TYPE;
 
   function _jsx(type, props, key, children) {
@@ -45,142 +61,29 @@
     return {
       $$typeof: REACT_ELEMENT_TYPE,
       type: type,
-      key: key === undefined ? null : "" + key,
+      key: key === undefined ? null : '' + key,
       ref: null,
       props: props,
       _owner: null
     };
   }
 
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-
-      if (enumerableOnly) {
-        symbols = symbols.filter(function (sym) {
-          return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-        });
-      }
-
-      keys.push.apply(keys, symbols);
-    }
-
-    return keys;
-  }
-
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i] != null ? arguments[i] : {};
-
-      if (i % 2) {
-        ownKeys(Object(source), true).forEach(function (key) {
-          _defineProperty(target, key, source[key]);
-        });
-      } else if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-      } else {
-        ownKeys(Object(source)).forEach(function (key) {
-          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-      }
-    }
-
-    return target;
-  }
-
-  function _typeof(obj) {
-    "@babel/helpers - typeof";
-
-    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-      _typeof = function (obj) {
-        return typeof obj;
-      };
-    } else {
-      _typeof = function (obj) {
-        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-      };
-    }
-
-    return _typeof(obj);
-  }
-
-  function _wrapRegExp() {
-    _wrapRegExp = function (re, groups) {
-      return new BabelRegExp(re, undefined, groups);
-    };
-
-    var _super = RegExp.prototype;
-
-    var _groups = new WeakMap();
-
-    function BabelRegExp(re, flags, groups) {
-      var _this = new RegExp(re, flags);
-
-      _groups.set(_this, groups || _groups.get(re));
-
-      return _setPrototypeOf(_this, BabelRegExp.prototype);
-    }
-
-    _inherits(BabelRegExp, RegExp);
-
-    BabelRegExp.prototype.exec = function (str) {
-      var result = _super.exec.call(this, str);
-
-      if (result) result.groups = buildGroups(result, this);
-      return result;
-    };
-
-    BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
-      if (typeof substitution === "string") {
-        var groups = _groups.get(this);
-
-        return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
-          return "$" + groups[name];
-        }));
-      } else if (typeof substitution === "function") {
-        var _this = this;
-
-        return _super[Symbol.replace].call(this, str, function () {
-          var args = arguments;
-
-          if (typeof args[args.length - 1] !== "object") {
-            args = [].slice.call(args);
-            args.push(buildGroups(args, _this));
-          }
-
-          return substitution.apply(this, args);
-        });
-      } else {
-        return _super[Symbol.replace].call(this, str, substitution);
-      }
-    };
-
-    function buildGroups(result, re) {
-      var g = _groups.get(re);
-
-      return Object.keys(g).reduce(function (groups, name) {
-        groups[name] = result[g[name]];
-        return groups;
-      }, Object.create(null));
-    }
-
-    return _wrapRegExp.apply(this, arguments);
-  }
-
   function _asyncIterator(iterable) {
     var method;
 
     if (typeof Symbol !== "undefined") {
-      if (Symbol.asyncIterator) method = iterable[Symbol.asyncIterator];
-      if (method == null && Symbol.iterator) method = iterable[Symbol.iterator];
+      if (Symbol.asyncIterator) {
+        method = iterable[Symbol.asyncIterator];
+        if (method != null) return method.call(iterable);
+      }
+
+      if (Symbol.iterator) {
+        method = iterable[Symbol.iterator];
+        if (method != null) return method.call(iterable);
+      }
     }
 
-    if (method == null) method = iterable["@@asyncIterator"];
-    if (method == null) method = iterable["@@iterator"];
-    if (method == null) throw new TypeError("Object is not async iterable");
-    return method.call(iterable);
+    throw new TypeError("Object is not async iterable");
   }
 
   function _AwaitValue(value) {
@@ -266,9 +169,11 @@
     }
   }
 
-  _AsyncGenerator.prototype[typeof Symbol === "function" && Symbol.asyncIterator || "@@asyncIterator"] = function () {
-    return this;
-  };
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    _AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
 
   _AsyncGenerator.prototype.next = function (arg) {
     return this._invoke("next", arg);
@@ -309,9 +214,11 @@
 
     ;
 
-    iter[typeof Symbol !== "undefined" && Symbol.iterator || "@@iterator"] = function () {
-      return this;
-    };
+    if (typeof Symbol === "function" && Symbol.iterator) {
+      iter[Symbol.iterator] = function () {
+        return this;
+      };
+    }
 
     iter.next = function (value) {
       if (waiting) {
@@ -495,6 +402,40 @@
     return target;
   }
 
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+      if (enumerableOnly) symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      });
+      keys.push.apply(keys, symbols);
+    }
+
+    return keys;
+  }
+
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i] != null ? arguments[i] : {};
+
+      if (i % 2) {
+        ownKeys(Object(source), true).forEach(function (key) {
+          _defineProperty(target, key, source[key]);
+        });
+      } else if (Object.getOwnPropertyDescriptors) {
+        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+      } else {
+        ownKeys(Object(source)).forEach(function (key) {
+          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
+      }
+    }
+
+    return target;
+  }
+
   function _inherits(subClass, superClass) {
     if (typeof superClass !== "function" && superClass !== null) {
       throw new TypeError("Super expression must either be null or a function");
@@ -615,17 +556,19 @@
     };
   }
 
-  function _getRequireWildcardCache(nodeInterop) {
+  function _getRequireWildcardCache() {
     if (typeof WeakMap !== "function") return null;
-    var cacheBabelInterop = new WeakMap();
-    var cacheNodeInterop = new WeakMap();
-    return (_getRequireWildcardCache = function (nodeInterop) {
-      return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
-    })(nodeInterop);
+    var cache = new WeakMap();
+
+    _getRequireWildcardCache = function () {
+      return cache;
+    };
+
+    return cache;
   }
 
-  function _interopRequireWildcard(obj, nodeInterop) {
-    if (!nodeInterop && obj && obj.__esModule) {
+  function _interopRequireWildcard(obj) {
+    if (obj && obj.__esModule) {
       return obj;
     }
 
@@ -635,7 +578,7 @@
       };
     }
 
-    var cache = _getRequireWildcardCache(nodeInterop);
+    var cache = _getRequireWildcardCache();
 
     if (cache && cache.has(obj)) {
       return cache.get(obj);
@@ -645,7 +588,7 @@
     var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
 
     for (var key in obj) {
-      if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
 
         if (desc && (desc.get || desc.set)) {
@@ -903,21 +846,18 @@
   }
 
   function _iterableToArray(iter) {
-    if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
+    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
   }
 
   function _iterableToArrayLimit(arr, i) {
-    var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
-
-    if (_i == null) return;
+    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
     var _arr = [];
     var _n = true;
     var _d = false;
-
-    var _s, _e;
+    var _e = undefined;
 
     try {
-      for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
         _arr.push(_s.value);
 
         if (i && _arr.length === i) break;
@@ -937,12 +877,10 @@
   }
 
   function _iterableToArrayLimitLoose(arr, i) {
-    var _i = arr && (typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]);
-
-    if (_i == null) return;
+    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
     var _arr = [];
 
-    for (_i = _i.call(arr), _step; !(_step = _i.next()).done;) {
+    for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
       _arr.push(_step.value);
 
       if (i && _arr.length === i) break;
@@ -977,9 +915,9 @@
   }
 
   function _createForOfIteratorHelper(o, allowArrayLike) {
-    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
+    var it;
 
-    if (!it) {
+    if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
       if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
         if (it) o = it;
         var i = 0;
@@ -1012,7 +950,7 @@
         err;
     return {
       s: function () {
-        it = it.call(o);
+        it = o[Symbol.iterator]();
       },
       n: function () {
         var step = it.next();
@@ -1034,24 +972,28 @@
   }
 
   function _createForOfIteratorHelperLoose(o, allowArrayLike) {
-    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
-    if (it) return (it = it.call(o)).next.bind(it);
+    var it;
 
-    if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
-      if (it) o = it;
-      var i = 0;
-      return function () {
-        if (i >= o.length) return {
-          done: true
+    if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+      if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+        if (it) o = it;
+        var i = 0;
+        return function () {
+          if (i >= o.length) return {
+            done: true
+          };
+          return {
+            done: false,
+            value: o[i++]
+          };
         };
-        return {
-          done: false,
-          value: o[i++]
-        };
-      };
+      }
+
+      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
 
-    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+    it = o[Symbol.iterator]();
+    return it.next.bind(it);
   }
 
   function _skipFirstGeneratorNext(fn) {
@@ -1664,6 +1606,71 @@
     throw new TypeError("attempted to reassign private method");
   }
 
+  function _wrapRegExp(re, groups) {
+    _wrapRegExp = function (re, groups) {
+      return new BabelRegExp(re, undefined, groups);
+    };
+
+    var _RegExp = _wrapNativeSuper(RegExp);
+
+    var _super = RegExp.prototype;
+
+    var _groups = new WeakMap();
+
+    function BabelRegExp(re, flags, groups) {
+      var _this = _RegExp.call(this, re, flags);
+
+      _groups.set(_this, groups || _groups.get(re));
+
+      return _this;
+    }
+
+    _inherits(BabelRegExp, _RegExp);
+
+    BabelRegExp.prototype.exec = function (str) {
+      var result = _super.exec.call(this, str);
+
+      if (result) result.groups = buildGroups(result, this);
+      return result;
+    };
+
+    BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
+      if (typeof substitution === "string") {
+        var groups = _groups.get(this);
+
+        return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
+          return "$" + groups[name];
+        }));
+      } else if (typeof substitution === "function") {
+        var _this = this;
+
+        return _super[Symbol.replace].call(this, str, function () {
+          var args = [];
+          args.push.apply(args, arguments);
+
+          if (typeof args[args.length - 1] !== "object") {
+            args.push(buildGroups(args, _this));
+          }
+
+          return substitution.apply(this, args);
+        });
+      } else {
+        return _super[Symbol.replace].call(this, str, substitution);
+      }
+    };
+
+    function buildGroups(result, re) {
+      var g = _groups.get(re);
+
+      return Object.keys(g).reduce(function (groups, name) {
+        groups[name] = result[g[name]];
+        return groups;
+      }, Object.create(null));
+    }
+
+    return _wrapRegExp.apply(this, arguments);
+  }
+
   // Numbers represent type - 
   // 1:float 2:vec2 3:vec3 4:vec4
   var geometryFunctions = {
@@ -1846,7 +1853,7 @@
   	throw new Error('Could not dynamically require "' + path + '". Please configure the dynamicRequireTargets or/and ignoreDynamicRequires option of @rollup/plugin-commonjs appropriately for this require call to work.');
   }
 
-  const _from$1="estraverse@^4.2.0";const _id$2="estraverse@4.3.0";const _inBundle$1=false;const _integrity$1="sha512-39nnKffWz8xN1BU/2c79n9nB9HDzo0niYUqx6xyqUnyoAnQyyWpOTdZEeiCch8BBu515t4wp9ZmgVfVhn9EBpw==";const _location$1="/estraverse";const _phantomChildren$1={};const _requested$1={type:"range",registry:true,raw:"estraverse@^4.2.0",name:"estraverse",escapedName:"estraverse",rawSpec:"^4.2.0",saveSpec:null,fetchSpec:"^4.2.0"};const _requiredBy$1=["/escodegen"];const _resolved$1="https://registry.npmjs.org/estraverse/-/estraverse-4.3.0.tgz";const _shasum$1="398ad3f3c5a24948be7725e83d11a7de28cdbd1d";const _spec$1="estraverse@^4.2.0";const _where$1="/Users/peterwhidden/Documents/sp-test/shader-park-core/node_modules/escodegen";const bugs$1={url:"https://github.com/estools/estraverse/issues"};const bundleDependencies$1=false;const deprecated$1=false;const description$1="ECMAScript JS AST traversal functions";const devDependencies$1={"babel-preset-env":"^1.6.1","babel-register":"^6.3.13",chai:"^2.1.1",espree:"^1.11.0",gulp:"^3.8.10","gulp-bump":"^0.2.2","gulp-filter":"^2.0.0","gulp-git":"^1.0.1","gulp-tag-version":"^1.3.0",jshint:"^2.5.6",mocha:"^2.1.0"};const engines$1={node:">=4.0"};const homepage$1="https://github.com/estools/estraverse";const license$1="BSD-2-Clause";const main$1="estraverse.js";const maintainers$1=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",url:"http://github.com/Constellation"}];const name$1="estraverse";const repository$1={type:"git",url:"git+ssh://git@github.com/estools/estraverse.git"};const scripts$1={lint:"jshint estraverse.js",test:"npm run-script lint && npm run-script unit-test","unit-test":"mocha --compilers js:babel-register"};const version$1="4.3.0";var require$$0 = {_from:_from$1,_id:_id$2,_inBundle:_inBundle$1,_integrity:_integrity$1,_location:_location$1,_phantomChildren:_phantomChildren$1,_requested:_requested$1,_requiredBy:_requiredBy$1,_resolved:_resolved$1,_shasum:_shasum$1,_spec:_spec$1,_where:_where$1,bugs:bugs$1,bundleDependencies:bundleDependencies$1,deprecated:deprecated$1,description:description$1,devDependencies:devDependencies$1,engines:engines$1,homepage:homepage$1,license:license$1,main:main$1,maintainers:maintainers$1,name:name$1,repository:repository$1,scripts:scripts$1,version:version$1};
+  const name$1="estraverse";const description$1="ECMAScript JS AST traversal functions";const homepage$1="https://github.com/estools/estraverse";const main$1="estraverse.js";const version$1="4.3.0";const engines$1={node:">=4.0"};const maintainers$1=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository$1={type:"git",url:"http://github.com/estools/estraverse.git"};const devDependencies$1={"babel-preset-env":"^1.6.1","babel-register":"^6.3.13",chai:"^2.1.1",espree:"^1.11.0",gulp:"^3.8.10","gulp-bump":"^0.2.2","gulp-filter":"^2.0.0","gulp-git":"^1.0.1","gulp-tag-version":"^1.3.0",jshint:"^2.5.6",mocha:"^2.1.0"};const license$1="BSD-2-Clause";const scripts$1={test:"npm run-script lint && npm run-script unit-test",lint:"jshint estraverse.js","unit-test":"mocha --compilers js:babel-register"};var require$$0 = {name:name$1,description:description$1,homepage:homepage$1,main:main$1,version:version$1,engines:engines$1,maintainers:maintainers$1,repository:repository$1,devDependencies:devDependencies$1,license:license$1,scripts:scripts$1};
 
   /*
     Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -6299,7 +6306,7 @@
   	SourceNode: SourceNode
   };
 
-  const _from="escodegen@1.14.1";const _id$1="escodegen@1.14.1";const _inBundle=false;const _integrity="sha512-Bmt7NcRySdIfNPfU2ZoXDrrXsG9ZjvDxcAlMfDUgRBjLOWTuIACXPBFJH7Z+cLb40JeQco5toikyc9t9P8E9SQ==";const _location="/escodegen";const _phantomChildren={};const _requested={type:"version",registry:true,raw:"escodegen@1.14.1",name:"escodegen",escapedName:"escodegen",rawSpec:"1.14.1",saveSpec:null,fetchSpec:"1.14.1"};const _requiredBy=["/"];const _resolved="https://registry.npmjs.org/escodegen/-/escodegen-1.14.1.tgz";const _shasum="ba01d0c8278b5e95a9a45350142026659027a457";const _spec="escodegen@1.14.1";const _where="/Users/peterwhidden/Documents/sp-test/shader-park-core";const bin={esgenerate:"bin/esgenerate.js",escodegen:"bin/escodegen.js"};const bugs={url:"https://github.com/estools/escodegen/issues"};const bundleDependencies=false;const dependencies={esprima:"^4.0.1",estraverse:"^4.2.0",esutils:"^2.0.2",optionator:"^0.8.1","source-map":"~0.6.1"};const deprecated=false;const description="ECMAScript code generator";const devDependencies={acorn:"^7.1.0",bluebird:"^3.4.7","bower-registry-client":"^1.0.0",chai:"^3.5.0","commonjs-everywhere":"^0.9.7",gulp:"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1",semver:"^5.1.0"};const engines={node:">=4.0"};const files=["LICENSE.BSD","README.md","bin","escodegen.js","package.json"];const homepage="http://github.com/estools/escodegen";const license="BSD-2-Clause";const main="escodegen.js";const maintainers=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",url:"http://github.com/Constellation"}];const name="escodegen";const optionalDependencies={"source-map":"~0.6.1"};const repository={type:"git",url:"git+ssh://git@github.com/estools/escodegen.git"};const scripts={build:"cjsify -a path: tools/entry-point.js > escodegen.browser.js","build-min":"cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",lint:"gulp lint",release:"node tools/release.js",test:"gulp travis","unit-test":"gulp test"};const version="1.14.1";var require$$3 = {_from:_from,_id:_id$1,_inBundle:_inBundle,_integrity:_integrity,_location:_location,_phantomChildren:_phantomChildren,_requested:_requested,_requiredBy:_requiredBy,_resolved:_resolved,_shasum:_shasum,_spec:_spec,_where:_where,bin:bin,bugs:bugs,bundleDependencies:bundleDependencies,dependencies:dependencies,deprecated:deprecated,description:description,devDependencies:devDependencies,engines:engines,files:files,homepage:homepage,license:license,main:main,maintainers:maintainers,name:name,optionalDependencies:optionalDependencies,repository:repository,scripts:scripts,version:version};
+  const name="escodegen";const description="ECMAScript code generator";const homepage="http://github.com/estools/escodegen";const main="escodegen.js";const bin={esgenerate:"./bin/esgenerate.js",escodegen:"./bin/escodegen.js"};const files=["LICENSE.BSD","README.md","bin","escodegen.js","package.json"];const version="1.14.1";const engines={node:">=4.0"};const maintainers=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository={type:"git",url:"http://github.com/estools/escodegen.git"};const dependencies={estraverse:"^4.2.0",esutils:"^2.0.2",esprima:"^4.0.1",optionator:"^0.8.1"};const optionalDependencies={"source-map":"~0.6.1"};const devDependencies={acorn:"^7.1.0",bluebird:"^3.4.7","bower-registry-client":"^1.0.0",chai:"^3.5.0","commonjs-everywhere":"^0.9.7",gulp:"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1",semver:"^5.1.0"};const license="BSD-2-Clause";const scripts={test:"gulp travis","unit-test":"gulp test",lint:"gulp lint",release:"node tools/release.js","build-min":"./node_modules/.bin/cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",build:"./node_modules/.bin/cjsify -a path: tools/entry-point.js > escodegen.browser.js"};var require$$3 = {name:name,description:description,homepage:homepage,main:main,bin:bin,files:files,version:version,engines:engines,maintainers:maintainers,repository:repository,dependencies:dependencies,optionalDependencies:optionalDependencies,devDependencies:devDependencies,license:license,scripts:scripts};
 
   /*
     Copyright (C) 2012-2014 Yusuke Suzuki <utatane.tea@gmail.com>
