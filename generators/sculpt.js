@@ -173,6 +173,10 @@ export function baseUniforms() {
 	];
 }
 
+export function bindStaticData(staticData, spCode) {
+	return `const staticData = JSON.parse(\`${JSON.stringify(staticData)}\`)\n` + spCode;
+}
+
 export function sculptToGLSL(userProvidedSrc) {
 	const PI = Math.PI;
 	const TWO_PI = Math.PI * 2;

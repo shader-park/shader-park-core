@@ -37,7 +37,11 @@ import {
     defaultFragSourceGLSL
 } from './glsl/glsl-lib.js'
 
-console.log(`using shader-park version: 0.1.1`);
+import {
+    bindStaticData
+} from './generators/sculpt.js'
+
+console.log(`using shader-park version: 0.1.2`);
 
 /// Generate code for various targets
 
@@ -51,6 +55,7 @@ export {
     sculptToThreeJSMesh,
     createSculptureWithGeometry,
     createSculpture,
+    bindStaticData,
     glslToOfflineRenderer,
     sculptToOfflineRenderer,
     glslToTouchDesignerShaderSource,
