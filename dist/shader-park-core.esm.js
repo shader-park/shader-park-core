@@ -66527,10 +66527,10 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
       canvas.width = width;
       canvas.height = height;
     }
-  } // resizeCanvas();
-  // window.addEventListener('resize', resizeCanvas);
+  }
 
-
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
   var gl = canvas.getContext('webgl');
   var vertices = [-1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0, 1.0, 0.0];
   var indices = [3, 2, 1, 3, 1, 0];
@@ -66734,6 +66734,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park version: 0.1.0'); /// Generate code for various targets
+console.log("using shader-park version: 0.1.1"); /// Generate code for various targets
 
 export { createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource };
