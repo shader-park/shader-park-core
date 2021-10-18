@@ -9,6 +9,8 @@ import {
 	glslBuiltInOther
 } from '../glsl/bindings.js';
 
+import {convertFunctionToString} from '../targets/helpers.js'
+
 import * as escodegen from 'escodegen';
 import * as esprima from 'esprima';
 
@@ -174,6 +176,7 @@ export function baseUniforms() {
 }
 
 export function bindStaticData(staticData, spCode) {
+	spCode = convertFunctionToString(spCode);
 	return `const staticData = JSON.parse(\`${JSON.stringify(staticData)}\`)\n` + spCode;
 }
 
