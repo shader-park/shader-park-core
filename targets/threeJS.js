@@ -8,6 +8,8 @@ import {
     fragFooter,
 } from '../glsl/glsl-lib.js'
 
+import {convertFunctionToString} from './helpers.js'
+
 import { Texture, Vector2, Vector3, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide, SphereBufferGeometry} from 'three';
 
 /**
@@ -74,12 +76,7 @@ export function sculptToThreeJSMaterial(source, payload) {
 }
 
 export function sculptToThreeJSMesh(source, payload) {
-    if (typeof source === "function") {
-        source = source.toString();
-        source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
-    } else if (!(typeof source === "string")) {
-        throw "sculptToThreeJSMesh requires the source code to be a function, or a string"
-    }
+    source = convertFunctionToString(source);
     return makeBasicMesh(sculptToThreeJSMaterial(source, payload));
 }
 
@@ -93,12 +90,7 @@ export function createSculptureWithGeometry(geometry, source, uniformCallback=()
 
 // uniformCallback 
 export function createSculpture(source, uniformCallback=() => {return {}}, params={}) {
-    if (typeof source === "function") {
-        source = source.toString();
-        source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
-    } else if (!(typeof source === "string")) {
-        throw "sculptToThreeJSMesh requires the source code to be a function, or a string"
-    }
+    source = convertFunctionToString(source);
 
     let radius = ('radius' in params)? params.radius: 2;
 
