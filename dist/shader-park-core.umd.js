@@ -66742,7 +66742,7 @@
     };
   }
 
-  console.log("using shader-park version: 0.1.3"); /// Generate code for various targets
+  console.log("using shader-park version: 0.1.4"); /// Generate code for various targets
 
   exports.bindStaticData = bindStaticData;
   exports.createSculpture = createSculpture;
