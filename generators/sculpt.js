@@ -11,8 +11,8 @@ import {
 
 import {convertFunctionToString} from '../targets/helpers.js'
 
-import * as escodegen from 'escodegen';
-import * as esprima from 'esprima';
+// import * as escodegen from 'escodegen';
+// import * as esprima from 'esprima';
 
 function buildGeoSource(geo) {
 	return `
@@ -186,11 +186,12 @@ export function sculptToGLSL(userProvidedSrc) {
 	const TAU = TWO_PI;
 	
 	let debug = false;
-	let tree = esprima.parse(userProvidedSrc);
-	replaceOperatorOverload(tree);
-	replaceBinaryOp(tree);
-	replaceSliderInput(tree);
-	userProvidedSrc = escodegen.generate(tree);
+	// let tree = esprima.parse(userProvidedSrc);
+	// replaceOperatorOverload(tree);
+	// replaceBinaryOp(tree);
+	// replaceSliderInput(tree);
+	// userProvidedSrc = escodegen.generate(tree);
+	// userProvidedSrc = {}
 	if (debug) {
 		console.log('tree', tree);
 	}
