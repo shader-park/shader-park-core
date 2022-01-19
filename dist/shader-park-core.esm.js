@@ -1807,191 +1807,167 @@ void main() {
 }
 `;
 
-function glslToMinimalRenderer(canvas, source, updateUniforms) {
-    const fullFrag = minimalHeader
-    + usePBRHeader
-    + useHemisphereLight
-    + uniformsToGLSL(baseUniforms()) 
-    + 'const float STEP_SIZE_CONSTANT = 0.9;\n'
-    + 'const int MAX_ITERATIONS = 300;\n'
-    + sculptureStarterCode 
-    + source
-    + fragFooter;
-    return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
-}
+// import { Texture, Vector2, Vector3, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide, SphereBufferGeometry} from 'three';
 
 /**
- * for fast and efficient use on the web
- * input - sculpt code
- * output - a fully self-contained lightweight html file which renders the sculpture
- **/
-function sculptToMinimalRenderer(canvas, source, updateUniforms) {
-    if (typeof source === "function") {
-        source = source.toString();
-        source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
-    } else if (!(typeof source === "string")) {
-        throw "sculptToMinimalRenderer requires the source code to be a function, or a string"
-    } 
+ *  Three targets are provided for both GLSL and Sculpt/JS api.
+ * 
+ *  1: source -> Threejs shader source components (easy customization)
+ *  2: source -> Threejs material
+ *  3: source -> Threejs mesh (easy to use)
+ * 
+ * TODO: make these materials 'plug in' to threejs' lighting model, like unity's surface shaders
+ */
 
-    let generatedGLSL = sculptToGLSL(source);
-    let fullFrag =
-        minimalHeader
-        + usePBRHeader
-        + useHemisphereLight
-        + uniformsToGLSL(generatedGLSL.uniforms) 
-        + 'const float STEP_SIZE_CONSTANT = ' + generatedGLSL.stepSizeConstant + ';\n'
-        + 'const int MAX_ITERATIONS = ' + generatedGLSL.maxIterations + ';\n'
-        + sculptureStarterCode 
-        + generatedGLSL.geoGLSL 
-        + '\n' 
-        + generatedGLSL.colorGLSL 
-        + '\n' 
-        + fragFooter;
-    return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
+function glslToThreeJSShaderSource(source) {
+    return {
+        uniforms: baseUniforms(),
+        frag: threeHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + 'const int MAX_ITERATIONS = 300;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + fragFooter,
+        vert: threeJSVertexSource
+    }
 }
 
-function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
+function glslToThreeJSMaterial(source, payload) {
+    let src = glslToThreeJSShaderSource(source);
+    return makeMaterial(src.uniforms, src.vert, src.frag, payload);
+}
 
-    // if no update function is provided assume no-op
-    if (updateUniforms === undefined) {
-        updateUniforms = () => {return {}};
+function glslToThreeJSMesh(source, payload) {
+    return makeBasicMesh(glslToThreeJSMaterial(source, payload));
+}
+
+function sculptToThreeJSShaderSource(source) {
+    const src = sculptToGLSL(source);
+    if (src.error) {
+        console.log(src.error);
     }
+    let frg = 
+          threeHeader
+        + usePBRHeader
+        + useHemisphereLight
+        + uniformsToGLSL(src.uniforms) 
+        + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
+        + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
+        + sculptureStarterCode 
+        + src.geoGLSL 
+        + '\n' 
+        + src.colorGLSL 
+        + '\n' 
+        + fragFooter;
 
-    function resizeCanvas() {
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        // change this so canvas doesn't have to fill entire window
-        const width = window.innerWidth*devicePixelRatio;
-        const height = window.innerHeight*devicePixelRatio;
-        if (canvas.width != width ||
-            canvas.height != height) {
-            canvas.width = width;
-            canvas.height = height;
-        }
+    return {
+        uniforms: src.uniforms,
+        frag: frg,
+        vert: threeJSVertexSource,
+        error: src.error,
+        geoGLSL: src.geoGLSL,
+        colorGLSL: src.colorGLSL
+    };
+}
+
+function sculptToThreeJSMaterial(source, payload) {
+    let src = sculptToThreeJSShaderSource(source);
+    let material = makeMaterial(src.uniforms, src.vert, src.frag, payload);
+    material.uniformDescriptions = src.uniforms;
+    return material;
+}
+
+function sculptToThreeJSMesh(source, payload) {
+    source = convertFunctionToString(source);
+    return makeBasicMesh(sculptToThreeJSMaterial(source, payload));
+}
+
+function createSculptureWithGeometry(geometry, source, uniformCallback=() => {return {}}, params={}) {
+    geometry.computeBoundingSphere();
+    let radius = ('radius' in params)? params.radius: geometry.boundingSphere.radius;
+    params.radius = radius;
+    params.geometry = geometry;
+    return createSculpture(source, uniformCallback, params);
+}
+
+// uniformCallback 
+function createSculpture(source, uniformCallback=() => {return {}}, params={}) {
+    source = convertFunctionToString(source);
+
+    let radius = ('radius' in params)? params.radius: 2;
+
+    let geometry;
+    if ('geometry' in params) {
+        geometry = params.geometry;
+    } else {
+        let segments = ('segments' in params)? params.segments: 8;
+        geometry = new THREE.SphereBufferGeometry( radius, segments, segments );   
     }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    const gl = canvas.getContext('webgl');
-    const vertices = [
-        -1.0,1.0,0.0,
-        -1.0,-1.0,0.0,
-        1.0,-1.0,0.0,
-        1.0,1.0,0.0 
-    ];
-    const indices = [3,2,1,3,1,0];
-    const vertex_buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    const Index_Buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Index_Buffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    let material = sculptToThreeJSMaterial(source);
+    
+    material.uniforms['opacity'].value = 1.0;
+    material.uniforms['mouse'].value = new THREE.Vector3();
+    material.uniforms['_scale'].value = radius;
+    let mesh = new THREE.Mesh(geometry, material);
 
-    let vertShader = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(vertShader, minimalVertexSource);
-    gl.compileShader(vertShader);
-    const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(fragShader, fullFrag);
-    gl.compileShader(fragShader);
-    let compiled = gl.getShaderParameter(fragShader, gl.COMPILE_STATUS);
-    console.log('Shader compiled successfully: ' + compiled);
-    let compilationLog = gl.getShaderInfoLog(fragShader);
-    if (!compiled) console.log('Shader compiler log: ' + compilationLog);
-    let shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertShader);
-    gl.attachShader(shaderProgram, fragShader);
-    gl.linkProgram(shaderProgram);
-    gl.useProgram(shaderProgram);
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Index_Buffer); 
-    const coord = gl.getAttribLocation(shaderProgram, "coordinates");
-    gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(coord);
-    gl.clearColor(1.0, 1.0, 1.0, 0.9);
-    gl.enable(gl.DEPTH_TEST);
-    const oTime = Date.now();
-    const loc = gl.getUniformLocation(shaderProgram, "time");
-    const _scale = gl.getUniformLocation(shaderProgram, "_scale");
-    const resolution = gl.getUniformLocation(shaderProgram, "resolution");
-    const opac = gl.getUniformLocation(shaderProgram, "opacity");
-    const mouseloc = gl.getUniformLocation(shaderProgram, "mouse");
-    gl.uniform1f(opac,1.0);
-    gl.uniform1f(_scale, 1.0);
-
-    const userUniformUpdateFuncs = assignUniforms(updateUniforms);
-
-    canvas.addEventListener("pointermove", function(e) {
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        const canvasX = (e.pageX - canvas.offsetLeft) * devicePixelRatio;
-        const canvasY = (e.pageY - canvas.offsetTop) * devicePixelRatio;
-        gl.uniform3f(mouseloc, 2.0*canvasX/canvas.width-1.0, 2.0*(1.0-canvasY/canvas.height)-1.0, -0.5);
-    }, false);
-    function updateDraw() {
-        if(typeof updateUniforms === 'function' ) {
-            callUniformFuncs(userUniformUpdateFuncs, updateUniforms());
+    mesh.onBeforeRender = function( renderer, scene, camera, geometry, material, group ) {
+        let uniformsToUpdate = uniformCallback();
+        if (!(typeof uniformsToUpdate === "object")) {
+            throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update"
         }
 
-        gl.uniform1f(loc, (Date.now()-oTime)*0.001);
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        const wwidth = window.innerWidth*devicePixelRatio;
-        const wheight = window.innerHeight*devicePixelRatio;
-        gl.uniform2fv(resolution, [wwidth, wheight]);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.viewport(0,0,canvas.width,canvas.height);
-        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT,0);
-        window.requestAnimationFrame(updateDraw);
-    }
-    updateDraw();
+        for (const [uniform, value] of Object.entries(uniformsToUpdate)) {
+            material.uniforms[uniform].value = value;
+        }
+        // material.uniforms['sculptureCenter'].value = geometry.position;
+    };
 
-    // loops through a dictionary and calls the function sotred in the value
-    function callUniformFuncs(uniformFuncs, updatedUniforms) {
-        if(typeof updatedUniforms !== 'object') {
-            console.error('updateUniforms must return a dictionary of uniform names and values. Instead got: ', updateUniforms);
-            return;
-        }
-        Object.entries(uniformFuncs).forEach(keys => {
-            const [key, uniformUpdateFunc] = keys;
-            if (key in updatedUniforms) {
-                uniformUpdateFunc(updatedUniforms[key]);
-            }
-        });
-    }
+    return mesh;
+}
 
-    function assignUniforms(updateUniforms) {
-        if(typeof updateUniforms !== 'function') {
-            console.error('updateUniforms must be a function that returns a dictionary of uniform names and values');
-            return {};
+function uniformDescriptionToThreeJSFormat(unifs, payload) {
+    
+    let finalUniforms = {};
+    
+    // if (payload && payload !== undefined && payload.msdfTexture !== undefined) {
+    //     finalUniforms["msdf"] = { value: payload.msdfTexture || new Texture() };
+    // }
+    unifs.forEach(uniform => {
+        if (uniform.type === 'float') {
+            finalUniforms[uniform.name] = {value: uniform.value};
+        } else if (uniform.type === 'vec2') {
+            finalUniforms[uniform.name] = {value: new THREE.Vector2(uniform.value.x, uniform.value.y)};
+        } else if (uniform.type === 'vec3') {
+            finalUniforms[uniform.name] = {value: new THREE.Vector3(uniform.value.x, uniform.value.y, uniform.value.z)};
+        } else if (uniform.type === 'vec4') {
+            finalUniforms[uniform.name] = {value: new THREE.Vector4(uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w)};
         }
-        const userUniformUpdateFuncs = {};
-        const uniformsDict = updateUniforms();
-        if(uniformsDict !== undefined && typeof uniformsDict === 'object') {
-            Object.entries(uniformsDict).forEach(keys => {
-                const [key, val] = keys;
-                const unifLocation = gl.getUniformLocation(shaderProgram, key);
-                if(typeof val === 'number') {
-                    userUniformUpdateFuncs[key] = (unif) => gl.uniform1f(unifLocation, unif);
-                } else if (Array.isArray(val)) {
-                    if(val.length === 1) {
-                        userUniformUpdateFuncs[key] = (unif) => gl.uniform1f(unifLocation, unif[0]);
-                    } else if(val.length === 2) {
-                        userUniformUpdateFuncs[key] = (unif) => gl.uniform2iv(unifLocation, unif);
-                    } else if(val.length === 3) {
-                        userUniformUpdateFuncs[key] = (unif) => gl.uniform3iv(unifLocation, unif);
-                    } else if(val.length === 4) {
-                        userUniformUpdateFuncs[key] = (unif) => gl.uniform4iv(unifLocation, unif);
-                    } else {
-                        console.error('Uniforms must be either a float or an array with length 1, 2, 3 or 4');
-                    }
-                } else {
-                    console.error('Uniforms must be either a float or an array with length 1, 2, 3 or 4');
-                }
-            });
-        }
-        return userUniformUpdateFuncs;
-    }    
+    });
+    return finalUniforms;
+} 
+
+// could use a scale parameter
+function makeMaterial(unifs, vert, frag, payload) {
+    const material = new THREE.ShaderMaterial({
+        uniforms: uniformDescriptionToThreeJSFormat(unifs, payload),
+        vertexShader: vert,
+        fragmentShader: frag,
+        transparent: true,
+        side: THREE.BackSide
+    });
+    material.extensions.fragDepth = false;
+    return material;
+}
+
+// There should be more options supported like size and shape
+function makeBasicMesh(material) {
+    return new Mesh(new THREE.BoxBufferGeometry(2, 2, 2), material);
 }
 
 // import {
+//     glslToOfflineRenderer,
+//     sculptToOfflineRenderer
+// } from './targets/offlineRenderer.js'
+
+// import {
+//     sculptToMinimalRenderer,
+//     glslToMinimalRenderer
+// } from './targets/minimalRenderer.js'
 
 // import {
 //     sculptToMinimalHTMLRenderer,
@@ -2017,4 +1993,4 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
 
 console.log(`using shader-park version: 0.1.4`);
 
-export { sculptToMinimalRenderer };
+export { createSculpture, createSculptureWithGeometry };

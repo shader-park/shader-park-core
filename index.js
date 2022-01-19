@@ -1,23 +1,23 @@
-// import {
+import {
 //     glslToThreeJSShaderSource,
 //     glslToThreeJSMaterial,
 //     glslToThreeJSMesh,
 //     sculptToThreeJSShaderSource,
 //     sculptToThreeJSMaterial,
 //     sculptToThreeJSMesh,
-//     createSculpture,
-//     createSculptureWithGeometry
-// } from './targets/threeJS.js'
+    createSculpture,
+    createSculptureWithGeometry
+} from './targets/threeJS.js'
 
 // import {
 //     glslToOfflineRenderer,
 //     sculptToOfflineRenderer
 // } from './targets/offlineRenderer.js'
 
-import {
-    sculptToMinimalRenderer,
-    glslToMinimalRenderer
-} from './targets/minimalRenderer.js'
+// import {
+//     sculptToMinimalRenderer,
+//     glslToMinimalRenderer
+// } from './targets/minimalRenderer.js'
 
 // import {
 //     sculptToMinimalHTMLRenderer,
@@ -53,14 +53,14 @@ export {
     // sculptToThreeJSShaderSource,
     // sculptToThreeJSMaterial,
     // sculptToThreeJSMesh,
-    // createSculptureWithGeometry,
-    // createSculpture,
+    createSculptureWithGeometry,
+    createSculpture,
     // bindStaticData,
     // glslToOfflineRenderer,
     // sculptToOfflineRenderer,
     // glslToTouchDesignerShaderSource,
     // sculptToTouchDesignerShaderSource,
-    sculptToMinimalRenderer,
+    // sculptToMinimalRenderer,
     // sculptToMinimalHTMLRenderer,
     // glslToMinimalRenderer,
     // glslToMinimalHTMLRenderer,

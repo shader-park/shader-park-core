@@ -10,7 +10,7 @@ import {
 
 import {convertFunctionToString} from './helpers.js'
 
-import { Texture, Vector2, Vector3, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide, SphereBufferGeometry} from 'three';
+// import { Texture, Vector2, Vector3, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide, SphereBufferGeometry} from 'three';
 
 /**
  *  Three targets are provided for both GLSL and Sculpt/JS api.
@@ -99,14 +99,14 @@ export function createSculpture(source, uniformCallback=() => {return {}}, param
         geometry = params.geometry;
     } else {
         let segments = ('segments' in params)? params.segments: 8;
-        geometry = new SphereBufferGeometry( radius, segments, segments );   
+        geometry = new THREE.SphereBufferGeometry( radius, segments, segments );   
     }
     let material = sculptToThreeJSMaterial(source);
     
     material.uniforms['opacity'].value = 1.0;
-    material.uniforms['mouse'].value = new Vector3();
+    material.uniforms['mouse'].value = new THREE.Vector3();
     material.uniforms['_scale'].value = radius;
-    let mesh = new Mesh(geometry, material);
+    let mesh = new THREE.Mesh(geometry, material);
 
     mesh.onBeforeRender = function( renderer, scene, camera, geometry, material, group ) {
         let uniformsToUpdate = uniformCallback();
@@ -127,18 +127,18 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
     
     let finalUniforms = {};
     
-    if (payload && payload !== undefined && payload.msdfTexture !== undefined) {
-        finalUniforms["msdf"] = { value: payload.msdfTexture || new Texture() };
-    }
+    // if (payload && payload !== undefined && payload.msdfTexture !== undefined) {
+    //     finalUniforms["msdf"] = { value: payload.msdfTexture || new Texture() };
+    // }
     unifs.forEach(uniform => {
         if (uniform.type === 'float') {
             finalUniforms[uniform.name] = {value: uniform.value};
         } else if (uniform.type === 'vec2') {
-            finalUniforms[uniform.name] = {value: new Vector2(uniform.value.x, uniform.value.y)};
+            finalUniforms[uniform.name] = {value: new THREE.Vector2(uniform.value.x, uniform.value.y)};
         } else if (uniform.type === 'vec3') {
-            finalUniforms[uniform.name] = {value: new Vector3(uniform.value.x, uniform.value.y, uniform.value.z)};
+            finalUniforms[uniform.name] = {value: new THREE.Vector3(uniform.value.x, uniform.value.y, uniform.value.z)};
         } else if (uniform.type === 'vec4') {
-            finalUniforms[uniform.name] = {value: new Vector4(uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w)};
+            finalUniforms[uniform.name] = {value: new THREE.Vector4(uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w)};
         }
     });
     return finalUniforms;
@@ -146,12 +146,12 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
 
 // could use a scale parameter
 function makeMaterial(unifs, vert, frag, payload) {
-    const material = new ShaderMaterial({
+    const material = new THREE.ShaderMaterial({
         uniforms: uniformDescriptionToThreeJSFormat(unifs, payload),
         vertexShader: vert,
         fragmentShader: frag,
         transparent: true,
-        side: BackSide
+        side: THREE.BackSide
     });
     material.extensions.fragDepth = false;
     return material;
@@ -159,5 +159,5 @@ function makeMaterial(unifs, vert, frag, payload) {
 
 // There should be more options supported like size and shape
 function makeBasicMesh(material) {
-    return new Mesh(new BoxBufferGeometry(2, 2, 2), material);
+    return new Mesh(new THREE.BoxBufferGeometry(2, 2, 2), material);
 }
