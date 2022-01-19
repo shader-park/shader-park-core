@@ -1993,4 +1993,4 @@ function makeBasicMesh(material) {
 
 console.log(`using shader-park version: 0.1.4`);
 
-export { createSculpture, createSculptureWithGeometry };
+export { createSculpture, createSculptureWithGeometry, sculptToThreeJSMaterial };

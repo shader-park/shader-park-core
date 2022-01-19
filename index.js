@@ -3,7 +3,7 @@ import {
 //     glslToThreeJSMaterial,
 //     glslToThreeJSMesh,
 //     sculptToThreeJSShaderSource,
-//     sculptToThreeJSMaterial,
+    sculptToThreeJSMaterial,
 //     sculptToThreeJSMesh,
     createSculpture,
     createSculptureWithGeometry
@@ -51,7 +51,7 @@ export {
     // glslToThreeJSMaterial,
     // glslToThreeJSMesh,
     // sculptToThreeJSShaderSource,
-    // sculptToThreeJSMaterial,
+    sculptToThreeJSMaterial,
     // sculptToThreeJSMesh,
     createSculptureWithGeometry,
     createSculpture,
