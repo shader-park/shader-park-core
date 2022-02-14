@@ -1013,8 +1013,21 @@ export function sculptToGLSL(userProvidedSrc) {
 	if(enable2DFlag) {
 		setSDF(0);
 	}
-	let geoFinal = buildGeoSource(geoSrc);
-	let colorFinal = buildColorSource(colorSrc, useLighting);
+
+	let geoFinal = '';
+	let colorFinal = '';
+	
+	function generateGeo() {
+		return buildGeoSource(geoSrc);
+	}
+
+	function generateColor() {
+		return buildColorSource(colorSrc, useLighting);
+	}
+
+	
+	// let geoFinal = buildGeoSource(geoSrc);
+	// let colorFinal = buildColorSource(colorSrc, useLighting);
 	
 	return {
 		uniforms: uniforms,
@@ -1022,6 +1035,45 @@ export function sculptToGLSL(userProvidedSrc) {
 		maxIterations: maxIterations,
 		geoGLSL: geoFinal,
 		colorGLSL: colorFinal,
-		error: error
+		error: error,
+		funcs: {
+			box,
+			torus,
+			cylinder,
+			union,
+			setSDF,
+			getSDF,
+			reset,
+			displace,
+			setSpace,
+			repeat,
+			rotateX,
+			rotateY,
+			rotateZ,
+			mirrorX,
+			mirrorY,
+			mirrorZ,
+			mirrorXYZ,
+			flipX,
+			flipY,
+			flipZ,
+			expand,
+			shell,
+			color,
+			metal,
+			shine,
+			lightDirection,
+			backgroundColor,
+			noLighting,
+			basicLighting,
+			occlusion,
+			input,
+			input2D,
+			getPixelCoord,
+			getResolution,
+			get2DCoords,
+			enable2D,
+			getSpherical,			
+		}
 	};
 }
