@@ -19,7 +19,7 @@ export const mathFunctions = {
     fromSpherical: { args: [3], ret:3 },
     getRayDirection: { args: [], ret:3 },
     osc: { args: [1], ret:1 },
-    _hash33: { args: [3], ret:1 },
+    _hash33: { args: [3], ret:3 },
     noise: { args: [3], ret:1 },
     fractalNoise: { args: [3], ret:1 },
     sphericalDistribution: { args: [3,1], ret:4 },
