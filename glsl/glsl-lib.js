@@ -428,7 +428,7 @@ float noise( vec2 p )
 }
 
 // from https://www.shadertoy.com/view/4djSRW
-float hash13(vec3 p3)
+float _hash13(vec3 p3)
 {
     p3  = fract(p3 * .1031);
     p3 += dot(p3, p3.zyx + 31.32);
