@@ -72,6 +72,12 @@ struct Material {
     float ao;
 };
 
+struct ShadedMaterial {
+    Material mat;
+    vec3 color;
+    vec3 backgroundColor;
+};
+
 Material blendMaterial(Material a, Material b, float amount) {
     return Material(
         mix(a.albedo, b.albedo, amount), 
@@ -602,7 +608,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 }
 
 // adapted from https://learnopengl.com/PBR/Lighting
-vec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat, vec3 backgroundColor) {
+ShadedMaterial pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat, vec3 backgroundColor) {
 
     vec3 V = -getRayDirection();
     vec3 F0 = vec3(0.04); 
@@ -650,8 +656,7 @@ vec3 pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat, vec3 backgro
     
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
-   
-    return color;
+    return ShadedMaterial(mat, color, backgroundColor);
 }
 
 float simpleLighting(vec3 p, vec3 normal, vec3 lightdir) {
@@ -691,21 +696,49 @@ float occlusion(vec3 p,vec3 n) {
 
 export const fragFooter = `
 // For advanced users //
-void main() {
 
+void main() {
     vec3 rayOrigin = (cameraPosition - sculptureCenter) / max(intersection_threshold, _scale);
     vec3 rayDirection = getRayDirection();
     float t = intersect(rayOrigin, rayDirection, stepSize);
+    ShadedMaterial col;
+    vec3 outputColor = vec3(0.);
+
     if(t < max_dist) {
         vec3 p = (rayOrigin + rayDirection*t);
         //vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0); //could be used to set FragDepth
         vec3 normal = calcNormal(p);
         // p *= _scale;
-        vec3 col = shade(p, normal);
-        pc_fragColor = vec4(col, opacity);
-        
+        col = shade(p, normal);
+        pc_fragColor = col.color;
     } else {
         discard;
     }
+
+    float reflectionCoefficient = 1. - col.mat.roughness;
+    const int max_bounces = 10;
+    for(int i = 0; i < max_bounces; i++) {
+        if(reflectionCoefficient < .001) {
+            break;
+        }
+        rayOrigin = (rayOrigin + rayDirection*t);
+        vec3 normal = calcNormal(rayOrigin);
+        rayDirection = reflect(rayDirection, normal);
+        rayOrigin += .001 * rayDirection;
+        float t = intersect(rayOrigin, rayDirection, stepSize);
+        vec3 p = (rayOrigin + rayDirection * t);
+        ShadedMaterial col;
+        if(t < max_dist) {
+            col = shade(p, normal);
+        } else {
+            outputColor = mix(outputColor, col.backgroundColor, reflectionCoefficient);
+            break;
+        }
+        
+        outputColor = mix(outputColor, col.color, reflectionCoefficient);
+
+        reflectionCoefficient *= 1. - col.mat.roughness;
+    }
+    gl_FragColor = vec4(outputColor, opacity);
 }
 `;
