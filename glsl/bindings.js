@@ -4,7 +4,6 @@
 export const geometryFunctions = {
     sphere: { args: [1] },
     line: { args: [3,3,1] },
-    cylinder: { args: [2] },
     cone: { args: [1,1] },
     roundCone: { args: [3,3,1,1] },
     plane: { args: [1,1,1,1] },
