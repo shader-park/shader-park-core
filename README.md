@@ -1,13 +1,19 @@
-### Library powering [Shaderpark](https://shaderpark.com)     
+## The library powering [Shaderpark](https://shaderpark.com)     
 [![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)  
-
-![Alt Text](https://i.imgur.com/dFI9g12.gif)
 
 Shaderpark simplifies creating procedural graphics using javascript.  
 With just a few lines of code, create shaders which are:
 - Animated
 - Interactive
-- 2D or 3D (with PBR)
+- 2D or 3D
+
+![Alt Text](https://i.imgur.com/okVONOu.gif)
+
+
+
+### Try the [live editor ✍️](https://shaderpark.netlify.app/new)
+### Browse the [Interactive Documentation 📖](https://shader-park-docs.netlify.app/references-js/)
+### Build from working [Template/Example Projects 🛠️](https://github.com/shader-park/shader-park-examples)
 
 ### Easily integrated with:
 - webpages
@@ -15,32 +21,16 @@ With just a few lines of code, create shaders which are:
 - touchdesigner
 - unity (under development)
 
-### Example
-(TODO)
+## Explore [hundreds of examples](https://shaderpark.netlify.app/explore)
+
+![Alt Text](https://i.imgur.com/dFI9g12.gif)
+
 
 ### Install   
-`npm i shader-park-core`
+`npm install shader-park-core`
 
-
-Live edit, remix and share your creations on [shaderpark.com](https://shaderpark.com)
- 
-### [Examples/Templates Repo](https://github.com/shader-park/shader-park-examples)
-
- 
-### Dev Setup:
-```npm install```
-or
-```yarn install```
-
-### Build:
-```npm run build```
-or
-```yarn build```
-
-### Watch:
-```npm watch```
-or
-```yarn watch```
+### Usage
+See examples on [glitch](https://glitch.com/@torinmb/shader-park-examples)
 
 ### CLI usage:  
   
