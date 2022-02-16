@@ -27,9 +27,9 @@ ${geo}
 }
 
 function buildColorSource(col, useLighting) {
-	let lgt = useLighting ? '' : '    return scope_0_material.albedo;';
+	let lgt = useLighting ? '' : '    return ShadedMaterial(scope_0_material, scope_0_material.albedo);';
 	return `
-vec3 shade(vec3 p, vec3 normal) {
+ShadedMaterial shade(vec3 p, vec3 normal) {
     float d = 100.0;
     vec3 op = p;
 	vec3 lightDirection = vec3(0.0, 1.0, 0.0);
@@ -47,15 +47,10 @@ vec3 shade(vec3 p, vec3 normal) {
 ${col}
 ${lgt}
 	#ifdef USE_PBR
-	return pbrLighting(
-		worldPos.xyz,
-		normal,
-		lightDirection,
-		scope_0_material,
-		backgroundColor
-		);
+	return pbrLighting(worldPos.xyz, normal, lightDirection, scope_0_material, backgroundColor);
 	#else
-	return scope_0_material.albedo*simpleLighting(p, normal, lightDirection, );*occ;
+	// TODO FIX or remove?
+	return ShadedMaterial(scope_0_material, scope_0_material.albedo*simpleLighting(p, normal, lightDirection), backgroundColor);
 	#endif
 }`;
 }
