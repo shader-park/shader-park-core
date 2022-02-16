@@ -1,4 +1,4 @@
-## The library powering [Shaderpark](https://shaderpark.com)     
+## The library powering [Shaderpark 🔮](https://shaderpark.com)     
 [![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)  
 
 Shaderpark simplifies creating procedural graphics using javascript.  
