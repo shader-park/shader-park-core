@@ -553,6 +553,14 @@ vec3 getRayDirection() {
 	return normalize(worldPos.xyz-cameraPosition);
 }
 
+vec3 getRayDirectionPixelAbove() {
+    return normalize(worldPos.xyz + vec3(0.0, dFdy(worldPos.y), 0.0) - cameraPosition);
+}
+
+vec3 getRayDirectionPixelRight() {
+    return normalize(worldPos.xyz + vec3(dFdx(worldPos.x), 0.0, 0.0) - cameraPosition);
+}
+
 vec3 mouseIntersection() {
     vec3 rayDirection = getRayDirection();
     return mouse+rayDirection*intersect(mouse, rayDirection, 0.8);
@@ -698,49 +706,68 @@ float occlusion(vec3 p,vec3 n) {
 
 export const fragFooter = `
 // For advanced users //
-
+#define AA 3
 void main() {
-    vec3 rayOrigin = (cameraPosition - sculptureCenter) / max(intersection_threshold, _scale);
-    vec3 rayDirection = getRayDirection();
-    float t = intersect(rayOrigin, rayDirection, stepSize);
-    ShadedMaterial col;
-    vec3 outputColor = vec3(0.);
+    vec3 tot = vec3(0.);
+    #if AA>1
+    for( int m=0; m<AA; m++ )
+    for( int n=0; n<AA; n++ )
+    {
+        // pixel coordinates
+        vec2 o = vec2(float(m),float(n)) / float(AA) - 0.5;
+        //vec2 p1 = (2.0*(fragCoord+o)-iResolution.xy)/iResolution.y;
 
-    if(t < max_dist) {
-        vec3 p = (rayOrigin + rayDirection*t);
-        //vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0); //could be used to set FragDepth
-        vec3 normal = calcNormal(p);
-        // p *= _scale;
-        col = shade(p, normal);
-        outputColor = col.color;
-    } else {
-        discard;
-    }
-
-    float reflectionCoefficient = 1. - col.mat.roughness;
-    const int max_bounces = 10;
-    for(int i = 0; i < max_bounces; i++) {
-        if(reflectionCoefficient < .001) {
-            break;
-        }
-        rayOrigin = (rayOrigin + rayDirection*t);
-        vec3 normal = calcNormal(rayOrigin);
-        rayDirection = reflect(rayDirection, normal);
-        rayOrigin += .001 * rayDirection;
-        float t = intersect(rayOrigin, rayDirection, stepSize);
-        vec3 p = (rayOrigin + rayDirection * t);
-        ShadedMaterial col;
-        if(t < max_dist) {
-            col = shade(p, normal);
-        } else {
-            outputColor = mix(outputColor, col.backgroundColor, reflectionCoefficient);
-            break;
-        }
+        vec3 rayDirection = normalize((worldPos.xyz+vec3(o.x, o.y, 0.))-cameraPosition);
+        #else   
+        vec3 rayDirection = getRayDirection(); 
+        //vec2 p = (2.0*fragCoord-iResolution.xy)/iResolution.y;
+        #endif
+        vec3 rayOrigin = (cameraPosition - sculptureCenter) / max(intersection_threshold, _scale);
         
-        outputColor = mix(outputColor, col.color, reflectionCoefficient);
+        float t = intersect(rayOrigin, rayDirection, stepSize);
+        ShadedMaterial col;
+        vec3 outputColor = vec3(0.);
 
-        reflectionCoefficient *= 1. - col.mat.roughness;
+        if(t < max_dist) {
+            vec3 p = (rayOrigin + rayDirection*t);
+            //vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0); //could be used to set FragDepth
+            vec3 normal = calcNormal(p);
+            // p *= _scale;
+            col = shade(p, normal);
+            outputColor = col.color;
+        } else {
+            discard;
+        }
+
+        float reflectionCoefficient = 1. - col.mat.roughness;
+        const int max_bounces = 10;
+        for(int i = 0; i < max_bounces; i++) {
+            if(reflectionCoefficient < .001) {
+                break;
+            }
+            rayOrigin = (rayOrigin + rayDirection*t);
+            vec3 normal = calcNormal(rayOrigin);
+            rayDirection = reflect(rayDirection, normal);
+            rayOrigin += .001 * rayDirection;
+            float t = intersect(rayOrigin, rayDirection, stepSize);
+            vec3 p = (rayOrigin + rayDirection * t);
+            ShadedMaterial col;
+            if(t < max_dist) {
+                col = shade(p, normal);
+            } else {
+                outputColor = mix(outputColor, col.backgroundColor, reflectionCoefficient);
+                break;
+            }
+            
+            outputColor = mix(outputColor, col.color, reflectionCoefficient);
+
+            reflectionCoefficient *= 1. - col.mat.roughness;
+        }
+        tot += outputColor;
+    #if AA>1
     }
-    gl_FragColor = vec4(outputColor, opacity);
+    tot /= float(AA*AA);
+    #endif
+    gl_FragColor = vec4(tot, opacity);
 }
 `;

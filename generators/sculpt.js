@@ -991,6 +991,10 @@ export function sculptToGLSL(userProvidedSrc) {
 		return out;
 	}
 	*/
+	let prependedSource = '';
+	function prependSource(src) {
+		prependedSource += '\n'+src+'\n';
+	}
 
 	let error = undefined;
 
@@ -1017,6 +1021,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		maxIterations: maxIterations,
 		geoGLSL: geoFinal,
 		colorGLSL: colorFinal,
+		prependedSource: prependedSource,
 		error: error
 	};
 }
