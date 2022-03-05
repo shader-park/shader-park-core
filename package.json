@@ -1,6 +1,6 @@
 {
   "name": "shader-park-core",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "core glsl and js framework for shader-park",
   "main": "dist/shader-park-core.esm.js",
   "csj": "dist/shader-park-core.cjs.js",
@@ -48,7 +48,7 @@
   "dependencies": {
     "escodegen": "^1.11.1",
     "esprima": "^4.0.1",
-    "three": "^0.129.0"
+    "three": "^0.138.3"
   },
   "devDependencies": {
     "@babel/core": "^7.13.13",
