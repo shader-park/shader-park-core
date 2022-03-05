@@ -11,7 +11,7 @@ With just a few lines of code, create shaders which are:
 
 
 
-### Try the [live editor ✍️](https://shaderpark.netlify.app/new)
+### Try the [live editor ✍️](https://shaderpark.com/new)
 ### Browse the [Interactive Documentation 📖](https://shader-park-docs.netlify.app/references-js/)
 ### Build from working [Template/Example Projects 🛠️](https://github.com/shader-park/shader-park-examples)
 
@@ -21,7 +21,7 @@ With just a few lines of code, create shaders which are:
 - touchdesigner
 - unity (under development)
 
-## Explore [hundreds of examples](https://shaderpark.netlify.app/explore)
+## Explore [hundreds of examples](https://shaderpark.com/explore)
 
 ![Alt Text](https://i.imgur.com/dFI9g12.gif)
 
