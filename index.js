@@ -41,7 +41,7 @@ import {
     bindStaticData
 } from './generators/sculpt.js'
 
-console.log(`using shader-park version: 0.1.5`);
+console.log(`using shader-park version: 0.1.6`);
 
 /// Generate code for various targets
 
