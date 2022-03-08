@@ -47,10 +47,8 @@
   "homepage": "https://github.com/shader-park/shader-park-core#readme",
   "dependencies": {
     "escodegen": "^1.11.1",
-    "esprima": "^4.0.1"
-  },
-  "peerDependencies": {
-    "three": ">= 0.102.0"
+    "esprima": "^4.0.1",
+    "three": "^0.138.3"
   },
   "devDependencies": {
     "@babel/core": "^7.13.13",
