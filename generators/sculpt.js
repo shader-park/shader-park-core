@@ -11,6 +11,8 @@ import {
 
 import {convertFunctionToString} from '../targets/helpers.js'
 
+import glsl from './glslParser.js';
+
 import * as escodegen from 'escodegen';
 import * as esprima from 'esprima';
 
@@ -198,6 +200,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	let generatedJSFuncsSource = "";
 	let geoSrc = "";
 	let colorSrc = "";
+	let userGLSL = "";
 	let varCount = 0;
 	let primCount = 0;
 	let stateCount = 0;
@@ -211,6 +214,14 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	////////////////////////////////////////////////////////////
 	// Generates JS from headers referenced in the bindings.js
+
+	function glslFunc(src) {
+		userGLSL += src + '\n';
+		const state = glsl.runParse(src, {});
+		console.log(state);
+		// temp func, implement this
+		return (x) => x;
+	}
 
 	//
 	function box(arg_0, arg_1, arg_2) {
@@ -1020,6 +1031,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		uniforms: uniforms,
 		stepSizeConstant: stepSizeConstant,
 		maxIterations: maxIterations,
+		userGLSL: userGLSL,
 		geoGLSL: geoFinal,
 		colorGLSL: colorFinal,
 		error: error
