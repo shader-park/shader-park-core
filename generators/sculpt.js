@@ -131,6 +131,7 @@ function replaceOperatorOverload(syntaxTree) {
 		}
 	} catch (e) {
 		console.error(e);
+		throw e
 	}
 }
 
@@ -153,6 +154,7 @@ function replaceSliderInput(syntaxTree) {
 		}
 	} catch (e) {
 		console.error(e);
+		throw e;
 	}
 }
 
@@ -218,6 +220,21 @@ export function sculptToGLSL(userProvidedSrc) {
 	function glslFunc(src) {
 		userGLSL += src + '\n';
 		const state = glsl.runParse(src, {});
+		let func = state.ast[0];
+		let proto = func.proto_type;
+		
+		let name = proto.identifier;
+		let params = proto.parameters;
+		let returnType = proto.return_type.specifier.type_name;
+		
+		console.log("Func name, returnType:", name, returnType)
+		params.forEach(param => {
+			let type = param.type.specifier.type_name;
+			let n = param.identifier;
+			let size = param.type.specifier.type_specifier.size
+			console.log("Param type, name, size:", type, n, size)
+		});
+		
 		console.log(state);
 		// temp func, implement this
 		return (x) => x;

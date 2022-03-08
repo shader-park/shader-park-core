@@ -27927,6 +27927,7 @@
       }
     } catch (e) {
       console.error(e);
+      throw e;
     }
   }
 
@@ -27954,6 +27955,7 @@
       }
     } catch (e) {
       console.error(e);
+      throw e;
     }
   }
 
@@ -28032,6 +28034,18 @@
     function glslFunc(src) {
       userGLSL += src + '\n';
       var state = glslParser.runParse(src, {});
+      var func = state.ast[0];
+      var proto = func.proto_type;
+      var name = proto.identifier;
+      var params = proto.parameters;
+      var returnType = proto.return_type.specifier.type_name;
+      console.log("Func name, returnType:", name, returnType);
+      params.forEach(function (param) {
+        var type = param.type.specifier.type_name;
+        var n = param.identifier;
+        var size = param.type.specifier.type_specifier.size;
+        console.log("Param type, name, size:", type, n, size);
+      });
       console.log(state); // temp func, implement this
 
       return function (x) {
