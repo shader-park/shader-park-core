@@ -1,7 +1,7 @@
-## The library powering [Shaderpark 🔮](https://shaderpark.com)     
+## The library powering [Shader Park 🔮](https://shaderpark.com)     
 [![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)  
 
-Shaderpark simplifies creating procedural graphics using javascript.  
+Shader Park simplifies creating procedural graphics using javascript.  
 With just a few lines of code, create shaders which are:
 - Animated
 - Interactive
