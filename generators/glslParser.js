@@ -602,7 +602,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 			
 			this.state.defines.__LINE__ = i + 1;
 	
-			for (d in this.state.defines) {
+			for (let d in this.state.defines) {
 				//easy global replace
 				line = line.split(d).join(this.state.defines[d]);
 			}
@@ -2839,7 +2839,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	        vstack.length = vstack.length - n;
 	        lstack.length = lstack.length - n;
 	    }
-
+		function lex() {
+			var token;
+			token = lexer.lex() || EOF;
+			if (typeof token !== 'number') {
+				token = self.symbols_[token] || token;
+			}
+			return token;
+		}
 	    var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
 	    while (true) {
 	        state = stack[stack.length - 1];
