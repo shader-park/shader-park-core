@@ -2405,7 +2405,7 @@ var glslParser = createCommonjsModule(function (module, exports) {
           return "";
         }
 
-        lmatches = raw.split(/\s+/);
+        var lmatches = raw.split(/\s+/);
 
         try {
           switch (lmatches[0]) {
@@ -28028,23 +28028,58 @@ function sculptToGLSL(userProvidedSrc) {
   function glslFunc(src) {
     userGLSL += src + '\n';
     var state = glslParser.runParse(src, {});
-    var func = state.ast[0];
+
+    if (state.errors.length) {
+      state.errors.forEach(function (err) {
+        compileError("glsl error: ".concat(err));
+      });
+    } // if(state.ast.length() )
+
+
+    var func = state.ast[state.ast.length - 1];
+    console.log(state);
     var proto = func.proto_type;
-    var name = proto.identifier;
+    var funcName = proto.identifier;
     var params = proto.parameters;
     var returnType = proto.return_type.specifier.type_name;
-    console.log("Func name, returnType:", name, returnType);
+    console.log("Func name, returnType:", funcName, returnType);
     params.forEach(function (param) {
       var type = param.type.specifier.type_name;
       var n = param.identifier;
       var size = param.type.specifier.type_specifier.size;
       console.log("Param type, name, size:", type, n, size);
-    });
-    console.log(state); // temp func, implement this
+    }); // temp func, implement this
 
-    return function (x) {
-      return x;
+    var funcArgCount = params.length;
+
+    var boundFunc = function boundFunc() {
+      if (arguments.length !== funcArgCount) {
+        compileError("Incorrect number of arguments: function ".concat(funcName, " takes ").concat(funcArgCount, " and was given ").concat(arguments.length));
+      }
+
+      console.log('in Bound Func: funcArgCount', funcArgCount);
+      var expression = funcName + "(";
+
+      for (var i = 0; i < funcArgCount; i++) {
+        var userParam = i < 0 || arguments.length <= i ? undefined : arguments[i];
+        var requiredParam = params[i];
+        var reqDim = requiredParam.type.specifier.type_specifier.size;
+
+        if (reqDim === 1) {
+          ensureScalar(funcName, userParam);
+        } else {
+          ensureDims(funcName, reqDim, userParam);
+        }
+
+        expression += collapseToString(userParam);
+        if (i < funcArgCount - 1) expression += ", ";
+      }
+
+      expression += ")";
+      return makeVarWithDims(expression, proto.return_type.specifier.type_specifier.size, false);
     };
+
+    return boundFunc;
   } //
 
 
@@ -28456,6 +28491,19 @@ function sculptToGLSL(userProvidedSrc) {
 
     if (typeof val !== 'number' && val.type !== 'float') {
       compileError("'" + funcName + "'" + " accepts only a scalar. Was given: '" + val.type + "'");
+    }
+  }
+
+  function ensureDims(funcName, size, val) {
+    // for now this only verifies vector dims not scalars/floats!
+    if (val.type === undefined) {
+      compileError("'" + funcName + "' expected a vector");
+    }
+
+    var tp = val.type;
+
+    if (size !== val.dims) {
+      compileError("'" + funcName + "' expected a vector dim: " + size + ", was given: " + val.dims);
     }
   }
 
@@ -28972,7 +29020,7 @@ function sculptToGLSL(userProvidedSrc) {
     setSDF(0);
   }
 
-  var geoFinal = buildGeoSource(geoSrc);
+  var geoFinal = userGLSL + '\n' + buildGeoSource(geoSrc);
   var colorFinal = buildColorSource(colorSrc, useLighting);
   return {
     uniforms: uniforms,

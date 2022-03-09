@@ -220,14 +220,22 @@ export function sculptToGLSL(userProvidedSrc) {
 	function glslFunc(src) {
 		userGLSL += src + '\n';
 		const state = glsl.runParse(src, {});
-		let func = state.ast[0];
+		if(state.errors.length) {
+			state.errors.forEach(err=> {
+				compileError(`glsl error: ${err}`); 
+			});
+		}
+		// if(state.ast.length() )
+		
+		let func = state.ast[state.ast.length-1];
+		console.log(state)
 		let proto = func.proto_type;
 		
-		let name = proto.identifier;
+		let funcName = proto.identifier;
 		let params = proto.parameters;
 		let returnType = proto.return_type.specifier.type_name;
 		
-		console.log("Func name, returnType:", name, returnType);
+		console.log("Func name, returnType:", funcName, returnType);
 		params.forEach(param => {
 			let type = param.type.specifier.type_name;
 			let n = param.identifier;
@@ -235,30 +243,34 @@ export function sculptToGLSL(userProvidedSrc) {
 			console.log("Param type, name, size:", type, n, size);
 		});
 		
-		console.log(state);
+		
 		// temp func, implement this
+		
  	 	const funcArgCount = params.length;
-                let boundFunc = (...args) => {
-                        if (args.length !== funcArgCount) {
- 				compileError(`incorrect number of arguments (${args.length}), function takes ${funcArgCount}`); 
+		let boundFunc = (...args) => {
+			if (args.length !== funcArgCount) {
+				compileError(`Incorrect number of arguments: function ${funcName} takes ${funcArgCount} and was given ${args.length}`); 
 			}
-			let expression = name + "(";
+			console.log('in Bound Func: funcArgCount', funcArgCount, )
+			let expression = funcName + "(";
 			for (let i = 0; i < funcArgCount; i++) {
-		        	const userParam = args[i];
+				const userParam = args[i];
 				const requiredParam = params[i];
- 				const reqDim = requiredParam.type.specifier.type_specifier.size;
- 				if (reqDim === 1) {
-					ensureScalar(name, userParam);
+				const reqDim = requiredParam.type.specifier.type_specifier.size;
+				if (reqDim === 1) {
+					ensureScalar(funcName, userParam);
 				} else {
-                                	ensureDims(name, reqDim, userParam);
+					ensureDims(funcName, reqDim, userParam);
 				}
 				expression += collapseToString(userParam);
 				if (i < funcArgCount-1) expression += ", ";
 			}
-                        expression += ")";
+			expression += ")";
 			return makeVarWithDims(expression, proto.return_type.specifier.type_specifier.size, false);
-                }
+		}
+		
 		return boundFunc;
+	
 	}
 
 	//
@@ -1073,7 +1085,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	if(enable2DFlag) {
 		setSDF(0);
 	}
-	let geoFinal = buildGeoSource(geoSrc);
+	let geoFinal = userGLSL + '\n' +  buildGeoSource(geoSrc);
 	let colorFinal = buildColorSource(colorSrc, useLighting);
 	
 	return {
