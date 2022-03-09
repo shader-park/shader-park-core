@@ -91,21 +91,6 @@ float ncos(float x) {
     return cos(x)*0.5+0.5;
 }
 
-#ifdef GLSL_NEED_ROUND
-float round(float x) {
-    return floor(x+0.5);
-}
-vec2 round(vec2 x) {
-    return floor(x+0.5);
-}
-vec3 round(vec3 x) {
-    return floor(x+0.5);
-}
-vec4 round(vec4 x) {
-    return floor(x+0.5);
-}
-#endif
-
 float softSquare(float x, int pw) {
     return 1.0/(pow(tan(x),float(pw+1)*2.0)+1.0);
 }
