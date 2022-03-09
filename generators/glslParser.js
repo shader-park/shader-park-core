@@ -572,7 +572,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 				return "";
 			}
 	
-			lmatches = raw.split(/\s+/);
+			let lmatches = raw.split(/\s+/);
 			
 			try {
 	
