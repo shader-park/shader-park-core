@@ -19,5 +19,14 @@ return min(min(
 {
     vec3 q = vec3( p.x, max(abs(p.y)-le,0.0), p.z );
     return length(vec2(length(q.xy)-r1,q.z)) - r2;
-}`
+}`,
+    cappedTorus:
+`
+float sdCappedTorus(in vec3 p, in vec2 sc, in float ra, in float rb)
+{
+    p.x = abs(p.x);
+    float k = (sc.y*p.x>sc.x*p.y) ? dot(p.xy,sc) : length(p.xy);
+    return sqrt( dot(p,p) + ra*ra - 2.0*ra*k ) - rb;
+}
+`    
     }

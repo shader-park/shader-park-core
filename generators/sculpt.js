@@ -275,7 +275,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		boundSDFs[key] = glslSDF(value);
 	}
 
-	let {boxFrame, link}  = boundSDFs;
+	let {boxFrame, link, cappedTorus}  = boundSDFs;
 
 	
 

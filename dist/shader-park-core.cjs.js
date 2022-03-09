@@ -14051,7 +14051,8 @@ var glslParser = createCommonjsModule(function (module, exports) {
 // Make sure to destruct the name in sculpt.js (search for DESTRUCT SDFs)
 var sdfs = {
   boxFrame: "float sdBoxFrame( vec3 p, vec3 b, float e )\n{\n    p = abs(p  )-b;\nvec3 q = abs(p+e)-e;\nreturn min(min(\n    length(max(vec3(p.x,q.y,q.z),0.0))+min(max(p.x,max(q.y,q.z)),0.0),\n    length(max(vec3(q.x,p.y,q.z),0.0))+min(max(q.x,max(p.y,q.z)),0.0)),\n    length(max(vec3(q.x,q.y,p.z),0.0))+min(max(q.x,max(q.y,p.z)),0.0));\n}",
-  link: "float sdLink( vec3 p, float le, float r1, float r2 )\n{\n    vec3 q = vec3( p.x, max(abs(p.y)-le,0.0), p.z );\n    return length(vec2(length(q.xy)-r1,q.z)) - r2;\n}"
+  link: "float sdLink( vec3 p, float le, float r1, float r2 )\n{\n    vec3 q = vec3( p.x, max(abs(p.y)-le,0.0), p.z );\n    return length(vec2(length(q.xy)-r1,q.z)) - r2;\n}",
+  cappedTorus: "\nfloat sdCappedTorus(in vec3 p, in vec2 sc, in float ra, in float rb)\n{\n    p.x = abs(p.x);\n    float k = (sc.y*p.x>sc.x*p.y) ? dot(p.xy,sc) : length(p.xy);\n    return sqrt( dot(p,p) + ra*ra - 2.0*ra*k ) - rb;\n}\n"
 };
 
 const name$1="estraverse";const description$1="ECMAScript JS AST traversal functions";const homepage$1="https://github.com/estools/estraverse";const main$1="estraverse.js";const version$1="4.3.0";const engines$1={node:">=4.0"};const maintainers$1=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository$1={type:"git",url:"http://github.com/estools/estraverse.git"};const devDependencies$1={"babel-preset-env":"^1.6.1","babel-register":"^6.3.13",chai:"^2.1.1",espree:"^1.11.0",gulp:"^3.8.10","gulp-bump":"^0.2.2","gulp-filter":"^2.0.0","gulp-git":"^1.0.1","gulp-tag-version":"^1.3.0",jshint:"^2.5.6",mocha:"^2.1.0"};const license$1="BSD-2-Clause";const scripts$1={test:"npm run-script lint && npm run-script unit-test",lint:"jshint estraverse.js","unit-test":"mocha --compilers js:babel-register"};var require$$0 = {name:name$1,description:description$1,homepage:homepage$1,main:main$1,version:version$1,engines:engines$1,maintainers:maintainers$1,repository:repository$1,devDependencies:devDependencies$1,license:license$1,scripts:scripts$1};
@@ -28108,7 +28109,8 @@ function sculptToGLSL(userProvidedSrc) {
   }
 
   var boxFrame = boundSDFs.boxFrame,
-      link = boundSDFs.link; //
+      link = boundSDFs.link,
+      cappedTorus = boundSDFs.cappedTorus; //
 
   function box(arg_0, arg_1, arg_2) {
     if (arg_1 !== undefined) {
