@@ -227,17 +227,38 @@ export function sculptToGLSL(userProvidedSrc) {
 		let params = proto.parameters;
 		let returnType = proto.return_type.specifier.type_name;
 		
-		console.log("Func name, returnType:", name, returnType)
+		console.log("Func name, returnType:", name, returnType);
 		params.forEach(param => {
 			let type = param.type.specifier.type_name;
 			let n = param.identifier;
-			let size = param.type.specifier.type_specifier.size
-			console.log("Param type, name, size:", type, n, size)
+			let size = param.type.specifier.type_specifier.size;
+			console.log("Param type, name, size:", type, n, size);
 		});
 		
 		console.log(state);
 		// temp func, implement this
-		return (x) => x;
+ 	 	const funcArgCount = params.length;
+                let boundFunc = (...args) => {
+                        if (args.length !== funcArgCount) {
+ 				compileError(`incorrect number of arguments (${args.length}), function takes ${funcArgCount}`); 
+			}
+			let expression = name + "(";
+			for (let i = 0; i < funcArgCount; i++) {
+		        	const userParam = args[i];
+				const requiredParam = params[i];
+ 				const reqDim = requiredParam.type.specifier.type_specifier.size;
+ 				if (reqDim === 1) {
+					ensureScalar(name, userParam);
+				} else {
+                                	ensureDims(name, reqDim, userParam);
+				}
+				expression += collapseToString(userParam);
+				if (i < funcArgCount-1) expression += ", ";
+			}
+                        expression += ")";
+			return makeVarWithDims(expression, proto.return_type.specifier.type_specifier.size, false);
+                }
+		return boundFunc;
 	}
 
 	//
@@ -573,6 +594,17 @@ export function sculptToGLSL(userProvidedSrc) {
 			compileError("'"+funcName+"'" + " accepts only a scalar. Was given: '" + val.type + "'");
 		}
 	}
+	
+	function ensureDims(funcName, size, val) {
+ 		// for now this only verifies vector dims not scalars/floats!
+		if (val.type === undefined) {
+                	compileError("'"+funcName+"' expected a vector");
+		}
+		const tp = val.type;
+                if (size !== val.dims) {
+			compileError("'"+funcName+"' expected a vector dim: " + size + ", was given: " + val.dims );
+		}
+ 	}
 
 	function ensureGroupOp(funcName, a, b) {
 		if (typeof a !== 'string' && typeof b !== 'string') {
