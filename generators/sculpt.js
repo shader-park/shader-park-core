@@ -225,33 +225,20 @@ export function sculptToGLSL(userProvidedSrc) {
 				compileError(`glsl error: ${err}`); 
 			});
 		}
-		// if(state.ast.length() )
-		
+
 		let func = state.ast[state.ast.length-1];
-		console.log(state)
+		console.log(state);
 		let proto = func.proto_type;
 		
 		let funcName = proto.identifier;
 		let params = proto.parameters;
 		let returnType = proto.return_type.specifier.type_name;
 		
-		console.log("Func name, returnType:", funcName, returnType);
-		params.forEach(param => {
-			let type = param.type.specifier.type_name;
-			let n = param.identifier;
-			let size = param.type.specifier.type_specifier.size;
-			console.log("Param type, name, size:", type, n, size);
-		});
-		
-		
-		// temp func, implement this
-		
  	 	const funcArgCount = params.length;
 		let boundFunc = (...args) => {
 			if (args.length !== funcArgCount) {
 				compileError(`Incorrect number of arguments: function ${funcName} takes ${funcArgCount} and was given ${args.length}`); 
 			}
-			console.log('in Bound Func: funcArgCount', funcArgCount, )
 			let expression = funcName + "(";
 			for (let i = 0; i < funcArgCount; i++) {
 				const userParam = args[i];

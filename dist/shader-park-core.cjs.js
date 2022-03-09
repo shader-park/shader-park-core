@@ -28037,8 +28037,7 @@ function sculptToGLSL(userProvidedSrc) {
       state.errors.forEach(function (err) {
         compileError("glsl error: ".concat(err));
       });
-    } // if(state.ast.length() )
-
+    }
 
     var func = state.ast[state.ast.length - 1];
     console.log(state);
@@ -28046,14 +28045,6 @@ function sculptToGLSL(userProvidedSrc) {
     var funcName = proto.identifier;
     var params = proto.parameters;
     var returnType = proto.return_type.specifier.type_name;
-    console.log("Func name, returnType:", funcName, returnType);
-    params.forEach(function (param) {
-      var type = param.type.specifier.type_name;
-      var n = param.identifier;
-      var size = param.type.specifier.type_specifier.size;
-      console.log("Param type, name, size:", type, n, size);
-    }); // temp func, implement this
-
     var funcArgCount = params.length;
 
     var boundFunc = function boundFunc() {
@@ -28061,7 +28052,6 @@ function sculptToGLSL(userProvidedSrc) {
         compileError("Incorrect number of arguments: function ".concat(funcName, " takes ").concat(funcArgCount, " and was given ").concat(arguments.length));
       }
 
-      console.log('in Bound Func: funcArgCount', funcArgCount);
       var expression = funcName + "(";
 
       for (var i = 0; i < funcArgCount; i++) {
@@ -80217,7 +80207,7 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log("using shader-park version: 0.1.6"); /// Generate code for various targets
+console.log("using shader-park version: 0.1.7"); /// Generate code for various targets
 
 exports.bindStaticData = bindStaticData;
 exports.createSculpture = createSculpture;
