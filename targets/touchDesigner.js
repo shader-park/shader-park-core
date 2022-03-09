@@ -37,7 +37,6 @@ in Vertex
 } iVert;
 
 #define sculptureCenter iVert.sculptureCenter;
-#define GLSL_NEED_ROUND
 #define worldPos iVert.worldSpacePos
 layout(location = 0) out vec4 oFragColor[TD_NUM_COLOR_BUFFERS];
 out float depthTexture;

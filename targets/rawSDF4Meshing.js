@@ -15,7 +15,6 @@ export function sculptToRawSDF4Meshing(source) {
 
     const minimalHeader = `
 precision highp float;
-#define GLSL_NEED_ROUND
 uniform float w_width;
 uniform float w_height;
 uniform mat4 projectionMatrix;

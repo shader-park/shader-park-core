@@ -34,7 +34,6 @@ void main(void) {
 }`;
 
 export const threeHeader = `
-#define GLSL_NEED_ROUND
 uniform mat4 projectionMatrix;
 uniform sampler2D msdf;
 
@@ -45,7 +44,6 @@ varying vec3 sculptureCenter;
 
 export const minimalHeader = `
 precision highp float;
-#define GLSL_NEED_ROUND
 uniform mat4 projectionMatrix;
 varying vec3 sculptureCenter;
 #define cameraPosition vec3(0.0,0.0,-2.0)

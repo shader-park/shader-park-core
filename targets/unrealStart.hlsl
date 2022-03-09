@@ -7,7 +7,6 @@ uniform float2 resolution;
 
 
 precision highp float;
-#define GLSL_NEED_ROUND
 // uniform mat4 projectionMatrix;
 // varying float3 sculptureCenter;
 
@@ -46,20 +45,7 @@ float ncos(float x) {
     return cos(x)*0.5+0.5;
 }
 
-#ifdef GLSL_NEED_ROUND
-float round(float x) {
-    return floor(x+0.5);
-}
-float2 round(float2 x) {
-    return floor(x+0.5);
-}
-float3 round(float3 x) {
-    return floor(x+0.5);
-}
-float4 round(float4 x) {
-    return floor(x+0.5);
-}
-#endif
+
 
 float softSquare(float x, int pw) {
     return 1.0/(pow(tan(x),float(pw+1)*2.0)+1.0);
