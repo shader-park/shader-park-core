@@ -25,9 +25,9 @@ void main()
 }
 `;
 
-export const minimalVertexSource = `
-attribute vec3 coordinates;
-varying vec3 sculptureCenter;
+export const minimalVertexSource = `#version 300 es
+in vec3 coordinates;
+out vec3 sculptureCenter;
 void main(void) {
      sculptureCenter = vec3(0.0);
      gl_Position = vec4(coordinates, 1.0);
@@ -42,10 +42,11 @@ varying vec4 worldPos;
 varying vec3 sculptureCenter;
 `;
 
-export const minimalHeader = `
+export const minimalHeader = `#version 300 es
 precision highp float;
 uniform mat4 projectionMatrix;
-varying vec3 sculptureCenter;
+in vec3 sculptureCenter;
+out vec4 pc_fragColor;
 #define cameraPosition vec3(0.0,0.0,-2.0)
 #define vUv vec2(0.0)
 #define worldPos vec4(vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)*1.75,0.0,0.0)
@@ -687,7 +688,7 @@ void main() {
         vec3 normal = calcNormal(p);
         // p *= _scale;
         vec3 col = shade(p, normal);
-        gl_FragColor = vec4(col, opacity);
+        pc_fragColor = vec4(col, opacity);
         
     } else {
         discard;

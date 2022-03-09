@@ -72,7 +72,7 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-    const gl = canvas.getContext('webgl');
+    const gl = canvas.getContext('webgl2');
     const vertices = [
         -1.0,1.0,0.0,
         -1.0,-1.0,0.0,
@@ -95,14 +95,27 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
     const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragShader, fullFrag);
     gl.compileShader(fragShader);
-    let compiled = gl.getShaderParameter(fragShader, gl.COMPILE_STATUS);
-    console.log('Shader compiled successfully: ' + compiled);
-    let compilationLog = gl.getShaderInfoLog(fragShader);
-    if (!compiled) console.log('Shader compiler log: ' + compilationLog);
+    let logShaderComp = (shader) => {
+        let compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+        console.log('Shader compiled successfully: ' + compiled);
+        let compilationLog = gl.getShaderInfoLog(shader);
+        if (!compiled) console.error('Shader compiler log: ' + compilationLog);
+    };
+    logShaderComp(vertShader);
+    logShaderComp(fragShader)
+
     let shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertShader);
     gl.attachShader(shaderProgram, fragShader);
     gl.linkProgram(shaderProgram);
+
+    // Check if it linked.
+    var success = gl.getProgramParameter(shaderProgram, gl.LINK_STATUS);
+    if (!success) {
+        // something went wrong with the link; get the error
+        console.error("program failed to link:" + gl.getProgramInfoLog(shaderProgram));
+    }
+
     gl.useProgram(shaderProgram);
     gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, Index_Buffer); 
