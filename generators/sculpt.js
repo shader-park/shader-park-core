@@ -13,6 +13,8 @@ import {convertFunctionToString} from '../targets/helpers.js'
 
 import glsl from './glslParser.js';
 
+import { sdfs } from '../glsl/sdfs.js';
+
 import * as escodegen from 'escodegen';
 import * as esprima from 'esprima';
 
@@ -266,6 +268,16 @@ export function sculptToGLSL(userProvidedSrc) {
 		  setSDF(sdfFunc(getSpace(), ...args));
 		};
 	}
+
+	////////////// DESTRUCT SDFs
+	let boundSDFs = {};
+	for (const [key, value] of Object.entries(sdfs)) {
+		boundSDFs[key] = glslSDF(value);
+	}
+
+	let {boxFrame, link}  = boundSDFs;
+
+	
 
 	//
 	function box(arg_0, arg_1, arg_2) {
@@ -1074,6 +1086,8 @@ export function sculptToGLSL(userProvidedSrc) {
 		getSpherical,
 	].map(el => el.toString()).join('\n');
 	
+
+
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc );
 	
 	if(enable2DFlag) {
