@@ -260,6 +260,13 @@ export function sculptToGLSL(userProvidedSrc) {
 	
 	}
 
+	function glslSDF(src) {
+		let sdfFunc = glslFunc(src);
+		return (...args) => {
+		  setSDF(sdfFunc(getSpace(), ...args));
+		};
+	}
+
 	//
 	function box(arg_0, arg_1, arg_2) {
 		if(arg_1 !== undefined) {
