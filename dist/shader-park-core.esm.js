@@ -2507,6 +2507,10 @@ var glslParser = createCommonjsModule(function (module, exports) {
         case 'int':
           return "" + parseInt(val);
 
+        case 'uint':
+          // TODO maybe take ABS()
+          return "" + parseInt(val);
+
         case 'float':
           //Should we keep maximum precision, or use the following to force to 32bit precision??
 
@@ -2544,6 +2548,7 @@ var glslParser = createCommonjsModule(function (module, exports) {
       _void: new Type("void", 1, 1),
       bool: new Type("bool", 1, 1),
       int: new Type("int", 1, 1),
+      uint: new Type("uint", 1, 1),
       float: new Type("float", 1, 1),
       vec2: new Type("vec2", 2, 1, 'float'),
       vec3: new Type("vec3", 3, 1, 'float'),
@@ -3469,6 +3474,7 @@ var glslParser = createCommonjsModule(function (module, exports) {
         },
         "+": {
           "int,int:int": ["ADD %1.x %2.x %3.x"],
+          "uint,uint:uint": ["ADD %1.x %2.x %3.x"],
           "float,float:float": ["ADD %1.x %2.x %3.x"],
           "float,vec2:vec2": ["ADD %1.xy %2.x %3.xy"],
           "float,vec3:vec3": ["ADD %1.xyz %2.x %3.xyz"],
@@ -3482,6 +3488,7 @@ var glslParser = createCommonjsModule(function (module, exports) {
         },
         "-": {
           "int,int:int": ["SUB %1.x %2.x %3.x"],
+          "uint,uint:uint": ["SUB %1.x %2.x %3.x"],
           "float,float:float": ["SUB %1.x %2.x %3.x"],
           "float,vec2:vec2": ["SUB %1.xy %2.x %3.xy"],
           "float,vec3:vec3": ["SUB %1.xyz %2.x %3.xyz"],
@@ -3495,6 +3502,7 @@ var glslParser = createCommonjsModule(function (module, exports) {
         },
         "*": {
           "int,int:int": ["MUL %1.x %2.x %3.x"],
+          "uint,uint:uint": ["MUL %1.x %2.x %3.x"],
           "float,float:float": ["MUL %1.x %2.x %3.x"],
           "float,vec2:vec2": ["MUL %1.xy %2.x %3.xy"],
           "float,vec3:vec3": ["MUL %1.xyz %2.x %3.xyz"],
@@ -3511,6 +3519,7 @@ var glslParser = createCommonjsModule(function (module, exports) {
         },
         "/": {
           "int,int:int": ["DIV %1.x %2.x %3.x"],
+          "uint,uint:uint": ["DIV %1.x %2.x %3.x"],
           "float,float:float": ["DIV %1.x %2.x %3.x"],
           "float,vec2:vec2": ["DIV %1.xy %2.x %3.xy"],
           "float,vec3:vec3": ["DIV %1.xyz %2.x %3.xyz"],
@@ -3524,26 +3533,32 @@ var glslParser = createCommonjsModule(function (module, exports) {
         },
         "<": {
           "int,int:bool": ["SLT %1.x %2.x %3.x"],
+          "uint,uint:bool": ["SLT %1.x %2.x %3.x"],
           "float,float:bool": ["SLT %1.x %2.x %3.x"]
         },
         ">": {
           "int,int:bool": ["SGT %1.x %2.x %3.x"],
+          "uint,uint:bool": ["SGT %1.x %2.x %3.x"],
           "float,float:bool": ["SGT %1.x %2.x %3.x"]
         },
         "<=": {
           "int,int:bool": ["SLE %1.x %2.x %3.x"],
+          "uint,uint:bool": ["SLE %1.x %2.x %3.x"],
           "float,float:bool": ["SLE %1.x %2.x %3.x"]
         },
         ">=": {
           "int,int:bool": ["SGE %1.x %2.x %3.x"],
+          "uint,uint:bool": ["SGE %1.x %2.x %3.x"],
           "float,float:bool": ["SGE %1.x %2.x %3.x"]
         },
         "==": {
           "int,int:bool": ["SEQ %1.x %2.x %3.x"],
+          "uint,uint:bool": ["SEQ %1.x %2.x %3.x"],
           "float,float:bool": ["SEQ %1.x %2.x %3.x"]
         },
         "!=": {
           "int,int:bool": ["SNE %1.x %2.x %3.x"],
+          "uint,uint:bool": ["SNE %1.x %2.x %3.x"],
           "float,float:bool": ["SNE %1.x %2.x %3.x"]
         },
         "&&": {
@@ -12406,6 +12421,13 @@ var glslParser = createCommonjsModule(function (module, exports) {
       if (this.primary_expression.type == 'int') {
         this.Type = 'int';
         this.Dest = this.primary_expression.int_constant;
+        this.Const = true;
+        return;
+      }
+
+      if (this.primary_expression.type == 'uint') {
+        this.Type = 'uint';
+        this.Dest = this.primary_expression.uint_constant;
         this.Const = true;
         return;
       }
