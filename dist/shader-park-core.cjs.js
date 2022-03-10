@@ -96213,7 +96213,7 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log("using shader-park version: 0.1.9"); /// Generate code for various targets
+console.log("using shader-park version: 0.1.10"); /// Generate code for various targets
 
 exports.bindStaticData = bindStaticData;
 exports.createSculpture = createSculpture;
