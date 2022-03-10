@@ -46,6 +46,7 @@
   },
   "homepage": "https://github.com/shader-park/shader-park-core#readme",
   "dependencies": {
+    "@shaderfrog/glsl-parser": "^0.2.1",
     "escodegen": "^1.11.1",
     "esprima": "^4.0.1",
     "three": "^0.138.3"

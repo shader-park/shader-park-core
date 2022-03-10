@@ -11,7 +11,9 @@ import {
 
 import {convertFunctionToString} from '../targets/helpers.js'
 
-import glsl from './glslParser.js';
+// import glsl from './glslParser.js';
+
+import { parser } from  '@shaderfrog/glsl-parser';
 
 import { sdfs } from '../glsl/sdfs.js';
 
@@ -218,23 +220,34 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	////////////////////////////////////////////////////////////
 	// Generates JS from headers referenced in the bindings.js
+	const dimsMapping = {
+		'float': 1,
+		'vec2': 2,
+		'vec3': 3,
+		'vec4': 4,
+	}
 
 	function glslFunc(src) {
 		userGLSL += src + '\n';
-		const state = glsl.runParse(src, {});
-		if(state.errors.length) {
-			state.errors.forEach(err=> {
-				compileError(`glsl error: ${err}`); 
-			});
-		}
+		let parsedSrc = parser.parse(src);
 
-		let func = state.ast[state.ast.length-1];
-		console.log(state);
-		let proto = func.proto_type;
-		
-		let funcName = proto.identifier;
-		let params = proto.parameters;
-		let returnType = proto.return_type.specifier.type_name;
+		let prototype = parsedSrc.program[parsedSrc.program.length-1].prototype;
+		let funcName = prototype.header.name.identifier;
+		let returnType = prototype.header.returnType.specifier.specifier.token;
+		let params = prototype.parameters;
+
+		let checkTypes = returnType === 'void' || returnType in dimsMapping;
+		if(!checkTypes) {
+			compileError(`glsl error: glslFunc currently supports binding to ${Object.keys(dimsMapping)} Return type was ${returnType}`); 
+		}
+		params.forEach(param => {
+			let type = param.declaration.specifier.specifier.token;
+			checkTypes = checkTypes && type in dimsMapping;
+			console.log(funcName, type, checkTypes)
+			if(!checkTypes) {
+				compileError(`glsl error: glslFunc currently supports binding to ${Object.keys(dimsMapping)} param type was ${type}`); 
+			}
+		})
 		
  	 	const funcArgCount = params.length;
 		let boundFunc = (...args) => {
@@ -244,8 +257,8 @@ export function sculptToGLSL(userProvidedSrc) {
 			let expression = funcName + "(";
 			for (let i = 0; i < funcArgCount; i++) {
 				const userParam = args[i];
-				const requiredParam = params[i];
-				const reqDim = requiredParam.type.specifier.type_specifier.size;
+				let type = params[i].declaration.specifier.specifier.token;
+				const reqDim = dimsMapping[type];
 				if (reqDim === 1) {
 					ensureScalar(funcName, userParam);
 				} else {
@@ -255,7 +268,8 @@ export function sculptToGLSL(userProvidedSrc) {
 				if (i < funcArgCount-1) expression += ", ";
 			}
 			expression += ")";
-			return makeVarWithDims(expression, proto.return_type.specifier.type_specifier.size, false);
+
+			return makeVarWithDims(expression, dimsMapping[returnType], false);
 		}
 		
 		return boundFunc;

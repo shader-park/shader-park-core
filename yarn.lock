@@ -945,6 +945,11 @@
     estree-walker "^1.0.1"
     picomatch "^2.2.2"
 
+"@shaderfrog/glsl-parser@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@shaderfrog/glsl-parser/-/glsl-parser-0.2.1.tgz#3963416c64916985fa1f3374975de5cc94986b91"
+  integrity sha512-rqbvfbDnDM+KP06DPZfbriBnSu6YDnBrrVNAOaIxZA3qWGyKsVoS/Xv5VkXD48kZ//q0YZhKAb10pVT4+mdTqg==
+
 "@types/estree@*":
   version "0.0.47"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.47.tgz#d7a51db20f0650efec24cd04994f523d93172ed4"
