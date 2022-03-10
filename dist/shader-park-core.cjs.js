@@ -31760,7 +31760,16 @@ function sculptToGLSL(userProvidedSrc) {
 
   function glslFunc(src) {
     userGLSL += src + '\n';
-    var parsedSrc = dist.parser.parse(src);
+    var parsedSrc;
+
+    try {
+      parsedSrc = dist.parser.parse(src);
+    } catch (e) {
+      console.error("glsl error in parseFunc: ".concat(e)); // compileError(`glsl error in parseFunc: ${e}`);
+
+      return function () {};
+    }
+
     var prototype = parsedSrc.program[parsedSrc.program.length - 1].prototype;
     var funcName = prototype.header.name.identifier;
     var returnType = prototype.header.returnType.specifier.specifier.token;

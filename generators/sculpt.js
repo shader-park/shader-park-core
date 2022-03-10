@@ -229,7 +229,15 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	function glslFunc(src) {
 		userGLSL += src + '\n';
-		let parsedSrc = parser.parse(src);
+
+		let parsedSrc;
+		try {
+			parsedSrc = parser.parse(src);
+		} catch(e) {
+			console.error(`glsl error in parseFunc: ${e}`)
+			// compileError(`glsl error in parseFunc: ${e}`);
+			return (...args) => {};
+		}
 
 		let prototype = parsedSrc.program[parsedSrc.program.length-1].prototype;
 		let funcName = prototype.header.name.identifier;
