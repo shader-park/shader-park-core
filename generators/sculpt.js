@@ -11,7 +11,7 @@ import {
 
 import {convertFunctionToString} from '../targets/helpers.js'
 
-// import glsl from './glslParser.js';
+import glsl from './glslParser.js';
 
 import { parser } from  '@shaderfrog/glsl-parser';
 
@@ -229,14 +229,54 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	function glslFunc(src) {
 		userGLSL += src + '\n';
+		const state = glsl.runParse(src, {});
+		if(state.errors.length) {
+			state.errors.forEach(err=> {
+				compileError(`glsl error: ${err}`); 
+			});
+		}
+
+		let func = state.ast[state.ast.length-1];
+		let proto = func.proto_type;
+		
+		let funcName = proto.identifier;
+		let params = proto.parameters;
+		let returnType = proto.return_type.specifier.type_name;
+		
+ 	 	const funcArgCount = params.length;
+		let boundFunc = (...args) => {
+			if (args.length !== funcArgCount) {
+				compileError(`Incorrect number of arguments: function ${funcName} takes ${funcArgCount} and was given ${args.length}`); 
+			}
+			let expression = funcName + "(";
+			for (let i = 0; i < funcArgCount; i++) {
+				const userParam = args[i];
+				const requiredParam = params[i];
+				const reqDim = requiredParam.type.specifier.type_specifier.size;
+				if (reqDim === 1) {
+					ensureScalar(funcName, userParam);
+				} else {
+					ensureDims(funcName, reqDim, userParam);
+				}
+				expression += collapseToString(userParam);
+				if (i < funcArgCount-1) expression += ", ";
+			}
+			expression += ")";
+			return makeVarWithDims(expression, proto.return_type.specifier.type_specifier.size, false);
+		}
+		
+		return boundFunc;
+	
+	}	
+
+	function glslFuncES3(src) {
+		userGLSL += src + '\n';
 
 		let parsedSrc;
 		try {
 			parsedSrc = parser.parse(src);
 		} catch(e) {
-			console.error(`glsl error in parseFunc: ${e}`)
-			// compileError(`glsl error in parseFunc: ${e}`);
-			return (...args) => {};
+			compileError(`glsl error in glslFuncES3 when parsing: ${e}`)
 		}
 
 		let prototype = parsedSrc.program[parsedSrc.program.length-1].prototype;
@@ -246,14 +286,14 @@ export function sculptToGLSL(userProvidedSrc) {
 
 		let checkTypes = returnType === 'void' || returnType in dimsMapping;
 		if(!checkTypes) {
-			compileError(`glsl error: glslFunc currently supports binding to ${Object.keys(dimsMapping)} Return type was ${returnType}`); 
+			compileError(`glsl error: glslFuncES3 currently supports binding to ${Object.keys(dimsMapping)} Return type was ${returnType}`); 
 		}
 		params.forEach(param => {
 			let type = param.declaration.specifier.specifier.token;
 			checkTypes = checkTypes && type in dimsMapping;
 			console.log(funcName, type, checkTypes)
 			if(!checkTypes) {
-				compileError(`glsl error: glslFunc currently supports binding to ${Object.keys(dimsMapping)} param type was ${type}`); 
+				compileError(`glsl error: glslFuncES3 currently supports binding to ${Object.keys(dimsMapping)} param type was ${type}`); 
 			}
 		})
 		
@@ -281,7 +321,6 @@ export function sculptToGLSL(userProvidedSrc) {
 		}
 		
 		return boundFunc;
-	
 	}
 
 	function glslSDF(src) {
