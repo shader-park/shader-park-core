@@ -38,7 +38,8 @@ import {
 } from './glsl/glsl-lib.js'
 
 import {
-    bindStaticData
+    bindStaticData,
+    sculptToGLSL
 } from './generators/sculpt.js'
 
 console.log(`using shader-park version: 0.1.10`);
@@ -62,6 +63,7 @@ export {
     sculptToTouchDesignerShaderSource,
     sculptToMinimalRenderer,
     sculptToMinimalHTMLRenderer,
+    sculptToGLSL,
     glslToMinimalRenderer,
     glslToMinimalHTMLRenderer,
     sculptToRawSDF4Meshing
