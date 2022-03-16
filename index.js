@@ -34,12 +34,20 @@ import {
 } from './targets/touchDesigner.js'
 
 import {
-    defaultFragSourceGLSL
+    defaultFragSourceGLSL,
+    usePBRHeader,
+    useHemisphereLight,
+    sculptureStarterCode,
+    minimalHeader,
+    minimalVertexSource,
+    fragFooter
 } from './glsl/glsl-lib.js'
 
 import {
     bindStaticData,
-    sculptToGLSL
+    sculptToGLSL,
+    baseUniforms, 
+    uniformsToGLSL
 } from './generators/sculpt.js'
 
 console.log(`using shader-park version: 0.1.10`);
@@ -47,7 +55,6 @@ console.log(`using shader-park version: 0.1.10`);
 /// Generate code for various targets
 
 export {
-    defaultFragSourceGLSL,
     glslToThreeJSShaderSource,
     glslToThreeJSMaterial,
     glslToThreeJSMesh,
@@ -63,8 +70,17 @@ export {
     sculptToTouchDesignerShaderSource,
     sculptToMinimalRenderer,
     sculptToMinimalHTMLRenderer,
-    sculptToGLSL,
     glslToMinimalRenderer,
     glslToMinimalHTMLRenderer,
-    sculptToRawSDF4Meshing
+    sculptToRawSDF4Meshing,
+    defaultFragSourceGLSL,
+    sculptToGLSL,
+    baseUniforms, 
+    uniformsToGLSL,
+    usePBRHeader,
+    useHemisphereLight,
+    sculptureStarterCode,
+    minimalHeader,
+    minimalVertexSource,
+    fragFooter
 }
