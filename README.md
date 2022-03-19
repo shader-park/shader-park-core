@@ -1,4 +1,4 @@
-<img width="1536" alt="Shader Park HeroF Crop" src="https://user-images.githubusercontent.com/6014011/159131395-2c133e0f-e56c-4e6b-bd06-6dde2ae6fc33.png">
+<img width="1536" alt="Shader Park HeroF Crop2" src="https://user-images.githubusercontent.com/6014011/159131472-2f26c33f-2023-4980-b6e0-3d2c5bd53d6f.png">
 
 
 ## The library powering [Shader Park 🔮](https://shaderpark.com)     
