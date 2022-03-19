@@ -1,3 +1,6 @@
+<img width="1536" alt="Shader Park HeroF Crop" src="https://user-images.githubusercontent.com/6014011/159131395-2c133e0f-e56c-4e6b-bd06-6dde2ae6fc33.png">
+
+
 ## The library powering [Shader Park 🔮](https://shaderpark.com)     
 [![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)  
 
