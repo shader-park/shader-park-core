@@ -1022,6 +1022,10 @@ export function sculptToGLSL(userProvidedSrc) {
 		appendColorSource(getCurrentMaterial() + ".roughness = 1.0-" + 
 			collapseToString(val) + ";\n");
 	}
+	
+	function fresnel(val) {
+		return pow(1 + dot(getRayDirection(), normal), val);
+	}
 
 	function lightDirection(x, y, z) {
 		if (y === undefined || z === undefined) {
@@ -1145,11 +1149,12 @@ export function sculptToGLSL(userProvidedSrc) {
 	// Define any code that needs to reference auto generated from bindings.js code here
 	let postGeneratedFunctions = [
 		getSpherical,
+		fresnel,
 	].map(el => el.toString()).join('\n');
 	
 
 
-	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc );
+	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
 	
 	if(enable2DFlag) {
 		setSDF(0);
