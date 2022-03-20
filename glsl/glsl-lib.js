@@ -67,6 +67,7 @@ const float intersection_threshold = 0.00001;
 
 struct Material {
     vec3 albedo;
+    float alpha;
     float metallic;
     float roughness;
     float ao;
@@ -75,6 +76,7 @@ struct Material {
 Material blendMaterial(Material a, Material b, float amount) {
     return Material(
         mix(a.albedo, b.albedo, amount), 
+        mix(a.alpha, b.alpha, amount),
         mix(a.metallic, b.metallic, amount), 
         mix(a.roughness, b.roughness, amount), 
         mix(a.ao, b.ao, amount)

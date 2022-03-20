@@ -42,8 +42,8 @@ vec3 shade(vec3 p, vec3 normal) {
 	vec3 backgroundColor = vec3(1.0, 1.0, 1.0);
 	vec3 mouseIntersect = vec3(0.0,1.0,0.0);
 	#ifdef USE_PBR
-	Material material = Material(vec3(1.0),0.5,0.7,1.0);
-	Material selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);
+	Material material = Material(vec3(1.0),1.0,0.5,0.7,1.0);
+	Material selectedMaterial = Material(vec3(1.0),1.0,0.5,0.7,1.0);
 	#else
 	float light = 1.0;
 	float occ = 1.0;
@@ -186,6 +186,30 @@ export function baseUniforms() {
 export function bindStaticData(staticData, spCode) {
 	spCode = convertFunctionToString(spCode);
 	return `const staticData = JSON.parse(\`${JSON.stringify(staticData)}\`)\n` + spCode;
+}
+
+function errorMsg(err) {
+	console.error(err);
+	throw new Error(err);
+}
+
+export function spCodeToMultiPassGLSL(passes) {
+	if(typeof(passes) !== 'object') {
+		errorMsg('spCodeToMultiPassGLSL requires finalImage to be defined in the provided object')
+	}
+	let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = passes;
+
+	if (!common) {
+		common = '';
+	}
+	if (!finalImage) {
+		errorMsg('spCodeToMultiPassGLSL requires finalImage to be defined in the provided object');
+	}
+	return [bufferA, bufferB, bufferC, bufferD, finalImage].map(pass => {
+		if (pass) {
+			return sculptToGLSL(common + '\n' + pass)
+		}
+	})
 }
 
 export function sculptToGLSL(userProvidedSrc) {
@@ -668,8 +692,9 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	function ensureScalar(funcName, val) {
-		let tp = typeof val;
-		if (typeof val !== 'number' && val.type !== 'float') {
+		if(typeof val === 'undefined') {
+			compileError("'"+funcName+"'" + " was given an undefined parameter");
+		} else if(typeof val !== 'number' && val.type !== 'float') {
 			compileError("'"+funcName+"'" + " accepts only a scalar. Was given: '" + val.type + "'");
 		}
 	}
@@ -995,19 +1020,37 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 
 	// Color/Lighting
+	function colorRGBA(col, green, blue, alpha) {
 
-	function color(col, green, blue) {
+	}
+
+
+	function color(col, green, blue, alpha = 1.0) {
 		if (green !== undefined) {
+			if(blue === undefined) {
+				compileError("color must be vec3, or vec4, or receive rgb, or rgba");
+			}
 			ensureScalar("color", col);
 			ensureScalar("color", green);
 			ensureScalar("color", blue);
+			ensureScalar("color", alpha);
+
 			appendColorSource(getCurrentMaterial() + ".albedo = vec3(" + 
 				collapseToString(col) + ", " + 
 				collapseToString(green) + ", " +
 				collapseToString(blue) + ");\n");
+			appendColorSource(getCurrentMaterial() + `.alpha = ${collapseToString(alpha)};\n`);
+
 		} else {
-			if (col.type !== 'vec3') compileError("albedo must be vec3");
-			appendColorSource(getCurrentMaterial() + ".albedo = " + collapseToString(col) + ";\n");
+			if(col.type === 'vec3') {
+				appendColorSource(getCurrentMaterial() + ".albedo = " + collapseToString(col) + ";\n");
+				appendColorSource(getCurrentMaterial() + `.alpha = ${collapseToString(alpha)};\n`);
+			} else if(col.type === 'vec4') {
+				appendColorSource(getCurrentMaterial() + `.albedo = ${collapseToString(col)}.rgb;\n`);
+				appendColorSource(getCurrentMaterial() + `.alpha = ${collapseToString(col)}.a;\n`);
+			} else {
+				compileError("color must be vec3, or vec4");
+			}
 		}
 	}
 
