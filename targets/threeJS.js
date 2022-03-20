@@ -10,7 +10,9 @@ import {
 
 import {convertFunctionToString} from './helpers.js'
 
-import { Texture, Vector2, Vector3, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide, SphereBufferGeometry} from 'three';
+import { MultiPostFX } from 'multiPostFX.js';
+
+import { Texture, Vector2, Vector3, Vector4, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide, SphereBufferGeometry} from 'three';
 
 /**
  *  Three targets are provided for both GLSL and Sculpt/JS api.
@@ -88,6 +90,57 @@ export function createSculptureWithGeometry(geometry, source, uniformCallback=()
     return createSculpture(source, uniformCallback, params);
 }
 
+export function createMultiPassSculptureWithGeometry(geometry, source, uniformCallback=() => {return {}}, params={}) {
+    geometry.computeBoundingSphere();
+    let radius = ('radius' in params)? params.radius: geometry.boundingSphere.radius;
+    params.radius = radius;
+    params.geometry = geometry;
+    return createSculpture(source, uniformCallback, params);
+}
+
+
+//
+{
+    buffera : `enable2D()`,
+    bufferb : `enable2D()`,
+    bufferc : `enable2D()`
+}
+export function createMultiPassSculpture(source, uniformCallback=() => {return {}}, params={}) {
+    // source = convertFunctionToString(source);
+    let {bufferA, bufferB, bufferC, bufferD, finalImage} = source;
+
+    let buffers = [bufferA, bufferB, bufferC, bufferD]
+
+
+    let radius = ('radius' in params)? params.radius: 2;
+
+    let geometry;
+    if ('geometry' in params) {
+        geometry = params.geometry;
+    } else {
+        let segments = ('segments' in params)? params.segments: 10;
+        geometry = new SphereBufferGeometry( radius, segments, segments );   
+    }
+    let material = sculptToThreeJSMaterial(source);
+    
+    material.uniforms['opacity'].value = 1.0;
+    material.uniforms['mouse'].value = new Vector3();
+    material.uniforms['_scale'].value = radius;
+    let mesh = new Mesh(geometry, material);
+
+    mesh.onBeforeRender = function( renderer, scene, camera, geometry, material, group ) {
+        let uniformsToUpdate = uniformCallback();
+        if (!(typeof uniformsToUpdate === "object")) {
+            throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update"
+        }
+
+        for (const [uniform, value] of Object.entries(uniformsToUpdate)) {
+            material.uniforms[uniform].value = value;
+        }
+        // material.uniforms['sculptureCenter'].value = geometry.position;
+    }
+}
+
 // uniformCallback 
 export function createSculpture(source, uniformCallback=() => {return {}}, params={}) {
     source = convertFunctionToString(source);
@@ -98,7 +151,7 @@ export function createSculpture(source, uniformCallback=() => {return {}}, param
     if ('geometry' in params) {
         geometry = params.geometry;
     } else {
-        let segments = ('segments' in params)? params.segments: 8;
+        let segments = ('segments' in params)? params.segments: 10;
         geometry = new SphereBufferGeometry( radius, segments, segments );   
     }
     let material = sculptToThreeJSMaterial(source);
