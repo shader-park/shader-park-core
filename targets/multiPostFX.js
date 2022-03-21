@@ -156,24 +156,23 @@ export class MultiPostFX {
         else {
             const passes = Object.keys(this.passes);
 
-            this.renderer.setRenderTarget(this.passes[passes[0]].target);
-            this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
-            this.renderer.setRenderTarget(null);
+            // this.renderer.setRenderTarget(this.passes[passes[0]].target);
+            // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
+            // this.renderer.setRenderTarget(null);
             // render the original scene in our first pass render target
             // this.renderer.setRenderTarget(this.passes[passes[0]].target);
             // this.renderer.render(scene, camera);
 
             // render next passes
             // console.log(' numpasses', passes.length, passes)
-            // for(let i = 1; i < this.nbPasses; i++) {
-            //     console.log('rendering', this.nbPasses);
-            //     this.renderer.setRenderTarget(this.passes[passes[i]].target);
-            //     this.renderer.render(this.passes[passes[i - 1]].scene, this.dummyCamera);
-            // }
+            for(let i = 0; i < this.nbPasses; i++) {
+                this.renderer.setRenderTarget(this.passes[passes[i]].target);
+                this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
+            }
 
             // render the last pass back to the canvas
             // TODO Check if we need this
-            // this.renderer.setRenderTarget(null);
+            this.renderer.setRenderTarget(null);
             // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
         }
     }
