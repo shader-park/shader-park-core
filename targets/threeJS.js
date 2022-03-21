@@ -63,7 +63,7 @@ function generateThreeJSFrag(src) {
     + src.colorGLSL 
     + '\n' 
     + fragFooter;
-    console.log(frg)
+    // console.log(frg)
     return {
         uniforms: src.uniforms,
         frag: frg,
@@ -78,12 +78,14 @@ export function multiPassSculpToThreeJSMaterial(passesSources) {
     const passes = spCodeToMultiPassGLSL(passesSources);
     let output = {};
     for (const [key, value] of Object.entries(passes)) {
+        console.log('keyval', key, value)
         let src = generateThreeJSFrag(value);
-        let material = makeMaterial(src.uniforms, src.vert, src.frag, payload);
+        let material = makeMaterial(src.uniforms, src.vert, src.frag);
+        // console.log(src, material);
         material.uniformDescriptions = src.uniforms;
         output[key] = material
     }
-    return material;
+    return output;
 }
 
 export function sculptToThreeJSMaterial(source, payload) {
@@ -152,10 +154,7 @@ let passes = {
 export function createMultiPassSculpture(source, uniformCallback=() => {return {}}, params={}) {
     
     // source = convertFunctionToString(source);
-    let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = source;
-
-    // let buffers = [bufferA, bufferB, bufferC, bufferD]
-
+    // let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = source;
 
     let radius = ('radius' in params)? params.radius: 2;
 
@@ -166,9 +165,9 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
         let segments = ('segments' in params)? params.segments: 10;
         geometry = new SphereBufferGeometry( radius, segments, segments );   
     }
-    
-    let material = sculptToThreeJSMaterial(finalImage);
-
+    let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = multiPassSculpToThreeJSMaterial(source);
+    // let material = sculptToThreeJSMaterial(finalImage);
+    let material = finalImage;
     material.uniforms['opacity'].value = 1.0;
     material.uniforms['mouse'].value = new Vector3();
     material.uniforms['_scale'].value = radius;

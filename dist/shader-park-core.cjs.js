@@ -95934,20 +95934,12 @@ var MultiPostFX = /*#__PURE__*/function () {
         // no passes defined, just render the scene
         this.renderer.render(scene, camera);
       } else {
-        var passes = Object.keys(this.passes); // this.renderer.setRenderTarget(this.passes[passes[0]].target);
-        // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
-        // this.renderer.setRenderTarget(null);
-        // render the original scene in our first pass render target
-        // this.renderer.setRenderTarget(this.passes[passes[0]].target);
-        // this.renderer.render(scene, camera);
-        // render next passes
-        // console.log(' numpasses', passes.length, passes)
+        var passes = Object.keys(this.passes);
 
         for (var i = 0; i < this.nbPasses; i++) {
           this.renderer.setRenderTarget(this.passes[passes[i]].target);
           this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
-        } // render the last pass back to the canvas
-        // TODO Check if we need this
+        } // switch the renderer back to the main canvas
 
 
         this.renderer.setRenderTarget(null); // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
@@ -95992,8 +95984,8 @@ function generateThreeJSFrag(src) {
     console.log(src.error);
   }
 
-  var frg = threeHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(src.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL + '\n' + src.colorGLSL + '\n' + fragFooter;
-  console.log(frg);
+  var frg = threeHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(src.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL + '\n' + src.colorGLSL + '\n' + fragFooter; // console.log(frg)
+
   return {
     uniforms: src.uniforms,
     frag: frg,
@@ -96014,15 +96006,15 @@ function multiPassSculpToThreeJSMaterial(passesSources) {
         key = _Object$entries$_i[0],
         value = _Object$entries$_i[1];
 
+    console.log('keyval', key, value);
     var src = generateThreeJSFrag(value);
+    var material = makeMaterial(src.uniforms, src.vert, src.frag); // console.log(src, material);
 
-    var _material = makeMaterial(src.uniforms, src.vert, src.frag, payload);
-
-    _material.uniformDescriptions = src.uniforms;
-    output[key] = _material;
+    material.uniformDescriptions = src.uniforms;
+    output[key] = material;
   }
 
-  return material;
+  return output;
 }
 function sculptToThreeJSMaterial(source, payload) {
   var src = sculptToThreeJSShaderSource(source);
@@ -96085,13 +96077,7 @@ function createMultiPassSculpture(source) {
   };
   var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
   // source = convertFunctionToString(source);
-  var common = source.common,
-      bufferA = source.bufferA,
-      bufferB = source.bufferB,
-      bufferC = source.bufferC,
-      bufferD = source.bufferD,
-      finalImage = source.finalImage; // let buffers = [bufferA, bufferB, bufferC, bufferD]
-
+  // let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = source;
   var radius = 'radius' in params ? params.radius : 2;
   var geometry;
 
@@ -96102,7 +96088,16 @@ function createMultiPassSculpture(source) {
     geometry = new SphereGeometry(radius, segments, segments);
   }
 
-  var material = sculptToThreeJSMaterial(finalImage);
+  var _multiPassSculpToThre = multiPassSculpToThreeJSMaterial(source),
+      common = _multiPassSculpToThre.common,
+      bufferA = _multiPassSculpToThre.bufferA,
+      bufferB = _multiPassSculpToThre.bufferB,
+      bufferC = _multiPassSculpToThre.bufferC,
+      bufferD = _multiPassSculpToThre.bufferD,
+      finalImage = _multiPassSculpToThre.finalImage; // let material = sculptToThreeJSMaterial(finalImage);
+
+
+  var material = finalImage;
   material.uniforms['opacity'].value = 1.0;
   material.uniforms['mouse'].value = new Vector3();
   material.uniforms['_scale'].value = radius;
