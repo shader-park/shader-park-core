@@ -43908,10 +43908,6 @@ function spCodeToMultiPassGLSL(passes) {
   }
 
   var common = passes.common,
-      bufferA = passes.bufferA,
-      bufferB = passes.bufferB,
-      bufferC = passes.bufferC,
-      bufferD = passes.bufferD,
       finalImage = passes.finalImage;
 
   if (!common) {
@@ -43922,11 +43918,19 @@ function spCodeToMultiPassGLSL(passes) {
     errorMsg('spCodeToMultiPassGLSL requires finalImage to be defined in the provided object');
   }
 
-  return [bufferA, bufferB, bufferC, bufferD, finalImage].map(function (pass) {
-    if (pass) {
-      return sculptToGLSL(common + '\n' + pass);
+  var output = {};
+
+  for (var _i = 0, _Object$entries = Object.entries(passes); _i < _Object$entries.length; _i++) {
+    var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+        key = _Object$entries$_i[0],
+        value = _Object$entries$_i[1];
+
+    if (key !== 'common') {
+      output[key] = sculptToGLSL(common + '\n' + value);
     }
-  });
+  }
+
+  return output;
 }
 function sculptToGLSL(userProvidedSrc) {
   var PI = Math.PI;
@@ -44085,10 +44089,10 @@ function sculptToGLSL(userProvidedSrc) {
 
   var boundSDFs = {};
 
-  for (var _i = 0, _Object$entries = Object.entries(sdfs); _i < _Object$entries.length; _i++) {
-    var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
-        key = _Object$entries$_i[0],
-        value = _Object$entries$_i[1];
+  for (var _i2 = 0, _Object$entries2 = Object.entries(sdfs); _i2 < _Object$entries2.length; _i2++) {
+    var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 2),
+        key = _Object$entries2$_i[0],
+        value = _Object$entries2$_i[1];
 
     boundSDFs[key] = glslSDF(value);
   }
@@ -44132,10 +44136,10 @@ function sculptToGLSL(userProvidedSrc) {
 
   var primitivesJS = "";
 
-  for (var _i2 = 0, _Object$entries2 = Object.entries(geometryFunctions); _i2 < _Object$entries2.length; _i2++) {
-    var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 2),
-        funcName = _Object$entries2$_i[0],
-        body = _Object$entries2$_i[1];
+  for (var _i3 = 0, _Object$entries3 = Object.entries(geometryFunctions); _i3 < _Object$entries3.length; _i3++) {
+    var _Object$entries3$_i = _slicedToArray(_Object$entries3[_i3], 2),
+        funcName = _Object$entries3$_i[0],
+        body = _Object$entries3$_i[1];
 
     var argList = body['args'];
     primitivesJS += "function " + funcName + "(";
@@ -44182,10 +44186,10 @@ function sculptToGLSL(userProvidedSrc) {
   function generateGLSLWrapper(funcJSON) {
     var wrapperSrc = "";
 
-    for (var _i3 = 0, _Object$entries3 = Object.entries(funcJSON); _i3 < _Object$entries3.length; _i3++) {
-      var _Object$entries3$_i = _slicedToArray(_Object$entries3[_i3], 2),
-          _funcName = _Object$entries3$_i[0],
-          _body = _Object$entries3$_i[1];
+    for (var _i4 = 0, _Object$entries4 = Object.entries(funcJSON); _i4 < _Object$entries4.length; _i4++) {
+      var _Object$entries4$_i = _slicedToArray(_Object$entries4[_i4], 2),
+          _funcName = _Object$entries4$_i[0],
+          _body = _Object$entries4$_i[1];
 
       var _argList = _body['args'];
       var returnType = _body['ret'];
@@ -95926,23 +95930,23 @@ var MultiPostFX = /*#__PURE__*/function () {
         // no passes defined, just render the scene
         this.renderer.render(scene, camera);
       } else {
-        var passes = Object.keys(this.passes);
-        this.renderer.setRenderTarget(this.passes[passes[0]].target);
-        this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
-        this.renderer.setRenderTarget(null); // render the original scene in our first pass render target
+        var passes = Object.keys(this.passes); // this.renderer.setRenderTarget(this.passes[passes[0]].target);
+        // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
+        // this.renderer.setRenderTarget(null);
+        // render the original scene in our first pass render target
         // this.renderer.setRenderTarget(this.passes[passes[0]].target);
         // this.renderer.render(scene, camera);
         // render next passes
         // console.log(' numpasses', passes.length, passes)
-        // for(let i = 1; i < this.nbPasses; i++) {
-        //     console.log('rendering', this.nbPasses);
-        //     this.renderer.setRenderTarget(this.passes[passes[i]].target);
-        //     this.renderer.render(this.passes[passes[i - 1]].scene, this.dummyCamera);
-        // }
-        // render the last pass back to the canvas
+
+        for (var i = 0; i < this.nbPasses; i++) {
+          this.renderer.setRenderTarget(this.passes[passes[i]].target);
+          this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
+        } // render the last pass back to the canvas
         // TODO Check if we need this
-        // this.renderer.setRenderTarget(null);
-        // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
+
+
+        this.renderer.setRenderTarget(null); // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
       }
     }
   }]);
@@ -95976,7 +95980,10 @@ function glslToThreeJSMesh(source, payload) {
 }
 function sculptToThreeJSShaderSource(source) {
   var src = sculptToGLSL(source);
+  return generateThreeJSFrag(src);
+}
 
+function generateThreeJSFrag(src) {
   if (src.error) {
     console.log(src.error);
   }
@@ -95991,6 +95998,27 @@ function sculptToThreeJSShaderSource(source) {
     geoGLSL: src.geoGLSL,
     colorGLSL: src.colorGLSL
   };
+} // {buffera, bufferb, bufferc, finalImage}
+
+
+function multiPassSculpToThreeJSMaterial(passesSources) {
+  var passes = spCodeToMultiPassGLSL(passesSources);
+  var output = {};
+
+  for (var _i = 0, _Object$entries = Object.entries(passes); _i < _Object$entries.length; _i++) {
+    var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+        key = _Object$entries$_i[0],
+        value = _Object$entries$_i[1];
+
+    var src = generateThreeJSFrag(value);
+
+    var _material = makeMaterial(src.uniforms, src.vert, src.frag, payload);
+
+    _material.uniformDescriptions = src.uniforms;
+    output[key] = _material;
+  }
+
+  return material;
 }
 function sculptToThreeJSMaterial(source, payload) {
   var src = sculptToThreeJSShaderSource(source);
@@ -96045,7 +96073,8 @@ var passes = {
   bufferA: {
     fragmentShader: "\n            precision highp float;\n            uniform sampler2D uScene;\n            uniform vec2 uResolution;\n            \n            void main() {\n                vec4 color = vec4(gl_FragCoord.xy / uResolution.xy, 1., 1.);\n                gl_FragColor = color;\n            }\n        "
   }
-};
+}; // TODO NEXT Replace sculptToThreeJSMaterial with 
+
 function createMultiPassSculpture(source) {
   var uniformCallback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function () {
     return {};
@@ -96098,10 +96127,10 @@ function createMultiPassSculpture(source) {
       throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update";
     }
 
-    for (var _i = 0, _Object$entries = Object.entries(uniformsToUpdate); _i < _Object$entries.length; _i++) {
-      var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
-          uniform = _Object$entries$_i[0],
-          value = _Object$entries$_i[1];
+    for (var _i2 = 0, _Object$entries2 = Object.entries(uniformsToUpdate); _i2 < _Object$entries2.length; _i2++) {
+      var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 2),
+          uniform = _Object$entries2$_i[0],
+          value = _Object$entries2$_i[1];
 
       material.uniforms[uniform].value = value;
     } // material.uniforms['sculptureCenter'].value = geometry.position;
@@ -96140,10 +96169,10 @@ function createSculpture(source) {
       throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update";
     }
 
-    for (var _i2 = 0, _Object$entries2 = Object.entries(uniformsToUpdate); _i2 < _Object$entries2.length; _i2++) {
-      var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 2),
-          uniform = _Object$entries2$_i[0],
-          value = _Object$entries2$_i[1];
+    for (var _i3 = 0, _Object$entries3 = Object.entries(uniformsToUpdate); _i3 < _Object$entries3.length; _i3++) {
+      var _Object$entries3$_i = _slicedToArray(_Object$entries3[_i3], 2),
+          uniform = _Object$entries3$_i[0],
+          value = _Object$entries3$_i[1];
 
       material.uniforms[uniform].value = value;
     } // material.uniforms['sculptureCenter'].value = geometry.position;

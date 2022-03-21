@@ -1,4 +1,4 @@
-import {sculptToGLSL, baseUniforms, uniformsToGLSL} from '../generators/sculpt.js'
+import {sculptToGLSL, baseUniforms, uniformsToGLSL, spCodeToMultiPassGLSL} from '../generators/sculpt.js'
 import {
     threeJSVertexSource, 
     threeHeader,
@@ -43,22 +43,26 @@ export function glslToThreeJSMesh(source, payload) {
 
 export function sculptToThreeJSShaderSource(source) {
     const src = sculptToGLSL(source);
+    return generateThreeJSFrag(src);
+}
+
+function generateThreeJSFrag(src) {
     if (src.error) {
         console.log(src.error);
     }
     let frg = 
-          threeHeader
-        + usePBRHeader
-        + useHemisphereLight
-        + uniformsToGLSL(src.uniforms) 
-        + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
-        + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
-        + sculptureStarterCode 
-        + src.geoGLSL 
-        + '\n' 
-        + src.colorGLSL 
-        + '\n' 
-        + fragFooter;
+        threeHeader
+    + usePBRHeader
+    + useHemisphereLight
+    + uniformsToGLSL(src.uniforms) 
+    + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
+    + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
+    + sculptureStarterCode 
+    + src.geoGLSL 
+    + '\n' 
+    + src.colorGLSL 
+    + '\n' 
+    + fragFooter;
     console.log(frg)
     return {
         uniforms: src.uniforms,
@@ -68,6 +72,18 @@ export function sculptToThreeJSShaderSource(source) {
         geoGLSL: src.geoGLSL,
         colorGLSL: src.colorGLSL
     };
+}
+// {buffera, bufferb, bufferc, finalImage}
+export function multiPassSculpToThreeJSMaterial(passesSources) {
+    const passes = spCodeToMultiPassGLSL(passesSources);
+    let output = {};
+    for (const [key, value] of Object.entries(passes)) {
+        let src = generateThreeJSFrag(value);
+        let material = makeMaterial(src.uniforms, src.vert, src.frag, payload);
+        material.uniformDescriptions = src.uniforms;
+        output[key] = material
+    }
+    return material;
 }
 
 export function sculptToThreeJSMaterial(source, payload) {
@@ -132,11 +148,10 @@ let passes = {
     }
 }
 
+// TODO NEXT Replace sculptToThreeJSMaterial with 
 export function createMultiPassSculpture(source, uniformCallback=() => {return {}}, params={}) {
     
     // source = convertFunctionToString(source);
-
-    
     let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = source;
 
     // let buffers = [bufferA, bufferB, bufferC, bufferD]
@@ -151,6 +166,7 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
         let segments = ('segments' in params)? params.segments: 10;
         geometry = new SphereBufferGeometry( radius, segments, segments );   
     }
+    
     let material = sculptToThreeJSMaterial(finalImage);
 
     material.uniforms['opacity'].value = 1.0;

@@ -197,19 +197,20 @@ export function spCodeToMultiPassGLSL(passes) {
 	if(typeof(passes) !== 'object') {
 		errorMsg('spCodeToMultiPassGLSL requires finalImage to be defined in the provided object')
 	}
-	let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = passes;
-
+	let {common, finalImage} = passes;
 	if (!common) {
 		common = '';
 	}
 	if (!finalImage) {
 		errorMsg('spCodeToMultiPassGLSL requires finalImage to be defined in the provided object');
 	}
-	return [bufferA, bufferB, bufferC, bufferD, finalImage].map(pass => {
-		if (pass) {
-			return sculptToGLSL(common + '\n' + pass)
+	let output = {};
+	for (const [key, value] of Object.entries(passes)) {
+		if(key !== 'common') {
+			output[key] = sculptToGLSL(common + '\n' + value);
 		}
-	})
+	}
+	return output;
 }
 
 export function sculptToGLSL(userProvidedSrc) {
