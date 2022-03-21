@@ -10,7 +10,7 @@ import {
 
 import {convertFunctionToString} from './helpers.js'
 
-import { MultiPostFX } from 'multiPostFX.js';
+import {MultiPostFX} from './multiPostFX.js';
 
 import { Texture, Vector2, Vector3, Vector4, ShaderMaterial, Mesh, BoxBufferGeometry, BackSide, SphereBufferGeometry} from 'three';
 
@@ -59,7 +59,7 @@ export function sculptToThreeJSShaderSource(source) {
         + src.colorGLSL 
         + '\n' 
         + fragFooter;
-
+    console.log(frg)
     return {
         uniforms: src.uniforms,
         frag: frg,
@@ -95,21 +95,51 @@ export function createMultiPassSculptureWithGeometry(geometry, source, uniformCa
     let radius = ('radius' in params)? params.radius: geometry.boundingSphere.radius;
     params.radius = radius;
     params.geometry = geometry;
-    return createSculpture(source, uniformCallback, params);
+    return createMultiPassSculpture(source, uniformCallback, params);
 }
 
+// let passes = {
+//     bufferA: {
+//         fragmentShader: `
+//             precision highp float;
+//             uniform sampler2D uScene;
+//             uniform vec2 uResolution;
+            
+//             void main() {
+//                 vec2 uv = gl_FragCoord.xy / uResolution.xy;
+//                 vec4 color = texture2D(uScene, uv);
+//                 // invert colors                 
+//                 color = mix(color, vec4((1.0 - color.rgb) * color.a, color.a), step(uv.x, 0.5));
+//                 //color = mix(color, vec4((1.0 - color.rgb) * color.a, color.a), step(uv.y, 0.5));
+//                 gl_FragColor = color;
+//             }
+//         `,
+//     }
+// }
 
-//
-{
-    buffera : `enable2D()`,
-    bufferb : `enable2D()`,
-    bufferc : `enable2D()`
+let passes = {
+    bufferA: {
+        fragmentShader: `
+            precision highp float;
+            uniform sampler2D uScene;
+            uniform vec2 uResolution;
+            
+            void main() {
+                vec4 color = vec4(gl_FragCoord.xy / uResolution.xy, 1., 1.);
+                gl_FragColor = color;
+            }
+        `,
+    }
 }
+
 export function createMultiPassSculpture(source, uniformCallback=() => {return {}}, params={}) {
+    
     // source = convertFunctionToString(source);
-    let {bufferA, bufferB, bufferC, bufferD, finalImage} = source;
 
-    let buffers = [bufferA, bufferB, bufferC, bufferD]
+    
+    let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = source;
+
+    // let buffers = [bufferA, bufferB, bufferC, bufferD]
 
 
     let radius = ('radius' in params)? params.radius: 2;
@@ -121,14 +151,30 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
         let segments = ('segments' in params)? params.segments: 10;
         geometry = new SphereBufferGeometry( radius, segments, segments );   
     }
-    let material = sculptToThreeJSMaterial(source);
-    
+    let material = sculptToThreeJSMaterial(finalImage);
+
     material.uniforms['opacity'].value = 1.0;
     material.uniforms['mouse'].value = new Vector3();
     material.uniforms['_scale'].value = radius;
+    
     let mesh = new Mesh(geometry, material);
-
+    let multiPost;
     mesh.onBeforeRender = function( renderer, scene, camera, geometry, material, group ) {
+        if(!multiPost) {
+            multiPost = new MultiPostFX({
+                renderer,
+                passes
+            });
+            console.log(multiPost)
+        } else {
+            multiPost.render(scene, camera);
+            
+            if('bufferA' in material.uniforms) {
+                
+                material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
+                console.log('setting buffA', material.uniforms['bufferA'].value)
+            }
+        }
         let uniformsToUpdate = uniformCallback();
         if (!(typeof uniformsToUpdate === "object")) {
             throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update"
@@ -139,6 +185,7 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
         }
         // material.uniforms['sculptureCenter'].value = geometry.position;
     }
+    return mesh;
 }
 
 // uniformCallback 
@@ -192,6 +239,8 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
             finalUniforms[uniform.name] = {value: new Vector3(uniform.value.x, uniform.value.y, uniform.value.z)};
         } else if (uniform.type === 'vec4') {
             finalUniforms[uniform.name] = {value: new Vector4(uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w)};
+        } else if(uniform.type === 'sampler2D') {
+            finalUniforms[uniform.name] = {value: new Texture()}
         }
     });
     return finalUniforms;

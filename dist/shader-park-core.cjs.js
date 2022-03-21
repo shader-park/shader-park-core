@@ -45002,7 +45002,43 @@ function sculptToGLSL(userProvidedSrc) {
       max: max
     });
     return new vec2(name, true);
+  } // let bufferA = inputTexture('bufferA');
+  // let samp = sampler(bufferA, vec2(.4));
+  // color(samp.x, samp.y, samp.z);
+
+
+  function inputTexture(name) {
+    uniforms.push({
+      name: name,
+      type: 'sampler2D'
+    });
+    return new makeVar(name, 'sampler2D', 0, true);
   }
+
+  function sampleTexture(textureRef, uv) {
+    ensureDims("sampleTexture", 2, uv);
+    return new vec4("texture(".concat(collapseToString(textureRef), ", ").concat(uv, ")"), false);
+  }
+
+  function _bindTextureRead(name) {
+    return function (coord) {
+      if (!uniforms.find(function (el) {
+        return el.name === name;
+      })) {
+        inputTexture(name);
+      }
+
+      return sampleTexture(name, coord);
+    };
+  }
+
+  var sampleBufferA = _bindTextureRead("bufferA");
+
+  var sampleBufferB = _bindTextureRead("bufferB");
+
+  var sampleBufferC = _bindTextureRead("bufferC");
+
+  var sampleBufferD = _bindTextureRead("bufferD");
 
   function getPixelCoord() {
     return makeVarWithDims('gl_FragCoord.xy', 2, true);
@@ -47561,7 +47597,7 @@ Texture.DEFAULT_MAPPING = UVMapping;
 
 Texture.prototype.isTexture = true;
 
-class Vector4$1 {
+class Vector4 {
 
 	constructor( x = 0, y = 0, z = 0, w = 1 ) {
 
@@ -48222,7 +48258,7 @@ class Vector4$1 {
 
 }
 
-Vector4$1.prototype.isVector4 = true;
+Vector4.prototype.isVector4 = true;
 
 /*
  In options, we can specify:
@@ -48239,10 +48275,10 @@ class WebGLRenderTarget extends EventDispatcher {
 		this.height = height;
 		this.depth = 1;
 
-		this.scissor = new Vector4$1( 0, 0, width, height );
+		this.scissor = new Vector4( 0, 0, width, height );
 		this.scissorTest = false;
 
-		this.viewport = new Vector4$1( 0, 0, width, height );
+		this.viewport = new Vector4( 0, 0, width, height );
 
 		const image = { width: width, height: height, depth: 1 };
 
@@ -54390,7 +54426,7 @@ class BufferAttribute {
 			if ( vector === undefined ) {
 
 				console.warn( 'THREE.BufferAttribute.copyVector4sArray(): vector is undefined', i );
-				vector = new Vector4$1();
+				vector = new Vector4();
 
 			}
 
@@ -61690,7 +61726,7 @@ function WebGLMorphtargets( gl, capabilities, textures ) {
 	const influencesList = {};
 	const morphInfluences = new Float32Array( 8 );
 	const morphTextures = new WeakMap();
-	const morph = new Vector4$1();
+	const morph = new Vector4();
 
 	const workInfluences = [];
 
@@ -65704,7 +65740,7 @@ function WebGLShadowMap( _renderer, _objects, _capabilities ) {
 	const _shadowMapSize = new Vector2(),
 		_viewportSize = new Vector2(),
 
-		_viewport = new Vector4$1(),
+		_viewport = new Vector4(),
 
 		_depthMaterial = new MeshDepthMaterial( { depthPacking: RGBADepthPacking } ),
 		_distanceMaterial = new MeshDistanceMaterial(),
@@ -66070,9 +66106,9 @@ function WebGLState( gl, extensions, capabilities ) {
 
 		let locked = false;
 
-		const color = new Vector4$1();
+		const color = new Vector4();
 		let currentColorMask = null;
-		const currentColorClear = new Vector4$1( 0, 0, 0, 0 );
+		const currentColorClear = new Vector4( 0, 0, 0, 0 );
 
 		return {
 
@@ -66425,8 +66461,8 @@ function WebGLState( gl, extensions, capabilities ) {
 	const scissorParam = gl.getParameter( 3088 );
 	const viewportParam = gl.getParameter( 2978 );
 
-	const currentScissor = new Vector4$1().fromArray( scissorParam );
-	const currentViewport = new Vector4$1().fromArray( viewportParam );
+	const currentScissor = new Vector4().fromArray( scissorParam );
+	const currentViewport = new Vector4().fromArray( viewportParam );
 
 	function createTexture( type, target, count ) {
 
@@ -69734,11 +69770,11 @@ class WebXRManager extends EventDispatcher {
 
 		const cameraL = new PerspectiveCamera();
 		cameraL.layers.enable( 1 );
-		cameraL.viewport = new Vector4$1();
+		cameraL.viewport = new Vector4();
 
 		const cameraR = new PerspectiveCamera();
 		cameraR.layers.enable( 2 );
-		cameraR.viewport = new Vector4$1();
+		cameraR.viewport = new Vector4();
 
 		const cameras = [ cameraL, cameraR ];
 
@@ -71246,8 +71282,8 @@ function WebGLRenderer( parameters = {} ) {
 
 	let _currentCamera = null;
 
-	const _currentViewport = new Vector4$1();
-	const _currentScissor = new Vector4$1();
+	const _currentViewport = new Vector4();
+	const _currentScissor = new Vector4();
 	let _currentScissorTest = null;
 
 	//
@@ -71259,8 +71295,8 @@ function WebGLRenderer( parameters = {} ) {
 	let _opaqueSort = null;
 	let _transparentSort = null;
 
-	const _viewport = new Vector4$1( 0, 0, _width, _height );
-	const _scissor = new Vector4$1( 0, 0, _width, _height );
+	const _viewport = new Vector4( 0, 0, _width, _height );
+	const _scissor = new Vector4( 0, 0, _width, _height );
 	let _scissorTest = false;
 
 	// frustum
@@ -74252,8 +74288,8 @@ class LOD extends Object3D {
 
 const _basePosition = /*@__PURE__*/ new Vector3();
 
-const _skinIndex = /*@__PURE__*/ new Vector4$1();
-const _skinWeight = /*@__PURE__*/ new Vector4$1();
+const _skinIndex = /*@__PURE__*/ new Vector4();
+const _skinWeight = /*@__PURE__*/ new Vector4();
 
 const _vector$5 = /*@__PURE__*/ new Vector3();
 const _matrix = /*@__PURE__*/ new Matrix4();
@@ -74313,7 +74349,7 @@ class SkinnedMesh extends Mesh {
 
 	normalizeSkinWeights() {
 
-		const vector = new Vector4$1();
+		const vector = new Vector4();
 
 		const skinWeight = this.geometry.attributes.skinWeight;
 
@@ -85357,7 +85393,7 @@ class LightShadow {
 
 		this._viewports = [
 
-			new Vector4$1( 0, 0, 1, 1 )
+			new Vector4( 0, 0, 1, 1 )
 
 		];
 
@@ -85605,17 +85641,17 @@ class PointLightShadow extends LightShadow {
 			// z - Negative z direction
 
 			// positive X
-			new Vector4$1( 2, 1, 1, 1 ),
+			new Vector4( 2, 1, 1, 1 ),
 			// negative X
-			new Vector4$1( 0, 1, 1, 1 ),
+			new Vector4( 0, 1, 1, 1 ),
 			// positive Z
-			new Vector4$1( 3, 1, 1, 1 ),
+			new Vector4( 3, 1, 1, 1 ),
 			// negative Z
-			new Vector4$1( 1, 1, 1, 1 ),
+			new Vector4( 1, 1, 1, 1 ),
 			// positive Y
-			new Vector4$1( 3, 0, 1, 1 ),
+			new Vector4( 3, 0, 1, 1 ),
 			// negative Y
-			new Vector4$1( 1, 0, 1, 1 )
+			new Vector4( 1, 0, 1, 1 )
 		];
 
 		this._cubeDirections = [
@@ -86289,7 +86325,7 @@ class MaterialLoader extends Loader {
 						break;
 
 					case 'v4':
-						material.uniforms[ name ].value = new Vector4$1().fromArray( uniform.value );
+						material.uniforms[ name ].value = new Vector4().fromArray( uniform.value );
 						break;
 
 					case 'm3':
@@ -94581,14 +94617,14 @@ Vector3.prototype.lengthManhattan = function () {
 
 //
 
-Vector4$1.prototype.fromAttribute = function ( attribute, index, offset ) {
+Vector4.prototype.fromAttribute = function ( attribute, index, offset ) {
 
 	console.warn( 'THREE.Vector4: .fromAttribute() has been renamed to .fromBufferAttribute().' );
 	return this.fromBufferAttribute( attribute, index, offset );
 
 };
 
-Vector4$1.prototype.lengthManhattan = function () {
+Vector4.prototype.lengthManhattan = function () {
 
 	console.warn( 'THREE.Vector4: .lengthManhattan() has been renamed to .manhattanLength().' );
 	return this.manhattanLength();
@@ -95798,6 +95834,127 @@ if ( typeof window !== 'undefined' ) {
 }
 
 /**
+ *
+ * @params: (object)
+ * renderer: (THREE.WebGLRenderer) renderer used to render your original scene
+ * passes: (object) object describing the passes applied consecutively
+ *  - passName (object):
+ *      - format: (THREE texture constants format, optionnal) format to use for your pass texure (default to THREE.RGBAFormat)
+ *      - uniforms: (object, optionnal) additional uniforms to use (see THREE Uniform)
+ *      - vertexShader: (string, optionnal) vertexShader to use. Use one if you want to specify varyings to your fragment shader. Uses the default const vertexShader if none specified
+ *      - fragmentShader: (string optionnal) fragmentShader to use. Uses the default const fragmentShader (that just display your scene) if none specified.
+ *
+ */
+
+var MultiPostFX = /*#__PURE__*/function () {
+  function MultiPostFX(params) {
+    _classCallCheck(this, MultiPostFX);
+
+    this.renderer = params.renderer;
+    if (!this.renderer) return; // three.js for .render() wants a camera, even if we're not using it :(
+
+    this.dummyCamera = new OrthographicCamera();
+    this.geometry = new BufferGeometry(); // Triangle expressed in clip space coordinates
+
+    var vertices = new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]);
+    this.geometry.setAttribute('position', new BufferAttribute(vertices, 2));
+    this.resolution = new Vector2();
+    this.renderer.getDrawingBufferSize(this.resolution); // default shaders
+
+    this.defaultVertexShader = "\n            precision highp float;\n            attribute vec2 position;\n            void main() {\n                gl_Position = vec4(position, 1.0, 1.0);\n            }\n        ";
+    this.defaultFragmentShader = "\n            precision highp float;\n            uniform sampler2D uScene;\n            uniform vec2 uResolution;\n            void main() {\n                vec2 uv = gl_FragCoord.xy / uResolution.xy;\n                gl_FragColor = texture2D(uScene, uv);\n            }\n        "; // add our passes
+
+    this.nbPasses = 0;
+    this.passes = {};
+    params.passes = params.passes || {};
+
+    for (var passName in params.passes) {
+      this.addPass(passName, params.passes[passName]);
+    }
+  }
+
+  _createClass(MultiPostFX, [{
+    key: "addPass",
+    value: function addPass(passName, passParams) {
+      // create a pass object that will contain a scene, a render target
+      // a material and its uniforms and finally a mesh
+      var pass = {
+        scene: new Scene(),
+        target: new WebGLRenderTarget(this.resolution.x, this.resolution.y, {
+          format: passParams.format || RGBAFormat,
+          // allow transparency
+          stencilBuffer: false,
+          depthBuffer: true
+        })
+      };
+      var uniforms = {
+        uScene: {
+          value: pass.target.texture
+        },
+        uResolution: {
+          value: this.resolution
+        }
+      }; // merge default uniforms with params
+
+      if (passParams.uniforms) {
+        uniforms = Object.assign(uniforms, passParams.uniforms);
+      }
+
+      pass.material = new RawShaderMaterial({
+        fragmentShader: passParams.fragmentShader || this.defaultFragmentShader,
+        vertexShader: passParams.vertexShader || this.defaultVertexShader,
+        uniforms: uniforms
+      });
+      pass.mesh = new Mesh(this.geometry, pass.material);
+      pass.mesh.frustumCulled = false;
+      pass.scene.add(pass.mesh);
+      this.passes[passName] = pass;
+      this.nbPasses++;
+    }
+  }, {
+    key: "resize",
+    value: function resize() {
+      this.renderer.getDrawingBufferSize(this.resolution); // resize all passes
+
+      var passes = Object.keys(this.passes);
+
+      for (var i = 0; i < this.nbPasses; i++) {
+        this.passes[passes[i]].target.setSize(this.resolution.x, this.resolution.y);
+        this.passes[passes[i]].material.uniforms.uResolution.value = this.resolution;
+      }
+    }
+  }, {
+    key: "render",
+    value: function render(scene, camera) {
+      if (this.nbPasses === 0) {
+        // no passes defined, just render the scene
+        this.renderer.render(scene, camera);
+      } else {
+        var passes = Object.keys(this.passes);
+        this.renderer.setRenderTarget(this.passes[passes[0]].target);
+        this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
+        this.renderer.setRenderTarget(null); // render the original scene in our first pass render target
+        // this.renderer.setRenderTarget(this.passes[passes[0]].target);
+        // this.renderer.render(scene, camera);
+        // render next passes
+        // console.log(' numpasses', passes.length, passes)
+        // for(let i = 1; i < this.nbPasses; i++) {
+        //     console.log('rendering', this.nbPasses);
+        //     this.renderer.setRenderTarget(this.passes[passes[i]].target);
+        //     this.renderer.render(this.passes[passes[i - 1]].scene, this.dummyCamera);
+        // }
+        // render the last pass back to the canvas
+        // TODO Check if we need this
+        // this.renderer.setRenderTarget(null);
+        // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
+      }
+    }
+  }]);
+
+  return MultiPostFX;
+}();
+
+/**
  *  Three targets are provided for both GLSL and Sculpt/JS api.
  * 
  *  1: source -> Threejs shader source components (easy customization)
@@ -95829,6 +95986,7 @@ function sculptToThreeJSShaderSource(source) {
   }
 
   var frg = threeHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(src.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL + '\n' + src.colorGLSL + '\n' + fragFooter;
+  console.log(frg);
   return {
     uniforms: src.uniforms,
     frag: frg,
@@ -95858,6 +96016,103 @@ function createSculptureWithGeometry(geometry, source) {
   params.radius = radius;
   params.geometry = geometry;
   return createSculpture(source, uniformCallback, params);
+}
+function createMultiPassSculptureWithGeometry(geometry, source) {
+  var uniformCallback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function () {
+    return {};
+  };
+  var params = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+  geometry.computeBoundingSphere();
+  var radius = 'radius' in params ? params.radius : geometry.boundingSphere.radius;
+  params.radius = radius;
+  params.geometry = geometry;
+  return createMultiPassSculpture(source, uniformCallback, params);
+} // let passes = {
+//     bufferA: {
+//         fragmentShader: `
+//             precision highp float;
+//             uniform sampler2D uScene;
+//             uniform vec2 uResolution;
+//             void main() {
+//                 vec2 uv = gl_FragCoord.xy / uResolution.xy;
+//                 vec4 color = texture2D(uScene, uv);
+//                 // invert colors                 
+//                 color = mix(color, vec4((1.0 - color.rgb) * color.a, color.a), step(uv.x, 0.5));
+//                 //color = mix(color, vec4((1.0 - color.rgb) * color.a, color.a), step(uv.y, 0.5));
+//                 gl_FragColor = color;
+//             }
+//         `,
+//     }
+// }
+
+var passes = {
+  bufferA: {
+    fragmentShader: "\n            precision highp float;\n            uniform sampler2D uScene;\n            uniform vec2 uResolution;\n            \n            void main() {\n                vec4 color = vec4(gl_FragCoord.xy / uResolution.xy, 1., 1.);\n                gl_FragColor = color;\n            }\n        "
+  }
+};
+function createMultiPassSculpture(source) {
+  var uniformCallback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function () {
+    return {};
+  };
+  var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  // source = convertFunctionToString(source);
+  var common = source.common,
+      bufferA = source.bufferA,
+      bufferB = source.bufferB,
+      bufferC = source.bufferC,
+      bufferD = source.bufferD,
+      finalImage = source.finalImage; // let buffers = [bufferA, bufferB, bufferC, bufferD]
+
+  var radius = 'radius' in params ? params.radius : 2;
+  var geometry;
+
+  if ('geometry' in params) {
+    geometry = params.geometry;
+  } else {
+    var segments = 'segments' in params ? params.segments : 10;
+    geometry = new SphereGeometry(radius, segments, segments);
+  }
+
+  var material = sculptToThreeJSMaterial(finalImage);
+  material.uniforms['opacity'].value = 1.0;
+  material.uniforms['mouse'].value = new Vector3();
+  material.uniforms['_scale'].value = radius;
+  var mesh = new Mesh(geometry, material);
+  var multiPost;
+
+  mesh.onBeforeRender = function (renderer, scene, camera, geometry, material, group) {
+    if (!multiPost) {
+      multiPost = new MultiPostFX({
+        renderer: renderer,
+        passes: passes
+      });
+      console.log(multiPost);
+    } else {
+      multiPost.render(scene, camera);
+
+      if ('bufferA' in material.uniforms) {
+        material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
+        console.log('setting buffA', material.uniforms['bufferA'].value);
+      }
+    }
+
+    var uniformsToUpdate = uniformCallback();
+
+    if (!(_typeof(uniformsToUpdate) === "object")) {
+      throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update";
+    }
+
+    for (var _i = 0, _Object$entries = Object.entries(uniformsToUpdate); _i < _Object$entries.length; _i++) {
+      var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+          uniform = _Object$entries$_i[0],
+          value = _Object$entries$_i[1];
+
+      material.uniforms[uniform].value = value;
+    } // material.uniforms['sculptureCenter'].value = geometry.position;
+
+  };
+
+  return mesh;
 } // uniformCallback 
 
 function createSculpture(source) {
@@ -95872,7 +96127,7 @@ function createSculpture(source) {
   if ('geometry' in params) {
     geometry = params.geometry;
   } else {
-    var segments = 'segments' in params ? params.segments : 8;
+    var segments = 'segments' in params ? params.segments : 10;
     geometry = new SphereGeometry(radius, segments, segments);
   }
 
@@ -95889,10 +96144,10 @@ function createSculpture(source) {
       throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update";
     }
 
-    for (var _i = 0, _Object$entries = Object.entries(uniformsToUpdate); _i < _Object$entries.length; _i++) {
-      var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
-          uniform = _Object$entries$_i[0],
-          value = _Object$entries$_i[1];
+    for (var _i2 = 0, _Object$entries2 = Object.entries(uniformsToUpdate); _i2 < _Object$entries2.length; _i2++) {
+      var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 2),
+          uniform = _Object$entries2$_i[0],
+          value = _Object$entries2$_i[1];
 
       material.uniforms[uniform].value = value;
     } // material.uniforms['sculptureCenter'].value = geometry.position;
@@ -95927,6 +96182,10 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
     } else if (uniform.type === 'vec4') {
       finalUniforms[uniform.name] = {
         value: new Vector4(uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w)
+      };
+    } else if (uniform.type === 'sampler2D') {
+      finalUniforms[uniform.name] = {
+        value: new Texture()
       };
     }
   });
@@ -96266,6 +96525,8 @@ console.log("using shader-park version: 0.1.12"); /// Generate code for various 
 
 exports.baseUniforms = baseUniforms;
 exports.bindStaticData = bindStaticData;
+exports.createMultiPassSculpture = createMultiPassSculpture;
+exports.createMultiPassSculptureWithGeometry = createMultiPassSculptureWithGeometry;
 exports.createSculpture = createSculpture;
 exports.createSculptureWithGeometry = createSculptureWithGeometry;
 exports.defaultFragSourceGLSL = defaultFragSourceGLSL;

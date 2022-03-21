@@ -1120,8 +1120,6 @@ export function sculptToGLSL(userProvidedSrc) {
 		return new float(name, true);
 	}
 
-
-	
 	function input2D(name, value={x: 0.0, y: 0.0}, min = {x: 0.0, y: 0.0}, max = {x: 1.0, y: 1.0}) {
 		if(typeof value === 'number' && typeof min === 'number' && typeof max === 'object') {
 			// syntax input2D(.2, 1.2);
@@ -1141,6 +1139,35 @@ export function sculptToGLSL(userProvidedSrc) {
 		uniforms.push({name, type:'vec2', value, min, max});
 		return new vec2(name, true);
 	}
+
+	// let bufferA = inputTexture('bufferA');
+	// let samp = sampler(bufferA, vec2(.4));
+	// color(samp.x, samp.y, samp.z);
+
+	function inputTexture(name) {
+		uniforms.push({name, type:'sampler2D'});
+		return new makeVar(name, 'sampler2D', 0, true);
+	}
+
+	function sampleTexture(textureRef, uv) {
+		ensureDims("sampleTexture", 2, uv);
+		return new vec4(`texture(${collapseToString(textureRef)}, ${uv})`, false);
+	}
+
+	function _bindTextureRead(name) {
+		return (coord) => {
+			if(!uniforms.find((el) => el.name === name)) {
+				inputTexture(name);
+			}
+			return sampleTexture(name, coord);
+		}
+	}
+
+	let sampleBufferA = _bindTextureRead("bufferA");
+	let sampleBufferB = _bindTextureRead("bufferB");
+	let sampleBufferC = _bindTextureRead("bufferC");
+	let sampleBufferD = _bindTextureRead("bufferD");
+
 
 	function getPixelCoord() {
 		return makeVarWithDims('gl_FragCoord.xy', 2, true);

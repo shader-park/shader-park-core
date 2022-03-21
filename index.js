@@ -6,7 +6,10 @@ import {
     sculptToThreeJSMaterial,
     sculptToThreeJSMesh,
     createSculpture,
-    createSculptureWithGeometry
+    createSculptureWithGeometry,
+    createMultiPassSculptureWithGeometry,
+    createMultiPassSculpture
+
 } from './targets/threeJS.js'
 
 import {
@@ -61,6 +64,8 @@ export {
     sculptToThreeJSShaderSource,
     sculptToThreeJSMaterial,
     sculptToThreeJSMesh,
+    createMultiPassSculptureWithGeometry,
+    createMultiPassSculpture,
     createSculptureWithGeometry,
     createSculpture,
     bindStaticData,
