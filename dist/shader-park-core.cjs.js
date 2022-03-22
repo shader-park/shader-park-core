@@ -96182,6 +96182,10 @@ function createMultiPassSculpture(source) {
       if ('bufferA' in material.uniforms) {
         material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
       }
+
+      if ('bufferA' in multiPost.passes.bufferA.material.uniforms) {
+        multiPost.passes['bufferA'].material.uniforms['bufferA'].value = multiPost.passes.bufferA.material.uniforms;
+      }
     }
 
     var uniformsToUpdate = uniformCallback();
