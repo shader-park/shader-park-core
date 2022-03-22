@@ -80,22 +80,37 @@ export class MultiPostFX {
 
         // default shaders
         this.defaultVertexShader = `
-
-            precision highp float;
-            attribute vec2 position;
+            varying vec4 worldPos;
+            varying vec3 sculptureCenter;
+            // precision highp float;
+            // attribute vec2 position;
             void main() {
-                gl_Position = vec4(position, 1.0, 1.0);
+                worldPos = modelMatrix*vec4(position,1.0);
+                sculptureCenter = (modelMatrix * vec4(0., 0., 0., 1.)).xyz;
+                gl_Position = vec4(position, 1.0);
             }
         `;
+
+        // varying vec4 worldPos;
+        // //varying vec2 vUv;
+        // varying vec3 sculptureCenter;
+        // void main()
+        // {
+        //     vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        //     worldPos = modelMatrix*vec4(position,1.0);
+        //     sculptureCenter = (modelMatrix * vec4(0., 0., 0., 1.)).xyz;
+        //     //vUv = uv;
+        //     gl_Position = projectionMatrix * mvPosition;
+        // }        
         // this.defaultVertexShader = threeJSVertexSource;
 
         this.defaultFragmentShader = `
             precision highp float;
-            uniform sampler2D uScene;
             uniform vec2 resolution;
+            
             void main() {
-                vec2 uv = gl_FragCoord.xy / resolution.xy;
-                gl_FragColor = texture2D(uScene, uv);
+                vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
+                gl_FragColor = color;
             }
         `;
 
@@ -122,7 +137,7 @@ export class MultiPostFX {
         };
 
         let uniforms = {
-            uScene: { value: pass.target.texture },
+            // uScene: { value: pass.target.texture },
             resolution: { value: this.resolution },
             opacity: { value:  1.0},
             mouse: { value:  new Vector3()},
@@ -136,11 +151,11 @@ export class MultiPostFX {
             uniforms = Object.assign(uniforms, passParams.uniforms);
         }
 
-        pass.material = new RawShaderMaterial({
+        pass.material = new ShaderMaterial({
             fragmentShader: passParams.fragmentShader || this.defaultFragmentShader,
             vertexShader: passParams.vertexShader || this.defaultVertexShader,
             uniforms: uniforms,
-            // transparent: true,
+            transparent: true,
             // side: BackSide
         });
         

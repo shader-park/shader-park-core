@@ -141,7 +141,6 @@ let passes = {
     bufferA: {
         fragmentShader: `
             precision highp float;
-            uniform sampler2D uScene;
             uniform vec2 resolution;
             
             void main() {
