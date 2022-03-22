@@ -92,9 +92,9 @@ export class MultiPostFX {
         this.defaultFragmentShader = `
             precision highp float;
             uniform sampler2D uScene;
-            uniform vec2 uResolution;
+            uniform vec2 resolution;
             void main() {
-                vec2 uv = gl_FragCoord.xy / uResolution.xy;
+                vec2 uv = gl_FragCoord.xy / resolution.xy;
                 gl_FragColor = texture2D(uScene, uv);
             }
         `;
@@ -123,14 +123,12 @@ export class MultiPostFX {
 
         let uniforms = {
             uScene: { value: pass.target.texture },
-            uResolution: { value: this.resolution },
+            resolution: { value: this.resolution },
             opacity: { value:  1.0},
             mouse: { value:  new Vector3()},
             _scale: { value:  2.0},
             time: {value: 0.0},
             stepSize: {value: 0.85},
-            resolution: {value: this.resolution}
-
         };
 
         // merge default uniforms with params
@@ -163,7 +161,7 @@ export class MultiPostFX {
         const passes = Object.keys(this.passes);
         for(let i = 0; i < this.nbPasses; i++) {
             this.passes[passes[i]].target.setSize(this.resolution.x, this.resolution.y);
-            this.passes[passes[i]].material.uniforms.uResolution.value = this.resolution;
+            this.passes[passes[i]].material.uniforms.resolution.value = this.resolution;
         }
     }
 
@@ -174,7 +172,6 @@ export class MultiPostFX {
         }
         else {
             const passes = Object.keys(this.passes);
-
             for(let i = 0; i < this.nbPasses; i++) {
                 this.renderer.setRenderTarget(this.passes[passes[i]].target);
                 this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);

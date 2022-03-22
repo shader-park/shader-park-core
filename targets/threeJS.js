@@ -142,10 +142,10 @@ let passes = {
         fragmentShader: `
             precision highp float;
             uniform sampler2D uScene;
-            uniform vec2 uResolution;
+            uniform vec2 resolution;
             
             void main() {
-                vec4 color = vec4(gl_FragCoord.xy / uResolution.xy, 1., 1.);
+                vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
                 gl_FragColor = color;
             }
         `,

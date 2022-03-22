@@ -95863,7 +95863,7 @@ var MultiPostFX = /*#__PURE__*/function () {
 
     this.defaultVertexShader = "\n\n            precision highp float;\n            attribute vec2 position;\n            void main() {\n                gl_Position = vec4(position, 1.0, 1.0);\n            }\n        "; // this.defaultVertexShader = threeJSVertexSource;
 
-    this.defaultFragmentShader = "\n            precision highp float;\n            uniform sampler2D uScene;\n            uniform vec2 uResolution;\n            void main() {\n                vec2 uv = gl_FragCoord.xy / uResolution.xy;\n                gl_FragColor = texture2D(uScene, uv);\n            }\n        "; // add our passes
+    this.defaultFragmentShader = "\n            precision highp float;\n            uniform sampler2D uScene;\n            uniform vec2 resolution;\n            void main() {\n                vec2 uv = gl_FragCoord.xy / resolution.xy;\n                gl_FragColor = texture2D(uScene, uv);\n            }\n        "; // add our passes
 
     this.nbPasses = 0;
     this.passes = {};
@@ -95892,7 +95892,7 @@ var MultiPostFX = /*#__PURE__*/function () {
         uScene: {
           value: pass.target.texture
         },
-        uResolution: {
+        resolution: {
           value: this.resolution
         },
         opacity: {
@@ -95909,9 +95909,6 @@ var MultiPostFX = /*#__PURE__*/function () {
         },
         stepSize: {
           value: 0.85
-        },
-        resolution: {
-          value: this.resolution
         }
       }; // merge default uniforms with params
 
@@ -95941,7 +95938,7 @@ var MultiPostFX = /*#__PURE__*/function () {
 
       for (var i = 0; i < this.nbPasses; i++) {
         this.passes[passes[i]].target.setSize(this.resolution.x, this.resolution.y);
-        this.passes[passes[i]].material.uniforms.uResolution.value = this.resolution;
+        this.passes[passes[i]].material.uniforms.resolution.value = this.resolution;
       }
     }
   }, {
@@ -96087,7 +96084,7 @@ function createMultiPassSculptureWithGeometry(geometry, source) {
 
 var passes = {
   bufferA: {
-    fragmentShader: "\n            precision highp float;\n            uniform sampler2D uScene;\n            uniform vec2 uResolution;\n            \n            void main() {\n                vec4 color = vec4(gl_FragCoord.xy / uResolution.xy, 1., 1.);\n                gl_FragColor = color;\n            }\n        "
+    fragmentShader: "\n            precision highp float;\n            uniform sampler2D uScene;\n            uniform vec2 resolution;\n            \n            void main() {\n                vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);\n                gl_FragColor = color;\n            }\n        "
   }
 }; // TODO NEXT Replace sculptToThreeJSMaterial with 
 
