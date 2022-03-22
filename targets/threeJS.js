@@ -206,16 +206,17 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
             multiPost.render(scene, camera);
             if('bufferA' in material.uniforms) {
                 material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
-                // console.log('setting buffA', material.uniforms['bufferA'].value)
             }
         }
         let uniformsToUpdate = uniformCallback();
         if (!(typeof uniformsToUpdate === "object")) {
             throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update"
         }
-
         for (const [uniform, value] of Object.entries(uniformsToUpdate)) {
             material.uniforms[uniform].value = value;
+            for (const [passName, currPass] of Object.entries(multiPost.passes)) {
+                currPass.material.uniforms[uniform].value = value;
+            }
         }
         // material.uniforms['sculptureCenter'].value = geometry.position;
     }

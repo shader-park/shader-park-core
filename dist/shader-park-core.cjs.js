@@ -95857,11 +95857,13 @@ var MultiPostFX = /*#__PURE__*/function () {
     this.renderer = params.renderer;
     if (!this.renderer) return; // three.js for .render() wants a camera, even if we're not using it :(
     // this.dummyCamera = new OrthographicCamera();
+    // this.dummyCamera = params.camera.clone();
 
-    this.dummyCamera = params.camera.clone();
-    this.geometry = new BufferGeometry();
+    this.dummyCamera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.dummyCamera.position.z = 2;
     this.resolution = new Vector2();
     this.renderer.getDrawingBufferSize(this.resolution);
+    this.geometry = new BufferGeometry();
     var vertices = new Float32Array([0.0, -10.0, 10.0, 10.0, -10.0, 10.0]); //  // Triangle expressed in clip space coordinates
     //  const vertices = new Float32Array([
     //     -1.0, -1.0,
@@ -96178,7 +96180,7 @@ function createMultiPassSculpture(source) {
       multiPost.render(scene, camera);
 
       if ('bufferA' in material.uniforms) {
-        material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture; // console.log('setting buffA', material.uniforms['bufferA'].value)
+        material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
       }
     }
 
@@ -96194,6 +96196,14 @@ function createMultiPassSculpture(source) {
           value = _Object$entries2$_i[1];
 
       material.uniforms[uniform].value = value;
+
+      for (var _i3 = 0, _Object$entries3 = Object.entries(multiPost.passes); _i3 < _Object$entries3.length; _i3++) {
+        var _Object$entries3$_i = _slicedToArray(_Object$entries3[_i3], 2),
+            passName = _Object$entries3$_i[0],
+            currPass = _Object$entries3$_i[1];
+
+        currPass.material.uniforms[uniform].value = value;
+      }
     } // material.uniforms['sculptureCenter'].value = geometry.position;
 
   };
@@ -96230,10 +96240,10 @@ function createSculpture(source) {
       throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update";
     }
 
-    for (var _i3 = 0, _Object$entries3 = Object.entries(uniformsToUpdate); _i3 < _Object$entries3.length; _i3++) {
-      var _Object$entries3$_i = _slicedToArray(_Object$entries3[_i3], 2),
-          uniform = _Object$entries3$_i[0],
-          value = _Object$entries3$_i[1];
+    for (var _i4 = 0, _Object$entries4 = Object.entries(uniformsToUpdate); _i4 < _Object$entries4.length; _i4++) {
+      var _Object$entries4$_i = _slicedToArray(_Object$entries4[_i4], 2),
+          uniform = _Object$entries4$_i[0],
+          value = _Object$entries4$_i[1];
 
       material.uniforms[uniform].value = value;
     } // material.uniforms['sculptureCenter'].value = geometry.position;

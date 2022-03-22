@@ -41,7 +41,8 @@ import {
     RawShaderMaterial,
     Vector2,
     Vector3,
-    BackSide
+    BackSide,
+    PerspectiveCamera
 } from 'three';
 
 /**
@@ -64,15 +65,16 @@ export class MultiPostFX {
 
         // three.js for .render() wants a camera, even if we're not using it :(
         // this.dummyCamera = new OrthographicCamera();
-        this.dummyCamera = params.camera.clone();
-        this.geometry = new BufferGeometry();
-
+        // this.dummyCamera = params.camera.clone();
+        
+        this.dummyCamera = new PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+        this.dummyCamera.position.z = 2;
        
 
         this.resolution = new Vector2();
         this.renderer.getDrawingBufferSize(this.resolution);
 
-
+        this.geometry = new BufferGeometry();
         const vertices = new Float32Array([
             0.0, -10.0,
             10.0, 10.0,
