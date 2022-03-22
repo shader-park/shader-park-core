@@ -137,19 +137,19 @@ export function createMultiPassSculptureWithGeometry(geometry, source, uniformCa
 //     }
 // }
 
-let passes = {
-    bufferA: {
-        fragmentShader: `
-            precision highp float;
-            uniform vec2 resolution;
+// let passes = {
+//     bufferA: {
+//         fragmentShader: `
+//             precision highp float;
+//             uniform vec2 resolution;
             
-            void main() {
-                vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
-                gl_FragColor = color;
-            }
-        `,
-    }
-}
+//             void main() {
+//                 vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
+//                 gl_FragColor = color;
+//             }
+//         `,
+//     }
+// }
 
 // TODO NEXT Replace sculptToThreeJSMaterial with 
 export function createMultiPassSculpture(source, uniformCallback=() => {return {}}, params={}) {
@@ -168,12 +168,20 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
     }
     let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = multiPassSculpToThreeJSMaterial(source);
     console.log('buffA', bufferA);
-    // let passes = {
-    //     bufferA: {
-    //         // '#version 300 es\n' +'precision highp float;\n'+
-    //         fragmentShader: bufferA.frag,
-    //     }
-    // }
+    let passes = {
+        bufferA: {
+            fragmentShader: bufferA.frag,
+//             fragmentShader: `
+//             precision highp float;
+//             uniform vec2 resolution;
+            
+//             void main() {
+//                 vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
+//                 gl_FragColor = color;
+//             }
+//         `,
+        }
+    }
     // let material = sculptToThreeJSMaterial(finalImage);
     let material = finalImage;
     material.uniforms['opacity'].value = 1.0;

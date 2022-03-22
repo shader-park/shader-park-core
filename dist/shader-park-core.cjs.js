@@ -95856,8 +95856,8 @@ var MultiPostFX = /*#__PURE__*/function () {
 
     this.renderer = params.renderer;
     if (!this.renderer) return; // three.js for .render() wants a camera, even if we're not using it :(
+    // this.dummyCamera = new OrthographicCamera();
 
-    this.dummyCamera = new OrthographicCamera();
     this.geometry = new BufferGeometry(); // Triangle expressed in clip space coordinates
 
     var vertices = new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]);
@@ -95965,12 +95965,12 @@ var MultiPostFX = /*#__PURE__*/function () {
 
         for (var i = 0; i < this.nbPasses; i++) {
           this.renderer.setRenderTarget(this.passes[passes[i]].target);
-          this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
+          this.renderer.render(this.passes[passes[i]].scene, camera);
         } // switch the renderer back to the main canvas
 
 
-        this.renderer.setRenderTarget(null); // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
-        // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
+        this.renderer.setRenderTarget(null); // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, camera);
+        // this.renderer.render(this.passes[passes[0]].scene, camera);
       }
     }
   }]);
@@ -96094,12 +96094,19 @@ function createMultiPassSculptureWithGeometry(geometry, source) {
 //         `,
 //     }
 // }
-
-var passes = {
-  bufferA: {
-    fragmentShader: "\n            precision highp float;\n            uniform vec2 resolution;\n            \n            void main() {\n                vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);\n                gl_FragColor = color;\n            }\n        "
-  }
-}; // TODO NEXT Replace sculptToThreeJSMaterial with 
+// let passes = {
+//     bufferA: {
+//         fragmentShader: `
+//             precision highp float;
+//             uniform vec2 resolution;
+//             void main() {
+//                 vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
+//                 gl_FragColor = color;
+//             }
+//         `,
+//     }
+// }
+// TODO NEXT Replace sculptToThreeJSMaterial with 
 
 function createMultiPassSculpture(source) {
   var uniformCallback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function () {
@@ -96126,13 +96133,20 @@ function createMultiPassSculpture(source) {
       bufferD = _multiPassSculpToThre.bufferD,
       finalImage = _multiPassSculpToThre.finalImage;
 
-  console.log('buffA', bufferA); // let passes = {
-  //     bufferA: {
-  //         // '#version 300 es\n' +'precision highp float;\n'+
-  //         fragmentShader: bufferA.frag,
-  //     }
-  // }
-  // let material = sculptToThreeJSMaterial(finalImage);
+  console.log('buffA', bufferA);
+  var passes = {
+    bufferA: {
+      fragmentShader: bufferA.frag //             fragmentShader: `
+      //             precision highp float;
+      //             uniform vec2 resolution;
+      //             void main() {
+      //                 vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
+      //                 gl_FragColor = color;
+      //             }
+      //         `,
+
+    }
+  }; // let material = sculptToThreeJSMaterial(finalImage);
 
   var material = finalImage;
   material.uniforms['opacity'].value = 1.0;

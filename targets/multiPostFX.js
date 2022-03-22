@@ -63,7 +63,7 @@ export class MultiPostFX {
         if(!this.renderer) return;
 
         // three.js for .render() wants a camera, even if we're not using it :(
-        this.dummyCamera = new OrthographicCamera();
+        // this.dummyCamera = new OrthographicCamera();
         this.geometry = new BufferGeometry();
 
         // Triangle expressed in clip space coordinates
@@ -189,13 +189,13 @@ export class MultiPostFX {
             const passes = Object.keys(this.passes);
             for(let i = 0; i < this.nbPasses; i++) {
                 this.renderer.setRenderTarget(this.passes[passes[i]].target);
-                this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
+                this.renderer.render(this.passes[passes[i]].scene, camera);
             }
             
             // switch the renderer back to the main canvas
             this.renderer.setRenderTarget(null);
-            // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
-            // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
+            // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, camera);
+            // this.renderer.render(this.passes[passes[0]].scene, camera);
         }
     }
 }
