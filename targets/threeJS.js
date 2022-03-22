@@ -194,8 +194,13 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
         if(!multiPost) {
             multiPost = new MultiPostFX({
                 renderer,
+                camera,
                 passes
             });
+            multiPost.resize();
+            window.addEventListener('resize', () => {
+                multiPost.resize();
+            }, false);
             // console.log(multiPost)
         } else {
             multiPost.render(scene, camera);

@@ -57,26 +57,35 @@ import {
  *
  */
 export class MultiPostFX {
-    constructor(params) {
+    constructor(params, camera) {
         this.renderer = params.renderer;
 
         if(!this.renderer) return;
 
         // three.js for .render() wants a camera, even if we're not using it :(
         // this.dummyCamera = new OrthographicCamera();
+        this.dummyCamera = params.camera.clone();
         this.geometry = new BufferGeometry();
 
-        // Triangle expressed in clip space coordinates
-        const vertices = new Float32Array([
-            -1.0, -1.0,
-            3.0, -1.0,
-            -1.0, 3.0
-        ]);
-
-        this.geometry.setAttribute('position', new BufferAttribute(vertices, 2));
+       
 
         this.resolution = new Vector2();
         this.renderer.getDrawingBufferSize(this.resolution);
+
+
+        const vertices = new Float32Array([
+            0.0, -10.0,
+            10.0, 10.0,
+            -10.0, 10.0,
+        ]);
+        //  // Triangle expressed in clip space coordinates
+        //  const vertices = new Float32Array([
+        //     -1.0, -1.0,
+        //     3.0, -1.0,
+        //     -1.0, 3.0
+        // ]);
+
+        this.geometry.setAttribute('position', new BufferAttribute(vertices, 2));
 
         // default shaders
         this.defaultVertexShader = `
@@ -86,8 +95,10 @@ export class MultiPostFX {
             // attribute vec2 position;
             void main() {
                 worldPos = modelMatrix*vec4(position,1.0);
+                vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
                 sculptureCenter = (modelMatrix * vec4(0., 0., 0., 1.)).xyz;
-                gl_Position = vec4(position, 1.0);
+                // gl_Position = vec4(position, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
             }
         `;
 
@@ -141,7 +152,7 @@ export class MultiPostFX {
             resolution: { value: this.resolution },
             opacity: { value:  1.0},
             mouse: { value:  new Vector3()},
-            _scale: { value:  2.0},
+            _scale: { value:  1.0},
             time: {value: 0.0},
             stepSize: {value: 0.85},
         };
@@ -171,7 +182,7 @@ export class MultiPostFX {
 
     resize() {
         this.renderer.getDrawingBufferSize(this.resolution);
-
+        console.log(this.resolution)
         // resize all passes
         const passes = Object.keys(this.passes);
         for(let i = 0; i < this.nbPasses; i++) {
@@ -189,13 +200,13 @@ export class MultiPostFX {
             const passes = Object.keys(this.passes);
             for(let i = 0; i < this.nbPasses; i++) {
                 this.renderer.setRenderTarget(this.passes[passes[i]].target);
-                this.renderer.render(this.passes[passes[i]].scene, camera);
+                this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
             }
             
             // switch the renderer back to the main canvas
             this.renderer.setRenderTarget(null);
             // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, camera);
-            // this.renderer.render(this.passes[passes[0]].scene, camera);
+            this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
         }
     }
 }

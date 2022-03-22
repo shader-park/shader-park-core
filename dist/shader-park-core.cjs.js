@@ -95851,21 +95851,27 @@ if ( typeof window !== 'undefined' ) {
  */
 
 var MultiPostFX = /*#__PURE__*/function () {
-  function MultiPostFX(params) {
+  function MultiPostFX(params, camera) {
     _classCallCheck(this, MultiPostFX);
 
     this.renderer = params.renderer;
     if (!this.renderer) return; // three.js for .render() wants a camera, even if we're not using it :(
     // this.dummyCamera = new OrthographicCamera();
 
-    this.geometry = new BufferGeometry(); // Triangle expressed in clip space coordinates
-
-    var vertices = new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]);
-    this.geometry.setAttribute('position', new BufferAttribute(vertices, 2));
+    this.dummyCamera = params.camera.clone();
+    this.geometry = new BufferGeometry();
     this.resolution = new Vector2();
-    this.renderer.getDrawingBufferSize(this.resolution); // default shaders
+    this.renderer.getDrawingBufferSize(this.resolution);
+    var vertices = new Float32Array([0.0, -10.0, 10.0, 10.0, -10.0, 10.0]); //  // Triangle expressed in clip space coordinates
+    //  const vertices = new Float32Array([
+    //     -1.0, -1.0,
+    //     3.0, -1.0,
+    //     -1.0, 3.0
+    // ]);
 
-    this.defaultVertexShader = "\n            varying vec4 worldPos;\n            varying vec3 sculptureCenter;\n            // precision highp float;\n            // attribute vec2 position;\n            void main() {\n                worldPos = modelMatrix*vec4(position,1.0);\n                sculptureCenter = (modelMatrix * vec4(0., 0., 0., 1.)).xyz;\n                gl_Position = vec4(position, 1.0);\n            }\n        "; // varying vec4 worldPos;
+    this.geometry.setAttribute('position', new BufferAttribute(vertices, 2)); // default shaders
+
+    this.defaultVertexShader = "\n            varying vec4 worldPos;\n            varying vec3 sculptureCenter;\n            // precision highp float;\n            // attribute vec2 position;\n            void main() {\n                worldPos = modelMatrix*vec4(position,1.0);\n                vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\n                sculptureCenter = (modelMatrix * vec4(0., 0., 0., 1.)).xyz;\n                // gl_Position = vec4(position, 1.0);\n                gl_Position = projectionMatrix * mvPosition;\n            }\n        "; // varying vec4 worldPos;
     // //varying vec2 vUv;
     // varying vec3 sculptureCenter;
     // void main()
@@ -95915,7 +95921,7 @@ var MultiPostFX = /*#__PURE__*/function () {
           value: new Vector3()
         },
         _scale: {
-          value: 2.0
+          value: 1.0
         },
         time: {
           value: 0.0
@@ -95945,7 +95951,8 @@ var MultiPostFX = /*#__PURE__*/function () {
   }, {
     key: "resize",
     value: function resize() {
-      this.renderer.getDrawingBufferSize(this.resolution); // resize all passes
+      this.renderer.getDrawingBufferSize(this.resolution);
+      console.log(this.resolution); // resize all passes
 
       var passes = Object.keys(this.passes);
 
@@ -95965,12 +95972,13 @@ var MultiPostFX = /*#__PURE__*/function () {
 
         for (var i = 0; i < this.nbPasses; i++) {
           this.renderer.setRenderTarget(this.passes[passes[i]].target);
-          this.renderer.render(this.passes[passes[i]].scene, camera);
+          this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
         } // switch the renderer back to the main canvas
 
 
         this.renderer.setRenderTarget(null); // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, camera);
-        // this.renderer.render(this.passes[passes[0]].scene, camera);
+
+        this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
       }
     }
   }]);
@@ -96159,8 +96167,13 @@ function createMultiPassSculpture(source) {
     if (!multiPost) {
       multiPost = new MultiPostFX({
         renderer: renderer,
+        camera: camera,
         passes: passes
-      }); // console.log(multiPost)
+      });
+      multiPost.resize();
+      window.addEventListener('resize', function () {
+        multiPost.resize();
+      }, false); // console.log(multiPost)
     } else {
       multiPost.render(scene, camera);
 
