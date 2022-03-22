@@ -95867,7 +95867,8 @@
       this.resolution = new Vector2();
       this.renderer.getDrawingBufferSize(this.resolution); // default shaders
 
-      this.defaultVertexShader = "\n            precision highp float;\n            attribute vec2 position;\n            void main() {\n                gl_Position = vec4(position, 1.0, 1.0);\n            }\n        ";
+      this.defaultVertexShader = "\n\n            precision highp float;\n            attribute vec2 position;\n            void main() {\n                gl_Position = vec4(position, 1.0, 1.0);\n            }\n        "; // this.defaultVertexShader = threeJSVertexSource;
+
       this.defaultFragmentShader = "\n            precision highp float;\n            uniform sampler2D uScene;\n            uniform vec2 uResolution;\n            void main() {\n                vec2 uv = gl_FragCoord.xy / uResolution.xy;\n                gl_FragColor = texture2D(uScene, uv);\n            }\n        "; // add our passes
 
       this.nbPasses = 0;
@@ -95899,6 +95900,24 @@
           },
           uResolution: {
             value: this.resolution
+          },
+          opacity: {
+            value: 1.0
+          },
+          mouse: {
+            value: new Vector3()
+          },
+          _scale: {
+            value: 2.0
+          },
+          time: {
+            value: 0.0
+          },
+          stepSize: {
+            value: 0.85
+          },
+          resolution: {
+            value: this.resolution
           }
         }; // merge default uniforms with params
 
@@ -95909,7 +95928,9 @@
         pass.material = new RawShaderMaterial({
           fragmentShader: passParams.fragmentShader || this.defaultFragmentShader,
           vertexShader: passParams.vertexShader || this.defaultVertexShader,
-          uniforms: uniforms
+          uniforms: uniforms // transparent: true,
+          // side: BackSide
+
         });
         pass.mesh = new Mesh(this.geometry, pass.material);
         pass.mesh.frustumCulled = false;
@@ -95945,6 +95966,7 @@
 
 
           this.renderer.setRenderTarget(null); // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
+          // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
         }
       }
     }]);
@@ -96010,12 +96032,14 @@
 
       console.log('keyval', key, value);
       var src = generateThreeJSFrag(value);
-      var material = makeMaterial(src.uniforms, src.vert, src.frag); // console.log(src, material);
-
-      material.uniformDescriptions = src.uniforms;
-      output[key] = material;
+      output[key] = src;
     }
 
+    console.log(output);
+    var finalImage = output['finalImage'];
+    var material = makeMaterial(finalImage.uniforms, finalImage.vert, finalImage.frag);
+    material.uniformDescriptions = finalImage.uniforms;
+    output['finalImage'] = material;
     return output;
   }
   function sculptToThreeJSMaterial(source, payload) {
@@ -96096,8 +96120,15 @@
         bufferB = _multiPassSculpToThre.bufferB,
         bufferC = _multiPassSculpToThre.bufferC,
         bufferD = _multiPassSculpToThre.bufferD,
-        finalImage = _multiPassSculpToThre.finalImage; // let material = sculptToThreeJSMaterial(finalImage);
+        finalImage = _multiPassSculpToThre.finalImage;
 
+    console.log('buffA', bufferA); // let passes = {
+    //     bufferA: {
+    //         // '#version 300 es\n' +'precision highp float;\n'+
+    //         fragmentShader: bufferA.frag,
+    //     }
+    // }
+    // let material = sculptToThreeJSMaterial(finalImage);
 
     var material = finalImage;
     material.uniforms['opacity'].value = 1.0;
@@ -96111,14 +96142,12 @@
         multiPost = new MultiPostFX({
           renderer: renderer,
           passes: passes
-        });
-        console.log(multiPost);
+        }); // console.log(multiPost)
       } else {
         multiPost.render(scene, camera);
 
         if ('bufferA' in material.uniforms) {
-          material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
-          console.log('setting buffA', material.uniforms['bufferA'].value);
+          material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture; // console.log('setting buffA', material.uniforms['bufferA'].value)
         }
       }
 
@@ -96226,8 +96255,8 @@
       fragmentShader: frag,
       transparent: true,
       side: BackSide
-    });
-    material.extensions.fragDepth = false;
+    }); // material.extensions.fragDepth = false;
+
     return material;
   } // There should be more options supported like size and shape
 

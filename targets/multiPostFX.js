@@ -25,6 +25,10 @@
  *
  */
 
+ import {
+    threeJSVertexSource, 
+} from '../glsl/glsl-lib.js'
+
 import {
     WebGLRenderTarget,
     OrthographicCamera,
@@ -33,8 +37,11 @@ import {
     BufferAttribute,
     Mesh,
     Scene,
+    ShaderMaterial,
     RawShaderMaterial,
     Vector2,
+    Vector3,
+    BackSide
 } from 'three';
 
 /**
@@ -73,12 +80,14 @@ export class MultiPostFX {
 
         // default shaders
         this.defaultVertexShader = `
+
             precision highp float;
             attribute vec2 position;
             void main() {
                 gl_Position = vec4(position, 1.0, 1.0);
             }
         `;
+        // this.defaultVertexShader = threeJSVertexSource;
 
         this.defaultFragmentShader = `
             precision highp float;
@@ -115,6 +124,13 @@ export class MultiPostFX {
         let uniforms = {
             uScene: { value: pass.target.texture },
             uResolution: { value: this.resolution },
+            opacity: { value:  1.0},
+            mouse: { value:  new Vector3()},
+            _scale: { value:  2.0},
+            time: {value: 0.0},
+            stepSize: {value: 0.85},
+            resolution: {value: this.resolution}
+
         };
 
         // merge default uniforms with params
@@ -125,8 +141,11 @@ export class MultiPostFX {
         pass.material = new RawShaderMaterial({
             fragmentShader: passParams.fragmentShader || this.defaultFragmentShader,
             vertexShader: passParams.vertexShader || this.defaultVertexShader,
-            uniforms: uniforms
+            uniforms: uniforms,
+            // transparent: true,
+            // side: BackSide
         });
+        
 
         pass.mesh = new Mesh(this.geometry, pass.material);
         pass.mesh.frustumCulled = false;
@@ -164,6 +183,7 @@ export class MultiPostFX {
             // switch the renderer back to the main canvas
             this.renderer.setRenderTarget(null);
             // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, this.dummyCamera);
+            // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
         }
     }
 }

@@ -80,11 +80,13 @@ export function multiPassSculpToThreeJSMaterial(passesSources) {
     for (const [key, value] of Object.entries(passes)) {
         console.log('keyval', key, value)
         let src = generateThreeJSFrag(value);
-        let material = makeMaterial(src.uniforms, src.vert, src.frag);
-        // console.log(src, material);
-        material.uniformDescriptions = src.uniforms;
-        output[key] = material
+        output[key] = src;
     }
+    console.log(output)
+    let finalImage = output['finalImage'];
+    let material = makeMaterial(finalImage.uniforms, finalImage.vert, finalImage.frag);
+    material.uniformDescriptions = finalImage.uniforms;
+    output['finalImage'] = material;
     return output;
 }
 
@@ -166,6 +168,13 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
         geometry = new SphereBufferGeometry( radius, segments, segments );   
     }
     let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = multiPassSculpToThreeJSMaterial(source);
+    console.log('buffA', bufferA);
+    // let passes = {
+    //     bufferA: {
+    //         // '#version 300 es\n' +'precision highp float;\n'+
+    //         fragmentShader: bufferA.frag,
+    //     }
+    // }
     // let material = sculptToThreeJSMaterial(finalImage);
     let material = finalImage;
     material.uniforms['opacity'].value = 1.0;
@@ -180,14 +189,12 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
                 renderer,
                 passes
             });
-            console.log(multiPost)
+            // console.log(multiPost)
         } else {
             multiPost.render(scene, camera);
-            
             if('bufferA' in material.uniforms) {
-                
                 material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
-                console.log('setting buffA', material.uniforms['bufferA'].value)
+                // console.log('setting buffA', material.uniforms['bufferA'].value)
             }
         }
         let uniformsToUpdate = uniformCallback();
@@ -270,7 +277,7 @@ function makeMaterial(unifs, vert, frag, payload) {
         transparent: true,
         side: BackSide
     });
-    material.extensions.fragDepth = false;
+    // material.extensions.fragDepth = false;
     return material;
 }
 
