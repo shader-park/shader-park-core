@@ -17,6 +17,7 @@ With just a few lines of code, create shaders which are:
 ### Try the [live editor ✍️](https://shaderpark.com/new)
 ### Browse the [Interactive Documentation 📖](https://shader-park-docs.netlify.app/references-js/)
 ### Build from working [Template/Example Projects 🛠️](https://github.com/shader-park/shader-park-examples)
+### Join the community on [Discord 💬](https://discord.gg/vuBnVuBvvK) 
 
 ### Easily integrated with:
 - webpages
