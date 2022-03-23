@@ -1168,6 +1168,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	let sampleBufferB = _bindTextureRead("bufferB");
 	let sampleBufferC = _bindTextureRead("bufferC");
 	let sampleBufferD = _bindTextureRead("bufferD");
+	let sampleLastFrame = _bindTextureRead("lastFrame");
 
 
 	function getPixelCoord() {

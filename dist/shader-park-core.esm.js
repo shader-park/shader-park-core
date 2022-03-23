@@ -45040,6 +45040,8 @@ function sculptToGLSL(userProvidedSrc) {
 
   var sampleBufferD = _bindTextureRead("bufferD");
 
+  var sampleLastFrame = _bindTextureRead("lastFrame");
+
   function getPixelCoord() {
     return makeVarWithDims('gl_FragCoord.xy', 2, true);
   }
@@ -95905,6 +95907,12 @@ var MultiPostFX = /*#__PURE__*/function () {
           // allow transparency
           stencilBuffer: false,
           depthBuffer: true
+        }),
+        targetOld: new WebGLRenderTarget(this.resolution.x, this.resolution.y, {
+          format: passParams.format || RGBAFormat,
+          // allow transparency
+          stencilBuffer: false,
+          depthBuffer: true
         })
       };
       var uniforms = {
@@ -95926,7 +95934,8 @@ var MultiPostFX = /*#__PURE__*/function () {
         },
         stepSize: {
           value: 0.85
-        }
+        },
+        lastFrame: new Texture()
       }; // merge default uniforms with params
 
       if (passParams.uniforms) {
@@ -95956,6 +95965,7 @@ var MultiPostFX = /*#__PURE__*/function () {
 
       for (var i = 0; i < this.nbPasses; i++) {
         this.passes[passes[i]].target.setSize(this.resolution.x, this.resolution.y);
+        this.passes[passes[i]].targetOld.setSize(this.resolution.x, this.resolution.y);
         this.passes[passes[i]].material.uniforms.resolution.value = this.resolution;
       }
     }
@@ -95969,6 +95979,13 @@ var MultiPostFX = /*#__PURE__*/function () {
         var passes = Object.keys(this.passes);
 
         for (var i = 0; i < this.nbPasses; i++) {
+          //PingPong texture
+          var temp = this.passes[passes[i]].targetOld;
+          this.passes[passes[i]].targetOld = this.passes[passes[i]].target;
+          this.passes[passes[i]].target = temp; //set uniform to correct target for feedback
+
+          this.passes[passes[i]].material.uniforms.lastFrame.value = this.passes[passes[i]].targetOld.texture; // apply to render target
+
           this.renderer.setRenderTarget(this.passes[passes[i]].target);
           this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
         } // switch the renderer back to the main canvas

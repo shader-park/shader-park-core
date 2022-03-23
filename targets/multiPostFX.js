@@ -42,7 +42,8 @@ import {
     Vector2,
     Vector3,
     BackSide,
-    PerspectiveCamera
+    PerspectiveCamera,
+    Texture
 } from 'three';
 
 /**
@@ -147,6 +148,11 @@ export class MultiPostFX {
                 stencilBuffer: false,
                 depthBuffer: true,
             }),
+            targetOld: new WebGLRenderTarget(this.resolution.x, this.resolution.y, {
+                format: passParams.format || RGBAFormat, // allow transparency
+                stencilBuffer: false,
+                depthBuffer: true,
+            }),
         };
 
         let uniforms = {
@@ -157,6 +163,7 @@ export class MultiPostFX {
             _scale: { value:  1.0},
             time: {value: 0.0},
             stepSize: {value: 0.85},
+            lastFrame: new Texture()
         };
 
         // merge default uniforms with params
@@ -189,6 +196,7 @@ export class MultiPostFX {
         const passes = Object.keys(this.passes);
         for(let i = 0; i < this.nbPasses; i++) {
             this.passes[passes[i]].target.setSize(this.resolution.x, this.resolution.y);
+            this.passes[passes[i]].targetOld.setSize(this.resolution.x, this.resolution.y);
             this.passes[passes[i]].material.uniforms.resolution.value = this.resolution;
         }
     }
@@ -201,6 +209,14 @@ export class MultiPostFX {
         else {
             const passes = Object.keys(this.passes);
             for(let i = 0; i < this.nbPasses; i++) {
+                
+                //PingPong texture
+                let temp = this.passes[passes[i]].targetOld;
+                this.passes[passes[i]].targetOld = this.passes[passes[i]].target;
+                this.passes[passes[i]].target = temp;
+                //set uniform to correct target for feedback
+                this.passes[passes[i]].material.uniforms.lastFrame.value = this.passes[passes[i]].targetOld.texture;
+                // apply to render target
                 this.renderer.setRenderTarget(this.passes[passes[i]].target);
                 this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
             }
