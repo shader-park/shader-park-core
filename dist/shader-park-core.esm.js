@@ -44995,6 +44995,7 @@ function sculptToGLSL(userProvidedSrc) {
 
   function revolve2D(sdf) {
     return function (r) {
+      ensureScalar('revolve2D', r);
       var s = getSpace();
       var q = vec2(length(vec3(s.x, s.z, 0)) - r, s.y);
 
@@ -45009,6 +45010,7 @@ function sculptToGLSL(userProvidedSrc) {
 
   var extrude2D = function extrude2D(sdf) {
     return function (h) {
+      ensureScalar('revolve2D', h);
       var s = getSpace();
 
       for (var _len4 = arguments.length, args = new Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {

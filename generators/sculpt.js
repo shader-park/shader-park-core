@@ -1145,6 +1145,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	
 	function revolve2D(sdf) {
 	  return (r, ...args) => {
+		ensureScalar('revolve2D', r);
 	    let s = getSpace();
 	    let q = vec2(length(vec3(s.x, s.z, 0)) - r, s.y);
 	    setSDF(sdf(q, ...args));
@@ -1155,11 +1156,12 @@ export function sculptToGLSL(userProvidedSrc) {
 	//https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
 	let extrude2D = (sdf) => {
 		return (h, ...args) => {
-		let s = getSpace()
-		let d = sdf(vec2(s.x, s.y), ...args)
-		let w = vec2(d, abs(s.z) - h )
-		let t = vec3(max(w.x, 0.0), max(w.y, 0.0), 0)
-		setSDF(min(max(w.x,w.y),0.0) + length(t))
+			ensureScalar('revolve2D', h);
+			let s = getSpace()
+			let d = sdf(vec2(s.x, s.y), ...args)
+			let w = vec2(d, abs(s.z) - h )
+			let t = vec3(max(w.x, 0.0), max(w.y, 0.0), 0)
+			setSDF(min(max(w.x,w.y),0.0) + length(t))
 		}
 	}
 
