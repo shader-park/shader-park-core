@@ -1143,7 +1143,7 @@ export function sculptToGLSL(userProvidedSrc) {
 
 	let error = undefined;
 	
-	function revolve(sdf) {
+	function revolve2D(sdf) {
 	  return (r, ...args) => {
 	    let s = getSpace();
 	    let q = vec2(length(vec3(s.x, s.z, 0)) - r, s.y);
