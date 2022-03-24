@@ -1142,6 +1142,14 @@ export function sculptToGLSL(userProvidedSrc) {
 	*/
 
 	let error = undefined;
+	
+	function revolve(sdf) {
+	  return (r, ...args) => {
+	    let s = getSpace();
+	    let q = vec2(length(vec3(s.x, s.z, 0)) - r, s.y);
+	    setSDF(sdf(q, ...args));
+	  }
+	}
 
 	function getSpherical() {
 		return toSpherical(getSpace());	
@@ -1150,9 +1158,9 @@ export function sculptToGLSL(userProvidedSrc) {
 	// Define any code that needs to reference auto generated from bindings.js code here
 	let postGeneratedFunctions = [
 		getSpherical,
-		fresnel
+		fresnel,
+		revolve
 	].map(el => el.toString()).join('\n');
-	
 
 
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
