@@ -96251,7 +96251,7 @@
     };
   }
 
-  console.log("using shader-park version: 0.1.12"); /// Generate code for various targets
+  console.log("using shader-park version: 0.1.13"); /// Generate code for various targets
 
   exports.baseUniforms = baseUniforms;
   exports.bindStaticData = bindStaticData;
