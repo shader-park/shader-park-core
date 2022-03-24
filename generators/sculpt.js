@@ -1024,6 +1024,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 	
 	function fresnel(val) {
+		ensureScalar("fresnel", val);
 		return pow(1 + dot(getRayDirection(), normal), val);
 	}
 
@@ -1149,7 +1150,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	// Define any code that needs to reference auto generated from bindings.js code here
 	let postGeneratedFunctions = [
 		getSpherical,
-		fresnel,
+		fresnel
 	].map(el => el.toString()).join('\n');
 	
 

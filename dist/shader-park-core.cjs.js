@@ -2,406 +2,86 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function createMetadataMethodsForProperty(metadataMap, kind, property) {
-  return {
-    getMetadata: function (key) {
-      if ("symbol" != typeof key) throw new TypeError("Metadata keys must be symbols, received: " + key);
-      var metadataForKey = metadataMap[key];
-      if (void 0 !== metadataForKey) if (1 === kind) {
-        var pub = metadataForKey.public;
-        if (void 0 !== pub) return pub[property];
-      } else if (2 === kind) {
-        var priv = metadataForKey.private;
-        if (void 0 !== priv) return priv.get(property);
-      } else if (Object.hasOwnProperty.call(metadataForKey, "constructor")) return metadataForKey.constructor;
-    },
-    setMetadata: function (key, value) {
-      if ("symbol" != typeof key) throw new TypeError("Metadata keys must be symbols, received: " + key);
-      var metadataForKey = metadataMap[key];
+function _typeof(obj) {
+  "@babel/helpers - typeof";
 
-      if (void 0 === metadataForKey && (metadataForKey = metadataMap[key] = {}), 1 === kind) {
-        var pub = metadataForKey.public;
-        void 0 === pub && (pub = metadataForKey.public = {}), pub[property] = value;
-      } else if (2 === kind) {
-        var priv = metadataForKey.priv;
-        void 0 === priv && (priv = metadataForKey.private = new Map()), priv.set(property, value);
-      } else metadataForKey.constructor = value;
-    }
-  };
-}
-
-function convertMetadataMapToFinal(obj, metadataMap) {
-  var parentMetadataMap = obj[Symbol.metadata || Symbol.for("Symbol.metadata")],
-      metadataKeys = Object.getOwnPropertySymbols(metadataMap);
-
-  if (0 !== metadataKeys.length) {
-    for (var i = 0; i < metadataKeys.length; i++) {
-      var key = metadataKeys[i],
-          metaForKey = metadataMap[key],
-          parentMetaForKey = parentMetadataMap ? parentMetadataMap[key] : null,
-          pub = metaForKey.public,
-          parentPub = parentMetaForKey ? parentMetaForKey.public : null;
-      pub && parentPub && Object.setPrototypeOf(pub, parentPub);
-      var priv = metaForKey.private;
-
-      if (priv) {
-        var privArr = Array.from(priv.values()),
-            parentPriv = parentMetaForKey ? parentMetaForKey.private : null;
-        parentPriv && (privArr = privArr.concat(parentPriv)), metaForKey.private = privArr;
-      }
-
-      parentMetaForKey && Object.setPrototypeOf(metaForKey, parentMetaForKey);
-    }
-
-    parentMetadataMap && Object.setPrototypeOf(metadataMap, parentMetadataMap), obj[Symbol.metadata || Symbol.for("Symbol.metadata")] = metadataMap;
-  }
-}
-
-function createAddInitializerMethod(initializers) {
-  return function (initializer) {
-    assertValidInitializer(initializer), initializers.push(initializer);
-  };
-}
-
-function memberDecCtx(base, name, desc, metadataMap, initializers, kind, isStatic, isPrivate) {
-  var kindStr;
-
-  switch (kind) {
-    case 1:
-      kindStr = "accessor";
-      break;
-
-    case 2:
-      kindStr = "method";
-      break;
-
-    case 3:
-      kindStr = "getter";
-      break;
-
-    case 4:
-      kindStr = "setter";
-      break;
-
-    default:
-      kindStr = "field";
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
   }
 
-  var metadataKind,
-      metadataName,
-      ctx = {
-    kind: kindStr,
-    name: isPrivate ? "#" + name : name,
-    isStatic: isStatic,
-    isPrivate: isPrivate
-  };
-
-  if (0 !== kind && (ctx.addInitializer = createAddInitializerMethod(initializers)), isPrivate) {
-    metadataKind = 2, metadataName = Symbol(name);
-    var access = {};
-    0 === kind ? (access.get = desc.get, access.set = desc.set) : 2 === kind ? access.get = function () {
-      return desc.value;
-    } : (1 !== kind && 3 !== kind || (access.get = function () {
-      return desc.get.call(this);
-    }), 1 !== kind && 4 !== kind || (access.set = function (v) {
-      desc.set.call(this, v);
-    })), ctx.access = access;
-  } else metadataKind = 1, metadataName = name;
-
-  return Object.assign(ctx, createMetadataMethodsForProperty(metadataMap, metadataKind, metadataName));
-}
-
-function assertValidInitializer(initializer) {
-  if ("function" != typeof initializer) throw new Error("initializers must be functions");
-}
-
-function assertValidReturnValue(kind, value) {
-  var type = typeof value;
-
-  if (1 === kind) {
-    if ("object" !== type || null === value) throw new Error("accessor decorators must return an object with get, set, or initializer properties or void 0");
-  } else if ("function" !== type) throw 0 === kind ? new Error("field decorators must return a initializer function or void 0") : new Error("method decorators must return a function or void 0");
-}
-
-function applyMemberDec(ret, base, decInfo, name, kind, isStatic, isPrivate, metadataMap, initializers) {
-  var desc,
-      initializer,
-      value,
-      decs = decInfo[0];
-  isPrivate ? desc = 0 === kind || 1 === kind ? {
-    get: decInfo[3],
-    set: decInfo[4]
-  } : 3 === kind ? {
-    get: decInfo[3]
-  } : 4 === kind ? {
-    set: decInfo[3]
-  } : {
-    value: decInfo[3]
-  } : 0 !== kind && (desc = Object.getOwnPropertyDescriptor(base, name)), 1 === kind ? value = {
-    get: desc.get,
-    set: desc.set
-  } : 2 === kind ? value = desc.value : 3 === kind ? value = desc.get : 4 === kind && (value = desc.set);
-  var newValue,
-      get,
-      set,
-      ctx = memberDecCtx(base, name, desc, metadataMap, initializers, kind, isStatic, isPrivate);
-  if ("function" == typeof decs) void 0 !== (newValue = decs(value, ctx)) && (assertValidReturnValue(kind, newValue), 0 === kind ? initializer = newValue : 1 === kind ? (initializer = newValue.initializer, get = newValue.get || value.get, set = newValue.set || value.set, value = {
-    get: get,
-    set: set
-  }) : value = newValue);else for (var i = decs.length - 1; i >= 0; i--) {
-    var newInit;
-    if (void 0 !== (newValue = (0, decs[i])(value, ctx))) assertValidReturnValue(kind, newValue), 0 === kind ? newInit = newValue : 1 === kind ? (newInit = newValue.initializer, get = newValue.get || value.get, set = newValue.set || value.set, value = {
-      get: get,
-      set: set
-    }) : value = newValue, void 0 !== newInit && (void 0 === initializer ? initializer = newInit : "function" == typeof initializer ? initializer = [initializer, newInit] : initializer.push(newInit));
-  }
-
-  if (0 === kind || 1 === kind) {
-    if (void 0 === initializer) initializer = function (instance, init) {
-      return init;
-    };else if ("function" != typeof initializer) {
-      var ownInitializers = initializer;
-
-      initializer = function (instance, init) {
-        for (var value = init, i = 0; i < ownInitializers.length; i++) value = ownInitializers[i].call(instance, value);
-
-        return value;
-      };
-    } else {
-      var originalInitializer = initializer;
-
-      initializer = function (instance, init) {
-        return originalInitializer.call(instance, init);
-      };
-    }
-    ret.push(initializer);
-  }
-
-  0 !== kind && (1 === kind ? (desc.get = value.get, desc.set = value.set) : 2 === kind ? desc.value = value : 3 === kind ? desc.get = value : 4 === kind && (desc.set = value), isPrivate ? 1 === kind ? (ret.push(function (instance, args) {
-    return value.get.call(instance, args);
-  }), ret.push(function (instance, args) {
-    return value.set.call(instance, args);
-  })) : 2 === kind ? ret.push(value) : ret.push(function (instance, args) {
-    return value.call(instance, args);
-  }) : Object.defineProperty(base, name, desc));
-}
-
-function applyMemberDecs(ret, Class, protoMetadataMap, staticMetadataMap, decInfos) {
-  for (var protoInitializers = [], staticInitializers = [], existingProtoNonFields = new Map(), existingStaticNonFields = new Map(), i = 0; i < decInfos.length; i++) {
-    var decInfo = decInfos[i];
-
-    if (Array.isArray(decInfo)) {
-      var base,
-          metadataMap,
-          initializers,
-          kind = decInfo[1],
-          name = decInfo[2],
-          isPrivate = decInfo.length > 3,
-          isStatic = kind >= 5;
-
-      if (isStatic ? (base = Class, metadataMap = staticMetadataMap, kind -= 5, initializers = staticInitializers) : (base = Class.prototype, metadataMap = protoMetadataMap, initializers = protoInitializers), 0 !== kind && !isPrivate) {
-        var existingNonFields = isStatic ? existingStaticNonFields : existingProtoNonFields,
-            existingKind = existingNonFields.get(name) || 0;
-        if (!0 === existingKind || 3 === existingKind && 4 !== kind || 4 === existingKind && 3 !== kind) throw new Error("Attempted to decorate a public method/accessor that has the same name as a previously decorated public method/accessor. This is not currently supported by the decorators plugin. Property name was: " + name);
-        !existingKind && kind > 2 ? existingNonFields.set(name, kind) : existingNonFields.set(name, !0);
-      }
-
-      applyMemberDec(ret, base, decInfo, name, kind, isStatic, isPrivate, metadataMap, initializers);
-    }
-  }
-
-  protoInitializers.length > 0 && pushInitializers(ret, protoInitializers), staticInitializers.length > 0 && pushInitializers(ret, staticInitializers);
-}
-
-function pushInitializers(ret, initializers) {
-  initializers.length > 0 ? (initializers = initializers.slice(), ret.push(function (instance) {
-    for (var i = 0; i < initializers.length; i++) initializers[i].call(instance, instance);
-
-    return instance;
-  })) : ret.push(function (instance) {
-    return instance;
-  });
-}
-
-function applyClassDecs(ret, targetClass, metadataMap, classDecs) {
-  for (var initializers = [], newClass = targetClass, name = targetClass.name, ctx = Object.assign({
-    kind: "class",
-    name: name,
-    addInitializer: createAddInitializerMethod(initializers)
-  }, createMetadataMethodsForProperty(metadataMap, 0, name)), i = classDecs.length - 1; i >= 0; i--) newClass = classDecs[i](newClass, ctx) || newClass;
-
-  ret.push(newClass), initializers.length > 0 ? ret.push(function () {
-    for (var i = 0; i < initializers.length; i++) initializers[i].call(newClass, newClass);
-  }) : ret.push(function () {});
-}
-
-function _applyDecs(targetClass, memberDecs, classDecs) {
-  var ret = [],
-      staticMetadataMap = {};
-
-  if (memberDecs) {
-    var protoMetadataMap = {};
-    applyMemberDecs(ret, targetClass, protoMetadataMap, staticMetadataMap, memberDecs), convertMetadataMapToFinal(targetClass.prototype, protoMetadataMap);
-  }
-
-  return classDecs && applyClassDecs(ret, targetClass, staticMetadataMap, classDecs), convertMetadataMapToFinal(targetClass, staticMetadataMap), ret;
-}
-
-function _asyncIterator(iterable) {
-  var method,
-      async,
-      sync,
-      retry = 2;
-
-  for ("undefined" != typeof Symbol && (async = Symbol.asyncIterator, sync = Symbol.iterator); retry--;) {
-    if (async && null != (method = iterable[async])) return method.call(iterable);
-    if (sync && null != (method = iterable[sync])) return new AsyncFromSyncIterator(method.call(iterable));
-    async = "@@asyncIterator", sync = "@@iterator";
-  }
-
-  throw new TypeError("Object is not async iterable");
-}
-
-function AsyncFromSyncIterator(s) {
-  function AsyncFromSyncIteratorContinuation(r) {
-    if (Object(r) !== r) return Promise.reject(new TypeError(r + " is not an object."));
-    var done = r.done;
-    return Promise.resolve(r.value).then(function (value) {
-      return {
-        value: value,
-        done: done
-      };
-    });
-  }
-
-  return AsyncFromSyncIterator = function (s) {
-    this.s = s, this.n = s.next;
-  }, AsyncFromSyncIterator.prototype = {
-    s: null,
-    n: null,
-    next: function () {
-      return AsyncFromSyncIteratorContinuation(this.n.apply(this.s, arguments));
-    },
-    return: function (value) {
-      var ret = this.s.return;
-      return void 0 === ret ? Promise.resolve({
-        value: value,
-        done: !0
-      }) : AsyncFromSyncIteratorContinuation(ret.apply(this.s, arguments));
-    },
-    throw: function (value) {
-      var thr = this.s.return;
-      return void 0 === thr ? Promise.reject(value) : AsyncFromSyncIteratorContinuation(thr.apply(this.s, arguments));
-    }
-  }, new AsyncFromSyncIterator(s);
+  return _typeof(obj);
 }
 
 var REACT_ELEMENT_TYPE;
 
 function _jsx(type, props, key, children) {
-  REACT_ELEMENT_TYPE || (REACT_ELEMENT_TYPE = "function" == typeof Symbol && Symbol.for && Symbol.for("react.element") || 60103);
-  var defaultProps = type && type.defaultProps,
-      childrenLength = arguments.length - 3;
-  if (props || 0 === childrenLength || (props = {
-    children: void 0
-  }), 1 === childrenLength) props.children = children;else if (childrenLength > 1) {
-    for (var childArray = new Array(childrenLength), i = 0; i < childrenLength; i++) childArray[i] = arguments[i + 3];
+  if (!REACT_ELEMENT_TYPE) {
+    REACT_ELEMENT_TYPE = typeof Symbol === "function" && Symbol["for"] && Symbol["for"]("react.element") || 0xeac7;
+  }
+
+  var defaultProps = type && type.defaultProps;
+  var childrenLength = arguments.length - 3;
+
+  if (!props && childrenLength !== 0) {
+    props = {
+      children: void 0
+    };
+  }
+
+  if (childrenLength === 1) {
+    props.children = children;
+  } else if (childrenLength > 1) {
+    var childArray = new Array(childrenLength);
+
+    for (var i = 0; i < childrenLength; i++) {
+      childArray[i] = arguments[i + 3];
+    }
 
     props.children = childArray;
   }
-  if (props && defaultProps) for (var propName in defaultProps) void 0 === props[propName] && (props[propName] = defaultProps[propName]);else props || (props = defaultProps || {});
+
+  if (props && defaultProps) {
+    for (var propName in defaultProps) {
+      if (props[propName] === void 0) {
+        props[propName] = defaultProps[propName];
+      }
+    }
+  } else if (!props) {
+    props = defaultProps || {};
+  }
+
   return {
     $$typeof: REACT_ELEMENT_TYPE,
     type: type,
-    key: void 0 === key ? null : "" + key,
+    key: key === undefined ? null : '' + key,
     ref: null,
     props: props,
     _owner: null
   };
 }
 
-function ownKeys(object, enumerableOnly) {
-  var keys = Object.keys(object);
+function _asyncIterator(iterable) {
+  var method;
 
-  if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    enumerableOnly && (symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    })), keys.push.apply(keys, symbols);
-  }
-
-  return keys;
-}
-
-function _objectSpread2(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = null != arguments[i] ? arguments[i] : {};
-    i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
-      _defineProperty(target, key, source[key]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
-      Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-    });
-  }
-
-  return target;
-}
-
-function _typeof(obj) {
-  "@babel/helpers - typeof";
-
-  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-  }, _typeof(obj);
-}
-
-function _wrapRegExp() {
-  _wrapRegExp = function (re, groups) {
-    return new BabelRegExp(re, void 0, groups);
-  };
-
-  var _super = RegExp.prototype,
-      _groups = new WeakMap();
-
-  function BabelRegExp(re, flags, groups) {
-    var _this = new RegExp(re, flags);
-
-    return _groups.set(_this, groups || _groups.get(re)), _setPrototypeOf(_this, BabelRegExp.prototype);
-  }
-
-  function buildGroups(result, re) {
-    var g = _groups.get(re);
-
-    return Object.keys(g).reduce(function (groups, name) {
-      return groups[name] = result[g[name]], groups;
-    }, Object.create(null));
-  }
-
-  return _inherits(BabelRegExp, RegExp), BabelRegExp.prototype.exec = function (str) {
-    var result = _super.exec.call(this, str);
-
-    return result && (result.groups = buildGroups(result, this)), result;
-  }, BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
-    if ("string" == typeof substitution) {
-      var groups = _groups.get(this);
-
-      return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
-        return "$" + groups[name];
-      }));
+  if (typeof Symbol !== "undefined") {
+    if (Symbol.asyncIterator) {
+      method = iterable[Symbol.asyncIterator];
+      if (method != null) return method.call(iterable);
     }
 
-    if ("function" == typeof substitution) {
-      var _this = this;
-
-      return _super[Symbol.replace].call(this, str, function () {
-        var args = arguments;
-        return "object" != typeof args[args.length - 1] && (args = [].slice.call(args)).push(buildGroups(args, _this)), substitution.apply(this, args);
-      });
+    if (Symbol.iterator) {
+      method = iterable[Symbol.iterator];
+      if (method != null) return method.call(iterable);
     }
+  }
 
-    return _super[Symbol.replace].call(this, str, substitution);
-  }, _wrapRegExp.apply(this, arguments);
+  throw new TypeError("Object is not async iterable");
 }
 
 function _AwaitValue(value) {
@@ -487,9 +167,11 @@ function _AsyncGenerator(gen) {
   }
 }
 
-_AsyncGenerator.prototype[typeof Symbol === "function" && Symbol.asyncIterator || "@@asyncIterator"] = function () {
-  return this;
-};
+if (typeof Symbol === "function" && Symbol.asyncIterator) {
+  _AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+    return this;
+  };
+}
 
 _AsyncGenerator.prototype.next = function (arg) {
   return this._invoke("next", arg);
@@ -530,9 +212,11 @@ function _asyncGeneratorDelegate(inner, awaitWrap) {
 
   ;
 
-  iter[typeof Symbol !== "undefined" && Symbol.iterator || "@@iterator"] = function () {
-    return this;
-  };
+  if (typeof Symbol === "function" && Symbol.iterator) {
+    iter[Symbol.iterator] = function () {
+      return this;
+    };
+  }
 
   iter.next = function (value) {
     if (waiting) {
@@ -623,9 +307,6 @@ function _defineProperties(target, props) {
 function _createClass(Constructor, protoProps, staticProps) {
   if (protoProps) _defineProperties(Constructor.prototype, protoProps);
   if (staticProps) _defineProperties(Constructor, staticProps);
-  Object.defineProperty(Constructor, "prototype", {
-    writable: false
-  });
   return Constructor;
 }
 
@@ -706,7 +387,7 @@ function _objectSpread(target) {
     var ownKeys = Object.keys(source);
 
     if (typeof Object.getOwnPropertySymbols === 'function') {
-      ownKeys.push.apply(ownKeys, Object.getOwnPropertySymbols(source).filter(function (sym) {
+      ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
         return Object.getOwnPropertyDescriptor(source, sym).enumerable;
       }));
     }
@@ -714,6 +395,40 @@ function _objectSpread(target) {
     ownKeys.forEach(function (key) {
       _defineProperty(target, key, source[key]);
     });
+  }
+
+  return target;
+}
+
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    var symbols = Object.getOwnPropertySymbols(object);
+    if (enumerableOnly) symbols = symbols.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    });
+    keys.push.apply(keys, symbols);
+  }
+
+  return keys;
+}
+
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+
+    if (i % 2) {
+      ownKeys(Object(source), true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
   }
 
   return target;
@@ -730,9 +445,6 @@ function _inherits(subClass, superClass) {
       writable: true,
       configurable: true
     }
-  });
-  Object.defineProperty(subClass, "prototype", {
-    writable: false
   });
   if (superClass) _setPrototypeOf(subClass, superClass);
 }
@@ -842,17 +554,19 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _getRequireWildcardCache(nodeInterop) {
+function _getRequireWildcardCache() {
   if (typeof WeakMap !== "function") return null;
-  var cacheBabelInterop = new WeakMap();
-  var cacheNodeInterop = new WeakMap();
-  return (_getRequireWildcardCache = function (nodeInterop) {
-    return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
-  })(nodeInterop);
+  var cache = new WeakMap();
+
+  _getRequireWildcardCache = function () {
+    return cache;
+  };
+
+  return cache;
 }
 
-function _interopRequireWildcard(obj, nodeInterop) {
-  if (!nodeInterop && obj && obj.__esModule) {
+function _interopRequireWildcard(obj) {
+  if (obj && obj.__esModule) {
     return obj;
   }
 
@@ -862,7 +576,7 @@ function _interopRequireWildcard(obj, nodeInterop) {
     };
   }
 
-  var cache = _getRequireWildcardCache(nodeInterop);
+  var cache = _getRequireWildcardCache();
 
   if (cache && cache.has(obj)) {
     return cache.get(obj);
@@ -872,7 +586,7 @@ function _interopRequireWildcard(obj, nodeInterop) {
   var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
 
   for (var key in obj) {
-    if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
       var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
 
       if (desc && (desc.get || desc.set)) {
@@ -949,8 +663,6 @@ function _assertThisInitialized(self) {
 function _possibleConstructorReturn(self, call) {
   if (call && (typeof call === "object" || typeof call === "function")) {
     return call;
-  } else if (call !== void 0) {
-    throw new TypeError("Derived constructors may only return object or undefined");
   }
 
   return _assertThisInitialized(self);
@@ -984,7 +696,7 @@ function _superPropBase(object, property) {
   return object;
 }
 
-function _get() {
+function _get(target, property, receiver) {
   if (typeof Reflect !== "undefined" && Reflect.get) {
     _get = Reflect.get;
   } else {
@@ -995,14 +707,14 @@ function _get() {
       var desc = Object.getOwnPropertyDescriptor(base, property);
 
       if (desc.get) {
-        return desc.get.call(arguments.length < 3 ? target : receiver);
+        return desc.get.call(receiver);
       }
 
       return desc.value;
     };
   }
 
-  return _get.apply(this, arguments);
+  return _get(target, property, receiver || target);
 }
 
 function set(target, property, value, receiver) {
@@ -1132,21 +844,18 @@ function _maybeArrayLike(next, arr, i) {
 }
 
 function _iterableToArray(iter) {
-  if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
+  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
 }
 
 function _iterableToArrayLimit(arr, i) {
-  var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
-
-  if (_i == null) return;
+  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
   var _arr = [];
   var _n = true;
   var _d = false;
-
-  var _s, _e;
+  var _e = undefined;
 
   try {
-    for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
+    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
       _arr.push(_s.value);
 
       if (i && _arr.length === i) break;
@@ -1166,12 +875,10 @@ function _iterableToArrayLimit(arr, i) {
 }
 
 function _iterableToArrayLimitLoose(arr, i) {
-  var _i = arr && (typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]);
-
-  if (_i == null) return;
+  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
   var _arr = [];
 
-  for (_i = _i.call(arr), _step; !(_step = _i.next()).done;) {
+  for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
     _arr.push(_step.value);
 
     if (i && _arr.length === i) break;
@@ -1206,9 +913,9 @@ function _nonIterableRest() {
 }
 
 function _createForOfIteratorHelper(o, allowArrayLike) {
-  var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
+  var it;
 
-  if (!it) {
+  if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
     if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
       if (it) o = it;
       var i = 0;
@@ -1241,7 +948,7 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
       err;
   return {
     s: function () {
-      it = it.call(o);
+      it = o[Symbol.iterator]();
     },
     n: function () {
       var step = it.next();
@@ -1263,24 +970,28 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
 }
 
 function _createForOfIteratorHelperLoose(o, allowArrayLike) {
-  var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
-  if (it) return (it = it.call(o)).next.bind(it);
+  var it;
 
-  if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
-    if (it) o = it;
-    var i = 0;
-    return function () {
-      if (i >= o.length) return {
-        done: true
+  if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+    if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+      if (it) o = it;
+      var i = 0;
+      return function () {
+        if (i >= o.length) return {
+          done: true
+        };
+        return {
+          done: false,
+          value: o[i++]
+        };
       };
-      return {
-        done: false,
-        value: o[i++]
-      };
-    };
+    }
+
+    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
-  throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  it = o[Symbol.iterator]();
+  return it.next.bind(it);
 }
 
 function _skipFirstGeneratorNext(fn) {
@@ -1889,30 +1600,73 @@ function _classPrivateMethodGet(receiver, privateSet, fn) {
   return fn;
 }
 
-function _checkPrivateRedeclaration(obj, privateCollection) {
-  if (privateCollection.has(obj)) {
-    throw new TypeError("Cannot initialize the same private elements twice on an object");
-  }
-}
-
-function _classPrivateFieldInitSpec(obj, privateMap, value) {
-  _checkPrivateRedeclaration(obj, privateMap);
-
-  privateMap.set(obj, value);
-}
-
-function _classPrivateMethodInitSpec(obj, privateSet) {
-  _checkPrivateRedeclaration(obj, privateSet);
-
-  privateSet.add(obj);
-}
-
 function _classPrivateMethodSet() {
   throw new TypeError("attempted to reassign private method");
 }
 
-function _identity(x) {
-  return x;
+function _wrapRegExp(re, groups) {
+  _wrapRegExp = function (re, groups) {
+    return new BabelRegExp(re, undefined, groups);
+  };
+
+  var _RegExp = _wrapNativeSuper(RegExp);
+
+  var _super = RegExp.prototype;
+
+  var _groups = new WeakMap();
+
+  function BabelRegExp(re, flags, groups) {
+    var _this = _RegExp.call(this, re, flags);
+
+    _groups.set(_this, groups || _groups.get(re));
+
+    return _this;
+  }
+
+  _inherits(BabelRegExp, _RegExp);
+
+  BabelRegExp.prototype.exec = function (str) {
+    var result = _super.exec.call(this, str);
+
+    if (result) result.groups = buildGroups(result, this);
+    return result;
+  };
+
+  BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
+    if (typeof substitution === "string") {
+      var groups = _groups.get(this);
+
+      return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
+        return "$" + groups[name];
+      }));
+    } else if (typeof substitution === "function") {
+      var _this = this;
+
+      return _super[Symbol.replace].call(this, str, function () {
+        var args = [];
+        args.push.apply(args, arguments);
+
+        if (typeof args[args.length - 1] !== "object") {
+          args.push(buildGroups(args, _this));
+        }
+
+        return substitution.apply(this, args);
+      });
+    } else {
+      return _super[Symbol.replace].call(this, str, substitution);
+    }
+  };
+
+  function buildGroups(result, re) {
+    var g = _groups.get(re);
+
+    return Object.keys(g).reduce(function (groups, name) {
+      groups[name] = result[g[name]];
+      return groups;
+    }, Object.create(null));
+  }
+
+  return _wrapRegExp.apply(this, arguments);
 }
 
 // Numbers represent type - 
@@ -12629,8 +12383,8 @@ var glslParser = createCommonjsModule(function (module, exports) {
         if (!entry
         /*|| !entry.type*/
         ) {
-          this.ir_error(util.format("%s is undefined", name));
-        }
+            this.ir_error(util.format("%s is undefined", name));
+          }
 
         this.Type = entry.type;
         this.Entry = entry;
@@ -30192,7 +29946,7 @@ var sdfs = {
   cappedTorus: "\nfloat sdCappedTorus(in vec3 p, in vec2 sc, in float ra, in float rb)\n{\n    p.x = abs(p.x);\n    float k = (sc.y*p.x>sc.x*p.y) ? dot(p.xy,sc) : length(p.xy);\n    return sqrt( dot(p,p) + ra*ra - 2.0*ra*k ) - rb;\n}\n"
 };
 
-const _from$1="estraverse@^4.2.0";const _id$3="estraverse@4.3.0";const _inBundle$1=false;const _integrity$1="sha512-39nnKffWz8xN1BU/2c79n9nB9HDzo0niYUqx6xyqUnyoAnQyyWpOTdZEeiCch8BBu515t4wp9ZmgVfVhn9EBpw==";const _location$1="/estraverse";const _phantomChildren$1={};const _requested$1={type:"range",registry:true,raw:"estraverse@^4.2.0",name:"estraverse",escapedName:"estraverse",rawSpec:"^4.2.0",saveSpec:null,fetchSpec:"^4.2.0"};const _requiredBy$1=["/escodegen"];const _resolved$1="https://registry.npmjs.org/estraverse/-/estraverse-4.3.0.tgz";const _shasum$1="398ad3f3c5a24948be7725e83d11a7de28cdbd1d";const _spec$1="estraverse@^4.2.0";const _where$1="/Users/peterwhidden/Documents/sp_refactor/shader-park-core/node_modules/escodegen";const bugs$1={url:"https://github.com/estools/estraverse/issues"};const bundleDependencies$1=false;const deprecated$1=false;const description$1="ECMAScript JS AST traversal functions";const devDependencies$1={"babel-preset-env":"^1.6.1","babel-register":"^6.3.13",chai:"^2.1.1",espree:"^1.11.0",gulp:"^3.8.10","gulp-bump":"^0.2.2","gulp-filter":"^2.0.0","gulp-git":"^1.0.1","gulp-tag-version":"^1.3.0",jshint:"^2.5.6",mocha:"^2.1.0"};const engines$1={node:">=4.0"};const homepage$1="https://github.com/estools/estraverse";const license$1="BSD-2-Clause";const main$1="estraverse.js";const maintainers$1=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",url:"http://github.com/Constellation"}];const name$1="estraverse";const repository$1={type:"git",url:"git+ssh://git@github.com/estools/estraverse.git"};const scripts$1={lint:"jshint estraverse.js",test:"npm run-script lint && npm run-script unit-test","unit-test":"mocha --compilers js:babel-register"};const version$1="4.3.0";var require$$0 = {_from:_from$1,_id:_id$3,_inBundle:_inBundle$1,_integrity:_integrity$1,_location:_location$1,_phantomChildren:_phantomChildren$1,_requested:_requested$1,_requiredBy:_requiredBy$1,_resolved:_resolved$1,_shasum:_shasum$1,_spec:_spec$1,_where:_where$1,bugs:bugs$1,bundleDependencies:bundleDependencies$1,deprecated:deprecated$1,description:description$1,devDependencies:devDependencies$1,engines:engines$1,homepage:homepage$1,license:license$1,main:main$1,maintainers:maintainers$1,name:name$1,repository:repository$1,scripts:scripts$1,version:version$1};
+const name$1="estraverse";const description$1="ECMAScript JS AST traversal functions";const homepage$1="https://github.com/estools/estraverse";const main$1="estraverse.js";const version$1="4.3.0";const engines$1={node:">=4.0"};const maintainers$1=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository$1={type:"git",url:"http://github.com/estools/estraverse.git"};const devDependencies$1={"babel-preset-env":"^1.6.1","babel-register":"^6.3.13",chai:"^2.1.1",espree:"^1.11.0",gulp:"^3.8.10","gulp-bump":"^0.2.2","gulp-filter":"^2.0.0","gulp-git":"^1.0.1","gulp-tag-version":"^1.3.0",jshint:"^2.5.6",mocha:"^2.1.0"};const license$1="BSD-2-Clause";const scripts$1={test:"npm run-script lint && npm run-script unit-test",lint:"jshint estraverse.js","unit-test":"mocha --compilers js:babel-register"};var require$$0 = {name:name$1,description:description$1,homepage:homepage$1,main:main$1,version:version$1,engines:engines$1,maintainers:maintainers$1,repository:repository$1,devDependencies:devDependencies$1,license:license$1,scripts:scripts$1};
 
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -34645,7 +34399,7 @@ var sourceMap = {
 	SourceNode: SourceNode
 };
 
-const _from="escodegen@^1.11.1";const _id$2="escodegen@1.14.3";const _inBundle=false;const _integrity="sha512-qFcX0XJkdg+PB3xjZZG/wKSuT1PnQWx57+TVSjIMmILd2yC/6ByYElPwJnslDsuWuSAp4AwJGumarAAmJch5Kw==";const _location="/escodegen";const _phantomChildren={};const _requested={type:"range",registry:true,raw:"escodegen@^1.11.1",name:"escodegen",escapedName:"escodegen",rawSpec:"^1.11.1",saveSpec:null,fetchSpec:"^1.11.1"};const _requiredBy=["/"];const _resolved="https://registry.npmjs.org/escodegen/-/escodegen-1.14.3.tgz";const _shasum="4e7b81fba61581dc97582ed78cab7f0e8d63f503";const _spec="escodegen@^1.11.1";const _where="/Users/peterwhidden/Documents/sp_refactor/shader-park-core";const bin={esgenerate:"bin/esgenerate.js",escodegen:"bin/escodegen.js"};const bugs={url:"https://github.com/estools/escodegen/issues"};const bundleDependencies=false;const dependencies={esprima:"^4.0.1",estraverse:"^4.2.0",esutils:"^2.0.2",optionator:"^0.8.1","source-map":"~0.6.1"};const deprecated=false;const description="ECMAScript code generator";const devDependencies={acorn:"^7.1.0",bluebird:"^3.4.7","bower-registry-client":"^1.0.0",chai:"^3.5.0","commonjs-everywhere":"^0.9.7",gulp:"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1",semver:"^5.1.0"};const engines={node:">=4.0"};const files=["LICENSE.BSD","README.md","bin","escodegen.js","package.json"];const homepage="http://github.com/estools/escodegen";const license="BSD-2-Clause";const main="escodegen.js";const maintainers=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",url:"http://github.com/Constellation"}];const name="escodegen";const optionalDependencies={"source-map":"~0.6.1"};const repository={type:"git",url:"git+ssh://git@github.com/estools/escodegen.git"};const scripts={build:"cjsify -a path: tools/entry-point.js > escodegen.browser.js","build-min":"cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",lint:"gulp lint",release:"node tools/release.js",test:"gulp travis","unit-test":"gulp test"};const version="1.14.3";var require$$3 = {_from:_from,_id:_id$2,_inBundle:_inBundle,_integrity:_integrity,_location:_location,_phantomChildren:_phantomChildren,_requested:_requested,_requiredBy:_requiredBy,_resolved:_resolved,_shasum:_shasum,_spec:_spec,_where:_where,bin:bin,bugs:bugs,bundleDependencies:bundleDependencies,dependencies:dependencies,deprecated:deprecated,description:description,devDependencies:devDependencies,engines:engines,files:files,homepage:homepage,license:license,main:main,maintainers:maintainers,name:name,optionalDependencies:optionalDependencies,repository:repository,scripts:scripts,version:version};
+const name="escodegen";const description="ECMAScript code generator";const homepage="http://github.com/estools/escodegen";const main="escodegen.js";const bin={esgenerate:"./bin/esgenerate.js",escodegen:"./bin/escodegen.js"};const files=["LICENSE.BSD","README.md","bin","escodegen.js","package.json"];const version="1.14.1";const engines={node:">=4.0"};const maintainers=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository={type:"git",url:"http://github.com/estools/escodegen.git"};const dependencies={estraverse:"^4.2.0",esutils:"^2.0.2",esprima:"^4.0.1",optionator:"^0.8.1"};const optionalDependencies={"source-map":"~0.6.1"};const devDependencies={acorn:"^7.1.0",bluebird:"^3.4.7","bower-registry-client":"^1.0.0",chai:"^3.5.0","commonjs-everywhere":"^0.9.7",gulp:"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1",semver:"^5.1.0"};const license="BSD-2-Clause";const scripts={test:"gulp travis","unit-test":"gulp test",lint:"gulp lint",release:"node tools/release.js","build-min":"./node_modules/.bin/cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",build:"./node_modules/.bin/cjsify -a path: tools/entry-point.js > escodegen.browser.js"};var require$$3 = {name:name,description:description,homepage:homepage,main:main,bin:bin,files:files,version:version,engines:engines,maintainers:maintainers,repository:repository,dependencies:dependencies,optionalDependencies:optionalDependencies,devDependencies:devDependencies,license:license,scripts:scripts};
 
 /*
   Copyright (C) 2012-2014 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -35633,7 +35387,7 @@ var escodegen = createCommonjsModule(function (module, exports) {
             result.push('[');
         }
 
-        result.push(this.generateExpression(expr, Precedence.Assignment, E_TTT));
+        result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
 
         if (computed) {
             result.push(']');
@@ -36873,19 +36627,13 @@ var escodegen = createCommonjsModule(function (module, exports) {
             multiline = false;
             if (expr.properties.length === 1) {
                 property = expr.properties[0];
-                if (
-                    property.type === Syntax.Property
-                    && property.value.type !== Syntax.Identifier
-                ) {
+                if (property.value.type !== Syntax.Identifier) {
                     multiline = true;
                 }
             } else {
                 for (i = 0, iz = expr.properties.length; i < iz; ++i) {
                     property = expr.properties[i];
-                    if (
-                        property.type === Syntax.Property
-                        && !property.shorthand
-                    ) {
+                    if (!property.shorthand) {
                         multiline = true;
                         break;
                     }
@@ -45084,6 +44832,11 @@ function sculptToGLSL(userProvidedSrc) {
     appendColorSource(getCurrentMaterial() + ".roughness = 1.0-" + collapseToString(val) + ";\n");
   }
 
+  function fresnel(val) {
+    ensureScalar("fresnel", val);
+    return pow(1 + dot(getRayDirection(), normal), val);
+  }
+
   function lightDirection(x, y, z) {
     if (y === undefined || z === undefined) {
       appendColorSource("lightDirection = " + collapseToString(x) + ";\n");
@@ -45249,7 +45002,7 @@ function sculptToGLSL(userProvidedSrc) {
   } // Define any code that needs to reference auto generated from bindings.js code here
 
 
-  var postGeneratedFunctions = [getSpherical].map(function (el) {
+  var postGeneratedFunctions = [getSpherical, fresnel].map(function (el) {
     return el.toString();
   }).join('\n');
   eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
@@ -96465,7 +96218,7 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log("using shader-park version: 0.1.10"); /// Generate code for various targets
+console.log("using shader-park version: 0.1.12"); /// Generate code for various targets
 
 exports.baseUniforms = baseUniforms;
 exports.bindStaticData = bindStaticData;
