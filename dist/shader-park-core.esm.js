@@ -44993,12 +44993,41 @@ function sculptToGLSL(userProvidedSrc) {
 
   var error = undefined;
 
+  function revolve2D(sdf) {
+    return function (r) {
+      var s = getSpace();
+      var q = vec2(length(vec3(s.x, s.z, 0)) - r, s.y);
+
+      for (var _len3 = arguments.length, args = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+        args[_key3 - 1] = arguments[_key3];
+      }
+
+      setSDF(sdf.apply(void 0, [q].concat(args)));
+    };
+  } //https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
+
+
+  var extrude2D = function extrude2D(sdf) {
+    return function (h) {
+      var s = getSpace();
+
+      for (var _len4 = arguments.length, args = new Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+        args[_key4 - 1] = arguments[_key4];
+      }
+
+      var d = sdf.apply(void 0, [vec2(s.x, s.y)].concat(args));
+      var w = vec2(d, abs(s.z) - h);
+      var t = vec3(max(w.x, 0.0), max(w.y, 0.0), 0);
+      setSDF(min(max(w.x, w.y), 0.0) + length(t));
+    };
+  };
+
   function getSpherical() {
     return toSpherical(getSpace());
   } // Define any code that needs to reference auto generated from bindings.js code here
 
 
-  var postGeneratedFunctions = [getSpherical, fresnel].map(function (el) {
+  var postGeneratedFunctions = [getSpherical, fresnel, revolve2D, extrude2D].map(function (el) {
     return el.toString();
   }).join('\n');
   eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);

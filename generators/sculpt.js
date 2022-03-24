@@ -1151,6 +1151,18 @@ export function sculptToGLSL(userProvidedSrc) {
 	  }
 	}
 
+
+	//https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
+	let extrude2D = (sdf) => {
+		return (h, ...args) => {
+		let s = getSpace()
+		let d = sdf(vec2(s.x, s.y), ...args)
+		let w = vec2(d, abs(s.z) - h )
+		let t = vec3(max(w.x, 0.0), max(w.y, 0.0), 0)
+		setSDF(min(max(w.x,w.y),0.0) + length(t))
+		}
+	}
+
 	function getSpherical() {
 		return toSpherical(getSpace());	
 	}
@@ -1159,7 +1171,8 @@ export function sculptToGLSL(userProvidedSrc) {
 	let postGeneratedFunctions = [
 		getSpherical,
 		fresnel,
-		revolve
+		revolve2D, 
+		extrude2D
 	].map(el => el.toString()).join('\n');
 
 
