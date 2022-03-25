@@ -188,17 +188,22 @@ export function bindStaticData(staticData, spCode) {
 	return `const staticData = JSON.parse(\`${JSON.stringify(staticData)}\`)\n` + spCode;
 }
 
+export function replaceMathOps(codeSrc) {
+	let tree = esprima.parse(userProvidedSrc);
+	replaceOperatorOverload(tree);
+	replaceBinaryOp(tree);
+	replaceSliderInput(tree);
+	userProvidedSrc = escodegen.generate(tree);
+}
+
 export function sculptToGLSL(userProvidedSrc) {
 	const PI = Math.PI;
 	const TWO_PI = Math.PI * 2;
 	const TAU = TWO_PI;
 	
 	let debug = false;
-	let tree = esprima.parse(userProvidedSrc);
-	replaceOperatorOverload(tree);
-	replaceBinaryOp(tree);
-	replaceSliderInput(tree);
-	userProvidedSrc = escodegen.generate(tree);
+	userProvidedSrc = replaceMathOps(userProvidedSrc);
+
 	if (debug) {
 		console.log('tree', tree);
 	}
@@ -1145,23 +1150,22 @@ export function sculptToGLSL(userProvidedSrc) {
 	
 	function revolve2D(sdf) {
 	  return (r, ...args) => {
-		ensureScalar('revolve2D', r);
+	    ensureScalar('revolve2D', r);
 	    let s = getSpace();
 	    let q = vec2(length(vec3(s.x, s.z, 0)) - r, s.y);
 	    setSDF(sdf(q, ...args));
 	  }
 	}
 
-
 	//https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
 	function extrude2D(sdf) {
 		return (h, ...args) => {
-			ensureScalar('revolve2D', h);
-			let s = getSpace()
-			let d = sdf(vec2(s.x, s.y), ...args)
-			let w = vec2(d, abs(s.z) - h )
-			let t = vec3(max(w.x, 0.0), max(w.y, 0.0), 0)
-			setSDF(min(max(w.x,w.y),0.0) + length(t))
+			ensureScalar('extrude2D', h);
+			let s = getSpace();
+			let d = sdf(vec2(s.x, s.y), ...args);
+			let w = vec2(d, abs(s.z) - h );
+			let t = vec3(max(w.x, 0.0), max(w.y, 0.0), 0);
+			setSDF(min(max(w.x,w.y),0.0) + length(t));
 		}
 	}
 
@@ -1175,7 +1179,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		fresnel,
 		revolve2D, 
 		extrude2D
-	].map(el => el.toString()).join('\n');
+	].map(replaceMathOps).map(el => el.toString()).join('\n');
 
 
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
