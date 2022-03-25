@@ -193,7 +193,7 @@ export function replaceMathOps(codeSrc) {
 	replaceOperatorOverload(tree);
 	replaceBinaryOp(tree);
 	replaceSliderInput(tree);
-	userProvidedSrc = escodegen.generate(tree);
+	return escodegen.generate(tree);
 }
 
 export function sculptToGLSL(userProvidedSrc) {
