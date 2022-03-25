@@ -45008,7 +45008,7 @@ function sculptToGLSL(userProvidedSrc) {
   } //https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
 
 
-  var extrude2D = function extrude2D(sdf) {
+  function extrude2D(sdf) {
     return function (h) {
       ensureScalar('revolve2D', h);
       var s = getSpace();
@@ -45022,7 +45022,7 @@ function sculptToGLSL(userProvidedSrc) {
       var t = vec3(max(w.x, 0.0), max(w.y, 0.0), 0);
       setSDF(min(max(w.x, w.y), 0.0) + length(t));
     };
-  };
+  }
 
   function getSpherical() {
     return toSpherical(getSpace());
@@ -96245,6 +96245,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log("using shader-park version: 0.1.13"); /// Generate code for various targets
+console.log("using shader-park version: 0.1.14"); /// Generate code for various targets
 
 export { baseUniforms, bindStaticData, createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, fragFooter, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, minimalHeader, minimalVertexSource, sculptToGLSL, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource, sculptureStarterCode, uniformsToGLSL, useHemisphereLight, usePBRHeader };

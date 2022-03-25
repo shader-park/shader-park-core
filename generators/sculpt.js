@@ -1154,7 +1154,7 @@ export function sculptToGLSL(userProvidedSrc) {
 
 
 	//https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
-	let extrude2D = (sdf) => {
+	function extrude2D(sdf) {
 		return (h, ...args) => {
 			ensureScalar('revolve2D', h);
 			let s = getSpace()
