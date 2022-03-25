@@ -1174,13 +1174,12 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 	
 	// Define any code that needs to reference auto generated from bindings.js code here
-	let postGeneratedFunctions = [
+	let postGeneratedFunctions = replaceMathOps([
 		getSpherical,
 		fresnel,
 		revolve2D, 
 		extrude2D
-	].map(replaceMathOps).map(el => el.toString()).join('\n');
-
+	].map(el => el.toString()).join('\n'));
 
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
 	
