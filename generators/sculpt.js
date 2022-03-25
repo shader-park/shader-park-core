@@ -189,7 +189,7 @@ export function bindStaticData(staticData, spCode) {
 }
 
 export function replaceMathOps(codeSrc) {
-	let tree = esprima.parse(userProvidedSrc);
+	let tree = esprima.parse(codeSrc);
 	replaceOperatorOverload(tree);
 	replaceBinaryOp(tree);
 	replaceSliderInput(tree);
