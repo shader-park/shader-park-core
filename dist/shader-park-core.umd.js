@@ -44210,10 +44210,14 @@
       }
 
       ensureScalar('mix', arg_2);
-      arg_0 = tryMakeNum(arg_0);
-      arg_1 = tryMakeNum(arg_1);
+
+      if (typeof arg_1 == 'number' || arg_1.type == 'float') {
+        arg_0 = tryMakeNum(arg_0);
+        arg_1 = tryMakeNum(arg_1);
+      }
+
       arg_2 = tryMakeNum(arg_2);
-      return new makeVarWithDims("mix(".concat(arg_0, ", ").concat(arg_1, ", ").concat(arg_2, ")"), arg_0.dims);
+      return new makeVarWithDims("mix(".concat(collapseToString(arg_0), ", ").concat(collapseToString(arg_1), ", ").concat(collapseToString(arg_2), ")"), arg_0.dims);
     }
 
     function pow(arg_0, arg_1) {
@@ -44222,7 +44226,7 @@
         arg_1 = tryMakeNum(arg_1);
       }
 
-      ensureSameDims('mix', arg_0, arg_1);
+      ensureSameDims('pow', arg_0, arg_1);
       return new makeVarWithDims("pow(".concat(collapseToString(arg_0), ", ").concat(collapseToString(arg_1), ")"), arg_0.dims);
     }
 
@@ -44232,6 +44236,10 @@
       }
 
       var dims = args.map(function (arg) {
+        if (arg.type === undefined) {
+          return _typeof(arg); //compileError("'"+funcName+"' expected a vector");
+        }
+
         return arg.dim;
       });
       var initialDim = dims[0];
@@ -44497,8 +44505,6 @@
       if (val.type === undefined) {
         compileError("'" + funcName + "' expected a vector");
       }
-
-      var tp = val.type;
 
       if (size !== val.dims) {
         compileError("'" + funcName + "' expected a vector dim: " + size + ", was given: " + val.dims);

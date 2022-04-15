@@ -439,10 +439,12 @@ export function sculptToGLSL(userProvidedSrc) {
 			compileError(`'mix' third argument must be float or match dim of first args`);
 		}
 		ensureScalar('mix', arg_2);
-		arg_0 = tryMakeNum(arg_0);
-		arg_1 = tryMakeNum(arg_1);
+		if(typeof arg_1 == 'number' || arg_1.type == 'float') {
+			arg_0 = tryMakeNum(arg_0);
+			arg_1 = tryMakeNum(arg_1);
+		}
 		arg_2 = tryMakeNum(arg_2);
-		return new makeVarWithDims(`mix(${arg_0}, ${arg_1}, ${arg_2})`, arg_0.dims);
+		return new makeVarWithDims(`mix(${collapseToString(arg_0)}, ${collapseToString(arg_1)}, ${collapseToString(arg_2)})`, arg_0.dims);
 	}
 
 	function pow(arg_0, arg_1) {
@@ -450,13 +452,20 @@ export function sculptToGLSL(userProvidedSrc) {
 			arg_0 = tryMakeNum(arg_0);
 			arg_1 = tryMakeNum(arg_1);
 		}
-		ensureSameDims('mix', arg_0, arg_1);
+		ensureSameDims('pow', arg_0, arg_1);
 		return new makeVarWithDims(`pow(${collapseToString(arg_0)}, ${collapseToString(arg_1)})`, arg_0.dims);
 	}	
 
 
 	function ensureSameDims(funcName, ...args) {
-		let dims = args.map(arg => arg.dim);
+		let dims = args.map(arg => {
+			if (arg.type === undefined) {
+				return typeof arg;
+				//compileError("'"+funcName+"' expected a vector");
+			}
+			return arg.dim;
+		});
+		
 		const initialDim = dims[0];
 		for(let i = 1; i < dims.length; i++) {
 			let next = dims[i];
@@ -691,10 +700,9 @@ export function sculptToGLSL(userProvidedSrc) {
 	function ensureDims(funcName, size, val) {
  		// for now this only verifies vector dims not scalars/floats!
 		if (val.type === undefined) {
-                	compileError("'"+funcName+"' expected a vector");
+			compileError("'"+funcName+"' expected a vector");
 		}
-		const tp = val.type;
-                if (size !== val.dims) {
+		if (size !== val.dims) {
 			compileError("'"+funcName+"' expected a vector dim: " + size + ", was given: " + val.dims );
 		}
  	}
