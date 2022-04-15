@@ -1752,10 +1752,7 @@ var glslBuiltInOneToOne = ["sin", "cos", "tan", "asin", "acos", "exp", "log", "e
 
 var glslBuiltInOther = {
   // overload pow somehow?
-  pow: {
-    args: [1, 1],
-    ret: 1
-  },
+  // pow: { args:[1,1], ret:1 },
   mod: {
     args: [1, 1],
     ret: 1
@@ -43900,16 +43897,19 @@ function bindStaticData(staticData, spCode) {
   spCode = convertFunctionToString(spCode);
   return "const staticData = JSON.parse(`".concat(JSON.stringify(staticData), "`)\n") + spCode;
 }
+function replaceMathOps(codeSrc) {
+  var tree = esprima.parse(codeSrc);
+  replaceOperatorOverload(tree);
+  replaceBinaryOp(tree);
+  replaceSliderInput(tree);
+  return escodegen.generate(tree);
+}
 function sculptToGLSL(userProvidedSrc) {
   var PI = Math.PI;
   var TWO_PI = Math.PI * 2;
   var TAU = TWO_PI;
   var debug = false;
-  var tree = esprima.parse(userProvidedSrc);
-  replaceOperatorOverload(tree);
-  replaceBinaryOp(tree);
-  replaceSliderInput(tree);
-  userProvidedSrc = escodegen.generate(tree);
+  userProvidedSrc = replaceMathOps(userProvidedSrc);
 
   if (debug) {
     console.log('tree', tree);
@@ -44212,6 +44212,16 @@ function sculptToGLSL(userProvidedSrc) {
     arg_1 = tryMakeNum(arg_1);
     arg_2 = tryMakeNum(arg_2);
     return new makeVarWithDims("mix(".concat(arg_0, ", ").concat(arg_1, ", ").concat(arg_2, ")"), arg_0.dims);
+  }
+
+  function pow(arg_0, arg_1) {
+    if (typeof arg_1 == 'number' || arg_1.type == 'float') {
+      arg_0 = tryMakeNum(arg_0);
+      arg_1 = tryMakeNum(arg_1);
+    }
+
+    ensureSameDims('mix', arg_0, arg_1);
+    return new makeVarWithDims("pow(".concat(collapseToString(arg_0), ", ").concat(collapseToString(arg_1), ")"), arg_0.dims);
   }
 
   function ensureSameDims(funcName) {
@@ -45014,7 +45024,7 @@ function sculptToGLSL(userProvidedSrc) {
 
   function extrude2D(sdf) {
     return function (h) {
-      ensureScalar('revolve2D', h);
+      ensureScalar('extrude2D', h);
       var s = getSpace();
 
       for (var _len4 = arguments.length, args = new Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
@@ -45030,12 +45040,39 @@ function sculptToGLSL(userProvidedSrc) {
 
   function getSpherical() {
     return toSpherical(getSpace());
+  }
+
+  function mirrorN(iterations, scale) {
+    ensureScalar('mirrorN', scale);
+
+    for (var i = iterations - 1; i >= 0; i--) {
+      mirrorXYZ();
+      console.log('scale', scale, 'i', i, 'iterations', iterations);
+      displace(scale * pow(2, i));
+    }
+  }
+
+  function grid() {
+    var num = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 2;
+    var scale = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : .2;
+    var roundness = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : .05;
+    // ensureScalar('num', num);
+    ensureScalar('num', scale);
+    ensureScalar('num', roundness); // num = collapseToString(num);
+    // scale = collapseToString(scale);
+    // roundness = collapseToString(roundness);
+
+    shape(function () {
+      mirrorN(num, scale);
+      boxFrame(vec3(scale), 0);
+      expand(roundness * scale);
+    })();
   } // Define any code that needs to reference auto generated from bindings.js code here
 
 
-  var postGeneratedFunctions = [getSpherical, fresnel, revolve2D, extrude2D].map(function (el) {
+  var postGeneratedFunctions = replaceMathOps([getSpherical, fresnel, revolve2D, extrude2D, mirrorN, grid].map(function (el) {
     return el.toString();
-  }).join('\n');
+  }).join('\n'));
   eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
 
   if (enable2DFlag) {

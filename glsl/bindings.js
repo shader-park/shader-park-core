@@ -50,7 +50,7 @@ export const glslBuiltInOneToOne = [
 // need better overloading system
 export const glslBuiltInOther = {
     // overload pow somehow?
-    pow: { args:[1,1], ret:1 },
+    // pow: { args:[1,1], ret:1 },
     mod: { args: [1,1], ret:1 },
     min: { args: [1,1], ret:1 },
     max: { args: [1,1], ret:1 },

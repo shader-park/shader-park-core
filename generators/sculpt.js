@@ -445,6 +445,15 @@ export function sculptToGLSL(userProvidedSrc) {
 		return new makeVarWithDims(`mix(${arg_0}, ${arg_1}, ${arg_2})`, arg_0.dims);
 	}
 
+	function pow(arg_0, arg_1) {
+		if(typeof arg_1 == 'number' || arg_1.type == 'float') {
+			arg_0 = tryMakeNum(arg_0);
+			arg_1 = tryMakeNum(arg_1);
+		}
+		ensureSameDims('mix', arg_0, arg_1);
+		return new makeVarWithDims(`pow(${collapseToString(arg_0)}, ${collapseToString(arg_1)})`, arg_0.dims);
+	}	
+
 
 	function ensureSameDims(funcName, ...args) {
 		let dims = args.map(arg => arg.dim);
@@ -1172,13 +1181,38 @@ export function sculptToGLSL(userProvidedSrc) {
 	function getSpherical() {
 		return toSpherical(getSpace());	
 	}
+
+	function mirrorN(iterations, scale) {
+		ensureScalar('mirrorN', scale);
+		for (let i=iterations-1; i >= 0; i--) {
+		  mirrorXYZ()
+		  console.log('scale', scale, 'i', i, 'iterations', iterations);
+		  displace(scale * pow(2, i));
+		}
+	  }
+	  
+	function grid(num=2, scale=.2, roundness=.05) {
+		// ensureScalar('num', num);
+		ensureScalar('num', scale);
+		ensureScalar('num', roundness);
+		// num = collapseToString(num);
+		// scale = collapseToString(scale);
+		// roundness = collapseToString(roundness);
+		shape(() => {
+		  mirrorN(num, scale);
+		  boxFrame(vec3(scale), 0);
+		  expand(roundness*scale);
+		})();
+	}	
 	
 	// Define any code that needs to reference auto generated from bindings.js code here
 	let postGeneratedFunctions = replaceMathOps([
 		getSpherical,
 		fresnel,
 		revolve2D, 
-		extrude2D
+		extrude2D,
+		mirrorN,
+		grid,
 	].map(el => el.toString()).join('\n'));
 
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
