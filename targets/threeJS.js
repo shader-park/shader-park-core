@@ -210,11 +210,15 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
                     // is passName our current Buffer?
                     
                     material.uniforms[passName].value = multiPost.passes[passName].target.texture;
-                   // material.uniforms.lastFrame.value = this.passes[passes[i]].targetOld.texture;
+                    //curPass.material.uniforms.lastFrame.value = curPass.targetOld.texture;
+                
                 }
-                // if(passName in multiPost.passes[passName].material.uniforms) {
-                //     multiPost.passes[passName].material.uniforms[passName].value = multiPost.passes[passName].material.uniforms;
-                // }
+                /*
+                if (passName in multiPost.passes[passName].material.uniforms) {
+                    console.log('setting passName', passName)
+                    multiPost.passes[passName].material.uniforms[passName].value = multiPost.passes[passName].target.texture;  
+                }
+                */
             });
             
             // if('bufferA' in material.uniforms) {

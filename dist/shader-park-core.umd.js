@@ -95855,7 +95855,7 @@
    */
 
   var MultiPostFX = /*#__PURE__*/function () {
-    function MultiPostFX(params, camera) {
+    function MultiPostFX(params) {
       _classCallCheck(this, MultiPostFX);
 
       this.renderer = params.renderer;
@@ -95986,18 +95986,33 @@
           // no passes defined, just render the scene
           this.renderer.render(scene, camera);
         } else {
-          var passes = Object.keys(this.passes);
+          var passNames = Object.keys(this.passes);
 
           for (var i = 0; i < this.nbPasses; i++) {
-            //PingPong texture
-            var curPass = this.passes[passes[i]];
+            var curPass = this.passes[passNames[i]];
+
+            var _iterator = _createForOfIteratorHelper(passNames),
+                _step;
+
+            try {
+              for (_iterator.s(); !(_step = _iterator.n()).done;) {
+                var passName = _step.value;
+                curPass.material.uniforms[passName].value = this.passes[passName].target.texture;
+              } //curPass.material.uniforms.lastFrame.value = curPass.targetOld.texture;
+              //PingPong texture
+
+            } catch (err) {
+              _iterator.e(err);
+            } finally {
+              _iterator.f();
+            }
+
             var temp = curPass.targetOld;
             curPass.targetOld = curPass.target;
             curPass.target = temp; //set uniform to correct target for feedback
             // curPass.material.uniforms[passes[i]].value = curPass.targetOld.texture;
             // curPass.material.uniforms[passes[i]].value = curPass.targetOld.texture;
-
-            curPass.material.uniforms.lastFrame.value = curPass.targetOld.texture; // apply to render target
+            // apply to render target
 
             this.renderer.setRenderTarget(curPass.target);
             this.renderer.render(curPass.scene, this.dummyCamera);
@@ -96206,10 +96221,14 @@
         passNames.forEach(function (passName) {
           if (passName in material.uniforms) {
             // is passName our current Buffer?
-            material.uniforms[passName].value = multiPost.passes[passName].target.texture; // material.uniforms.lastFrame.value = this.passes[passes[i]].targetOld.texture;
-          } // if(passName in multiPost.passes[passName].material.uniforms) {
-          //     multiPost.passes[passName].material.uniforms[passName].value = multiPost.passes[passName].material.uniforms;
-          // }
+            material.uniforms[passName].value = multiPost.passes[passName].target.texture; //curPass.material.uniforms.lastFrame.value = curPass.targetOld.texture;
+          }
+          /*
+          if (passName in multiPost.passes[passName].material.uniforms) {
+              console.log('setting passName', passName)
+              multiPost.passes[passName].material.uniforms[passName].value = multiPost.passes[passName].target.texture;  
+          }
+          */
 
         }); // if('bufferA' in material.uniforms) {
         //     material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;

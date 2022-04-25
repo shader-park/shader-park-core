@@ -59,7 +59,7 @@ import {
  *
  */
 export class MultiPostFX {
-    constructor(params, camera) {
+    constructor(params) {
         this.renderer = params.renderer;
 
         if(!this.renderer) return;
@@ -211,11 +211,18 @@ export class MultiPostFX {
             this.renderer.render(scene, camera);
         }
         else {
-            const passes = Object.keys(this.passes);
+            const passNames = Object.keys(this.passes);
             for(let i = 0; i < this.nbPasses; i++) {
+
+                let curPass = this.passes[passNames[i]];
+                for (let passName of passNames) {
+                    curPass.material.uniforms[passName].value = this.passes[passName].target.texture;
+                }
+
+                //curPass.material.uniforms.lastFrame.value = curPass.targetOld.texture;
                 
                 //PingPong texture
-                let curPass = this.passes[passes[i]];
+                
                 let temp = curPass.targetOld;
                 curPass.targetOld = curPass.target;
                 curPass.target = temp;
@@ -224,7 +231,7 @@ export class MultiPostFX {
                 // curPass.material.uniforms[passes[i]].value = curPass.targetOld.texture;
                 // curPass.material.uniforms[passes[i]].value = curPass.targetOld.texture;
                 
-                curPass.material.uniforms.lastFrame.value = curPass.targetOld.texture;
+                
                 
                 // apply to render target
                 this.renderer.setRenderTarget(curPass.target);
