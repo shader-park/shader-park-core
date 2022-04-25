@@ -95935,7 +95935,11 @@ var MultiPostFX = /*#__PURE__*/function () {
         stepSize: {
           value: 0.85
         },
-        lastFrame: new Texture()
+        lastFrame: new Texture(),
+        bufferA: new Texture(),
+        bufferB: new Texture(),
+        bufferC: new Texture(),
+        bufferD: new Texture()
       }; // merge default uniforms with params
 
       if (passParams.uniforms) {
@@ -95980,20 +95984,22 @@ var MultiPostFX = /*#__PURE__*/function () {
 
         for (var i = 0; i < this.nbPasses; i++) {
           //PingPong texture
-          var temp = this.passes[passes[i]].targetOld;
-          this.passes[passes[i]].targetOld = this.passes[passes[i]].target;
-          this.passes[passes[i]].target = temp; //set uniform to correct target for feedback
+          var curPass = this.passes[passes[i]];
+          var temp = curPass.targetOld;
+          curPass.targetOld = curPass.target;
+          curPass.target = temp; //set uniform to correct target for feedback
+          // curPass.material.uniforms[passes[i]].value = curPass.targetOld.texture;
+          // curPass.material.uniforms[passes[i]].value = curPass.targetOld.texture;
 
-          this.passes[passes[i]].material.uniforms.lastFrame.value = this.passes[passes[i]].targetOld.texture; // apply to render target
+          curPass.material.uniforms.lastFrame.value = curPass.targetOld.texture; // apply to render target
 
-          this.renderer.setRenderTarget(this.passes[passes[i]].target);
-          this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
+          this.renderer.setRenderTarget(curPass.target);
+          this.renderer.render(curPass.scene, this.dummyCamera);
         } // switch the renderer back to the main canvas
 
 
         this.renderer.setRenderTarget(null); // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, camera);
-
-        this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
+        // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
       }
     }
   }]);
@@ -96156,18 +96162,18 @@ function createMultiPassSculpture(source) {
       bufferD = _multiPassSculpToThre.bufferD,
       finalImage = _multiPassSculpToThre.finalImage;
 
-  console.log('buffA', bufferA);
   var passes = {
     bufferA: {
-      fragmentShader: bufferA.frag //             fragmentShader: `
-      //             precision highp float;
-      //             uniform vec2 resolution;
-      //             void main() {
-      //                 vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
-      //                 gl_FragColor = color;
-      //             }
-      //         `,
-
+      fragmentShader: bufferA.frag
+    },
+    bufferB: {
+      fragmentShader: bufferB.frag
+    },
+    bufferC: {
+      fragmentShader: bufferC.frag
+    },
+    bufferD: {
+      fragmentShader: bufferD.frag
     }
   }; // let material = sculptToThreeJSMaterial(finalImage);
 
@@ -96177,6 +96183,7 @@ function createMultiPassSculpture(source) {
   material.uniforms['_scale'].value = radius;
   var mesh = new Mesh(geometry, material);
   var multiPost;
+  var passNames = Object.keys(passes);
 
   mesh.onBeforeRender = function (renderer, scene, camera, geometry, material, group) {
     if (!multiPost) {
@@ -96190,15 +96197,20 @@ function createMultiPassSculpture(source) {
         multiPost.resize();
       }, false); // console.log(multiPost)
     } else {
-      multiPost.render(scene, camera);
+      passNames.forEach(function (passName) {
+        if (passName in material.uniforms) {
+          // is passName our current Buffer?
+          material.uniforms[passName].value = multiPost.passes[passName].target.texture; // material.uniforms.lastFrame.value = this.passes[passes[i]].targetOld.texture;
+        } // if(passName in multiPost.passes[passName].material.uniforms) {
+        //     multiPost.passes[passName].material.uniforms[passName].value = multiPost.passes[passName].material.uniforms;
+        // }
 
-      if ('bufferA' in material.uniforms) {
-        material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
-      }
-
-      if ('bufferA' in multiPost.passes.bufferA.material.uniforms) {
-        multiPost.passes['bufferA'].material.uniforms['bufferA'].value = multiPost.passes.bufferA.material.uniforms;
-      }
+      }); // if('bufferA' in material.uniforms) {
+      //     material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
+      // }
+      // if('bufferA' in multiPost.passes.bufferA.material.uniforms) {
+      //     multiPost.passes['bufferA'].material.uniforms['bufferA'].value = multiPost.passes.bufferA.material.uniforms;
+      // }
     }
 
     var uniformsToUpdate = uniformCallback();
@@ -96223,6 +96235,8 @@ function createMultiPassSculpture(source) {
       }
     } // material.uniforms['sculptureCenter'].value = geometry.position;
 
+
+    multiPost.render(scene, camera);
   };
 
   return mesh;

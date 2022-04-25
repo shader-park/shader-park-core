@@ -167,19 +167,18 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
         geometry = new SphereBufferGeometry( radius, segments, segments );   
     }
     let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = multiPassSculpToThreeJSMaterial(source);
-    console.log('buffA', bufferA);
     let passes = {
         bufferA: {
             fragmentShader: bufferA.frag,
-//             fragmentShader: `
-//             precision highp float;
-//             uniform vec2 resolution;
-            
-//             void main() {
-//                 vec4 color = vec4(gl_FragCoord.xy / resolution.xy, 1., 1.);
-//                 gl_FragColor = color;
-//             }
-//         `,
+        },
+        bufferB: {
+            fragmentShader: bufferB.frag,
+        },
+        bufferC: {
+            fragmentShader: bufferC.frag,
+        },
+        bufferD: {
+            fragmentShader: bufferD.frag,
         }
     }
     // let material = sculptToThreeJSMaterial(finalImage);
@@ -190,6 +189,7 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
     
     let mesh = new Mesh(geometry, material);
     let multiPost;
+    let passNames = Object.keys(passes);
     mesh.onBeforeRender = function( renderer, scene, camera, geometry, material, group ) {
         if(!multiPost) {
             multiPost = new MultiPostFX({
@@ -203,14 +203,27 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
             }, false);
             // console.log(multiPost)
         } else {
-            multiPost.render(scene, camera);
-            if('bufferA' in material.uniforms) {
-                material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
-            }
-            if('bufferA' in multiPost.passes.bufferA.material.uniforms) {
-                multiPost.passes['bufferA'].material.uniforms['bufferA'].value = multiPost.passes.bufferA.material.uniforms;
+            
+            passNames.forEach((passName) => {
 
-            }
+                if(passName in material.uniforms){
+                    // is passName our current Buffer?
+                    
+                    material.uniforms[passName].value = multiPost.passes[passName].target.texture;
+                   // material.uniforms.lastFrame.value = this.passes[passes[i]].targetOld.texture;
+                }
+                // if(passName in multiPost.passes[passName].material.uniforms) {
+                //     multiPost.passes[passName].material.uniforms[passName].value = multiPost.passes[passName].material.uniforms;
+                // }
+            });
+            
+            // if('bufferA' in material.uniforms) {
+            //     material.uniforms['bufferA'].value = multiPost.passes['bufferA'].target.texture;
+            // }
+            // if('bufferA' in multiPost.passes.bufferA.material.uniforms) {
+            //     multiPost.passes['bufferA'].material.uniforms['bufferA'].value = multiPost.passes.bufferA.material.uniforms;
+
+            // }
         }
         let uniformsToUpdate = uniformCallback();
         if (!(typeof uniformsToUpdate === "object")) {
@@ -223,6 +236,7 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
             }
         }
         // material.uniforms['sculptureCenter'].value = geometry.position;
+        multiPost.render(scene, camera);
     }
     return mesh;
 }

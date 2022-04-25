@@ -163,7 +163,11 @@ export class MultiPostFX {
             _scale: { value:  1.0},
             time: {value: 0.0},
             stepSize: {value: 0.85},
-            lastFrame: new Texture()
+            lastFrame: new Texture(),
+            bufferA: new Texture(),
+            bufferB: new Texture(),
+            bufferC: new Texture(),
+            bufferD: new Texture()
         };
 
         // merge default uniforms with params
@@ -211,20 +215,26 @@ export class MultiPostFX {
             for(let i = 0; i < this.nbPasses; i++) {
                 
                 //PingPong texture
-                let temp = this.passes[passes[i]].targetOld;
-                this.passes[passes[i]].targetOld = this.passes[passes[i]].target;
-                this.passes[passes[i]].target = temp;
+                let curPass = this.passes[passes[i]];
+                let temp = curPass.targetOld;
+                curPass.targetOld = curPass.target;
+                curPass.target = temp;
                 //set uniform to correct target for feedback
-                this.passes[passes[i]].material.uniforms.lastFrame.value = this.passes[passes[i]].targetOld.texture;
+                
+                // curPass.material.uniforms[passes[i]].value = curPass.targetOld.texture;
+                // curPass.material.uniforms[passes[i]].value = curPass.targetOld.texture;
+                
+                curPass.material.uniforms.lastFrame.value = curPass.targetOld.texture;
+                
                 // apply to render target
-                this.renderer.setRenderTarget(this.passes[passes[i]].target);
-                this.renderer.render(this.passes[passes[i]].scene, this.dummyCamera);
+                this.renderer.setRenderTarget(curPass.target);
+                this.renderer.render(curPass.scene, this.dummyCamera);
             }
             
             // switch the renderer back to the main canvas
             this.renderer.setRenderTarget(null);
             // this.renderer.render(this.passes[passes[this.nbPasses - 1]].scene, camera);
-            this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
+            // this.renderer.render(this.passes[passes[0]].scene, this.dummyCamera);
         }
     }
 }
