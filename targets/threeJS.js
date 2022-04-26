@@ -78,11 +78,9 @@ export function multiPassSculpToThreeJSMaterial(passesSources) {
     const passes = spCodeToMultiPassGLSL(passesSources);
     let output = {};
     for (const [key, value] of Object.entries(passes)) {
-        console.log('keyval', key, value)
         let src = generateThreeJSFrag(value);
         output[key] = src;
     }
-    console.log(output)
     let finalImage = output['finalImage'];
     let material = makeMaterial(finalImage.uniforms, finalImage.vert, finalImage.frag);
     material.uniformDescriptions = finalImage.uniforms;
@@ -153,10 +151,6 @@ export function createMultiPassSculptureWithGeometry(geometry, source, uniformCa
 
 // TODO NEXT Replace sculptToThreeJSMaterial with 
 export function createMultiPassSculpture(source, uniformCallback=() => {return {}}, params={}) {
-    
-    // source = convertFunctionToString(source);
-    // let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = source;
-
     let radius = ('radius' in params)? params.radius: 2;
 
     let geometry;
@@ -166,7 +160,7 @@ export function createMultiPassSculpture(source, uniformCallback=() => {return {
         let segments = ('segments' in params)? params.segments: 10;
         geometry = new SphereBufferGeometry( radius, segments, segments );   
     }
-    let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = multiPassSculpToThreeJSMaterial(source);
+    let {bufferA, bufferB, bufferC, bufferD, finalImage} = multiPassSculpToThreeJSMaterial(source);
     let passes = {
         bufferA: {
             fragmentShader: bufferA.frag,

@@ -95962,8 +95962,7 @@ var MultiPostFX = /*#__PURE__*/function () {
   }, {
     key: "resize",
     value: function resize() {
-      this.renderer.getDrawingBufferSize(this.resolution);
-      console.log(this.resolution); // resize all passes
+      this.renderer.getDrawingBufferSize(this.resolution); // resize all passes
 
       var passes = Object.keys(this.passes);
 
@@ -96078,12 +96077,10 @@ function multiPassSculpToThreeJSMaterial(passesSources) {
         key = _Object$entries$_i[0],
         value = _Object$entries$_i[1];
 
-    console.log('keyval', key, value);
     var src = generateThreeJSFrag(value);
     output[key] = src;
   }
 
-  console.log(output);
   var finalImage = output['finalImage'];
   var material = makeMaterial(finalImage.uniforms, finalImage.vert, finalImage.frag);
   material.uniformDescriptions = finalImage.uniforms;
@@ -96157,8 +96154,6 @@ function createMultiPassSculpture(source) {
     return {};
   };
   var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-  // source = convertFunctionToString(source);
-  // let {common, bufferA, bufferB, bufferC, bufferD, finalImage} = source;
   var radius = 'radius' in params ? params.radius : 2;
   var geometry;
 
@@ -96170,7 +96165,6 @@ function createMultiPassSculpture(source) {
   }
 
   var _multiPassSculpToThre = multiPassSculpToThreeJSMaterial(source),
-      common = _multiPassSculpToThre.common,
       bufferA = _multiPassSculpToThre.bufferA,
       bufferB = _multiPassSculpToThre.bufferB,
       bufferC = _multiPassSculpToThre.bufferC,

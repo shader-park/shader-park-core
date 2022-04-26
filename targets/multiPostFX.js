@@ -195,7 +195,6 @@ export class MultiPostFX {
 
     resize() {
         this.renderer.getDrawingBufferSize(this.resolution);
-        console.log(this.resolution)
         // resize all passes
         const passes = Object.keys(this.passes);
         for(let i = 0; i < this.nbPasses; i++) {
