@@ -296,7 +296,9 @@ export function sculptToGLSL(userProvidedSrc) {
 		params.forEach(param => {
 			let type = param.declaration.specifier.specifier.token;
 			checkTypes = checkTypes && type in dimsMapping;
-			console.log(funcName, type, checkTypes)
+			if(debug) {
+				console.log('glslFunc', funcName, type, checkTypes)
+			}
 			if(!checkTypes) {
 				compileError(`glsl error: glslFuncES3 currently supports binding to ${Object.keys(dimsMapping)} param type was ${type}`); 
 			}
@@ -1193,8 +1195,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	function mirrorN(iterations, scale) {
 		ensureScalar('mirrorN', scale);
 		for (let i=iterations-1; i >= 0; i--) {
-		  mirrorXYZ()
-		  console.log('scale', scale, 'i', i, 'iterations', iterations);
+		  mirrorXYZ();
 		  displace(scale * pow(2, i));
 		}
 	  }
