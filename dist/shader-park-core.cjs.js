@@ -44006,7 +44006,10 @@ function sculptToGLSL(userProvidedSrc) {
     params.forEach(function (param) {
       var type = param.declaration.specifier.specifier.token;
       checkTypes = checkTypes && type in dimsMapping;
-      console.log(funcName, type, checkTypes);
+
+      if (debug) {
+        console.log('glslFunc', funcName, type, checkTypes);
+      }
 
       if (!checkTypes) {
         compileError("glsl error: glslFuncES3 currently supports binding to ".concat(Object.keys(dimsMapping), " param type was ").concat(type));
@@ -45053,7 +45056,6 @@ function sculptToGLSL(userProvidedSrc) {
 
     for (var i = iterations - 1; i >= 0; i--) {
       mirrorXYZ();
-      console.log('scale', scale, 'i', i, 'iterations', iterations);
       displace(scale * pow(2, i));
     }
   }
@@ -96292,7 +96294,7 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log("using shader-park version: 0.1.15"); /// Generate code for various targets
+console.log("using shader-park version: 0.1.17"); /// Generate code for various targets
 
 exports.baseUniforms = baseUniforms;
 exports.bindStaticData = bindStaticData;
