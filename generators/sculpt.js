@@ -1212,7 +1212,28 @@ export function sculptToGLSL(userProvidedSrc) {
 		  boxFrame(vec3(scale), 0);
 		  expand(roundness*scale);
 		})();
-	}	
+	}
+	
+	function repeatSpace(scale, spacing, counts) {
+		ensureDims("repeatSpace", 3, scale);
+		ensureDims("repeatSpace", 3, spacing);
+		ensureDims("repeatSpace", 3, counts);
+		spacing *= 2 * scale;
+		counts -= 1;
+		const s = getSpace();
+		const rounded = floor(s/spacing + 0.5);
+		const clamped = vec3(
+			clamp(rounded.x, -1*counts.x, counts.x),
+			clamp(rounded.y, -1*counts.y, counts.y),
+			clamp(rounded.z, -1*counts.z, counts.z)
+		);
+		displace(spacing*clamped);
+		// return instance x, y, z index 
+		// and instances local coordinates
+		const coordScaled = s / (spacing);
+		const index = floor(coordScaled + 0.5);
+		return { "index": index, "local": coordScaled-index };
+	}
 	
 	// Define any code that needs to reference auto generated from bindings.js code here
 	let postGeneratedFunctions = replaceMathOps([
@@ -1222,6 +1243,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		extrude2D,
 		mirrorN,
 		grid,
+		repeatSpace
 	].map(el => el.toString()).join('\n'));
 
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
