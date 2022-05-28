@@ -50,7 +50,7 @@ import {
     uniformsToGLSL
 } from './generators/sculpt.js'
 
-console.log(`using shader-park version: 0.1.17`);
+console.log(`using shader-park version: 0.1.18`);
 
 /// Generate code for various targets
 

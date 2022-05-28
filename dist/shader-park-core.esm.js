@@ -44732,6 +44732,16 @@ function sculptToGLSL(userProvidedSrc) {
 
   function getSDF() {
     return float(getCurrentDist(), true);
+  }
+
+  function extractSDF(prim) {
+    return function () {
+      var curD = float(getCurrentDist(), false);
+      prim.apply(void 0, arguments);
+      var extractedSDF = float(getCurrentDist(), false);
+      appendSources("".concat(getCurrentDist(), " = ").concat(collapseToString(curD), ";\n"));
+      return extractedSDF;
+    };
   } // Displacements
 
 
@@ -45071,10 +45081,58 @@ function sculptToGLSL(userProvidedSrc) {
       boxFrame(vec3(scale), 0);
       expand(roundness * scale);
     })();
+  }
+
+  function repeatLinear(scale, spacing, counts) {
+    ensureDims("repeatSpace", 3, scale);
+    ensureDims("repeatSpace", 3, spacing);
+    ensureDims("repeatSpace", 3, counts);
+    spacing *= 2 * scale;
+    counts -= 1;
+    var s = getSpace();
+    var rounded = floor(s / spacing + 0.5);
+    var clamped = vec3(clamp(rounded.x, -1 * counts.x, counts.x), clamp(rounded.y, -1 * counts.y, counts.y), clamp(rounded.z, -1 * counts.z, counts.z));
+    displace(spacing * clamped); // return instance x, y, z index 
+    // and instances local coordinates
+
+    var coordScaled = s / spacing;
+    var index = floor(coordScaled + 0.5);
+    return {
+      "index": index,
+      "local": coordScaled - index
+    };
+  } // based on https://mercury.sexy/hg_sdf/
+
+
+  function repeatRadial(repeats) {
+    var s = getSpace();
+    var p = vec3(s.x, 0, s.z);
+    var angle = 2 * PI / repeats;
+    var a = atan(p.z, p.x) + angle / 2;
+    var r = length(p);
+    var c = floor(a / angle);
+    var ma = mod(a, angle) - angle / 2;
+    var px = cos(ma) * r;
+    var pz = sin(ma) * r;
+    setSpace(vec3(px, s.y, pz));
+    var absC = abs(c); // account for odd number of repeats
+
+    var diff = step(absC, repeats / 2);
+    c = diff * absC + (1 - diff) * c; // return radial index
+
+    return c;
+  }
+
+  function scaleShape(primitive, factor) {
+    return function () {
+      setSpace(getSpace() / factor);
+      primitive.apply(void 0, arguments);
+      setSDF(getSDF() * factor);
+    };
   } // Define any code that needs to reference auto generated from bindings.js code here
 
 
-  var postGeneratedFunctions = replaceMathOps([getSpherical, fresnel, revolve2D, extrude2D, mirrorN, grid].map(function (el) {
+  var postGeneratedFunctions = replaceMathOps([getSpherical, fresnel, revolve2D, extrude2D, mirrorN, grid, repeatLinear, repeatRadial, scaleShape].map(function (el) {
     return el.toString();
   }).join('\n'));
   eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
@@ -45407,7 +45465,7 @@ function generateUUID() {
 
 }
 
-function clamp( value, min, max ) {
+function clamp$1( value, min, max ) {
 
 	return Math.max( min, Math.min( max, value ) );
 
@@ -45612,7 +45670,7 @@ var MathUtils = /*#__PURE__*/Object.freeze({
 	DEG2RAD: DEG2RAD,
 	RAD2DEG: RAD2DEG,
 	generateUUID: generateUUID,
-	clamp: clamp,
+	clamp: clamp$1,
 	euclideanModulo: euclideanModulo,
 	mapLinear: mapLinear,
 	inverseLerp: inverseLerp,
@@ -46614,8 +46672,8 @@ class Color {
 
 		// h,s,l ranges are in 0.0 - 1.0
 		h = euclideanModulo( h, 1 );
-		s = clamp( s, 0, 1 );
-		l = clamp( l, 0, 1 );
+		s = clamp$1( s, 0, 1 );
+		l = clamp$1( l, 0, 1 );
 
 		if ( s === 0 ) {
 
@@ -48924,7 +48982,7 @@ class Quaternion {
 
 	angleTo( q ) {
 
-		return 2 * Math.acos( Math.abs( clamp( this.dot( q ), - 1, 1 ) ) );
+		return 2 * Math.acos( Math.abs( clamp$1( this.dot( q ), - 1, 1 ) ) );
 
 	}
 
@@ -49767,7 +49825,7 @@ class Vector3 {
 
 		// clamp, to handle numerical problems
 
-		return Math.acos( clamp( theta, - 1, 1 ) );
+		return Math.acos( clamp$1( theta, - 1, 1 ) );
 
 	}
 
@@ -52195,7 +52253,7 @@ class Euler {
 
 			case 'XYZ':
 
-				this._y = Math.asin( clamp( m13, - 1, 1 ) );
+				this._y = Math.asin( clamp$1( m13, - 1, 1 ) );
 
 				if ( Math.abs( m13 ) < 0.9999999 ) {
 
@@ -52213,7 +52271,7 @@ class Euler {
 
 			case 'YXZ':
 
-				this._x = Math.asin( - clamp( m23, - 1, 1 ) );
+				this._x = Math.asin( - clamp$1( m23, - 1, 1 ) );
 
 				if ( Math.abs( m23 ) < 0.9999999 ) {
 
@@ -52231,7 +52289,7 @@ class Euler {
 
 			case 'ZXY':
 
-				this._x = Math.asin( clamp( m32, - 1, 1 ) );
+				this._x = Math.asin( clamp$1( m32, - 1, 1 ) );
 
 				if ( Math.abs( m32 ) < 0.9999999 ) {
 
@@ -52249,7 +52307,7 @@ class Euler {
 
 			case 'ZYX':
 
-				this._y = Math.asin( - clamp( m31, - 1, 1 ) );
+				this._y = Math.asin( - clamp$1( m31, - 1, 1 ) );
 
 				if ( Math.abs( m31 ) < 0.9999999 ) {
 
@@ -52267,7 +52325,7 @@ class Euler {
 
 			case 'YZX':
 
-				this._z = Math.asin( clamp( m21, - 1, 1 ) );
+				this._z = Math.asin( clamp$1( m21, - 1, 1 ) );
 
 				if ( Math.abs( m21 ) < 0.9999999 ) {
 
@@ -52285,7 +52343,7 @@ class Euler {
 
 			case 'XZY':
 
-				this._z = Math.asin( - clamp( m12, - 1, 1 ) );
+				this._z = Math.asin( - clamp$1( m12, - 1, 1 ) );
 
 				if ( Math.abs( m12 ) < 0.9999999 ) {
 
@@ -76809,7 +76867,7 @@ class Curve {
 
 				vec.normalize();
 
-				const theta = Math.acos( clamp( tangents[ i - 1 ].dot( tangents[ i ] ), - 1, 1 ) ); // clamp for floating pt errors
+				const theta = Math.acos( clamp$1( tangents[ i - 1 ].dot( tangents[ i ] ), - 1, 1 ) ); // clamp for floating pt errors
 
 				normals[ i ].applyMatrix4( mat.makeRotationAxis( vec, theta ) );
 
@@ -76823,7 +76881,7 @@ class Curve {
 
 		if ( closed === true ) {
 
-			let theta = Math.acos( clamp( normals[ 0 ].dot( normals[ segments ] ), - 1, 1 ) );
+			let theta = Math.acos( clamp$1( normals[ 0 ].dot( normals[ segments ] ), - 1, 1 ) );
 			theta /= segments;
 
 			if ( tangents[ 0 ].dot( vec.crossVectors( normals[ 0 ], normals[ segments ] ) ) > 0 ) {
@@ -80196,7 +80254,7 @@ class LatheGeometry extends BufferGeometry {
 
 		// clamp phiLength so it's in range of [ 0, 2PI ]
 
-		phiLength = clamp( phiLength, 0, Math.PI * 2 );
+		phiLength = clamp$1( phiLength, 0, Math.PI * 2 );
 
 		// buffers
 
@@ -81707,7 +81765,7 @@ class MeshPhysicalMaterial extends MeshStandardMaterial {
 		Object.defineProperty( this, 'reflectivity', {
 			get: function () {
 
-				return ( clamp( 2.5 * ( this.ior - 1 ) / ( this.ior + 1 ), 0, 1 ) );
+				return ( clamp$1( 2.5 * ( this.ior - 1 ) / ( this.ior + 1 ), 0, 1 ) );
 
 			},
 			set: function ( reflectivity ) {
@@ -92043,7 +92101,7 @@ class Spherical {
 		} else {
 
 			this.theta = Math.atan2( x, z );
-			this.phi = Math.acos( clamp( y / this.radius, - 1, 1 ) );
+			this.phi = Math.acos( clamp$1( y / this.radius, - 1, 1 ) );
 
 		}
 
@@ -92391,7 +92449,7 @@ class Line3 {
 
 		if ( clampToLine ) {
 
-			t = clamp( t, 0, 1 );
+			t = clamp$1( t, 0, 1 );
 
 		}
 
@@ -96290,6 +96348,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log("using shader-park version: 0.1.17"); /// Generate code for various targets
+console.log("using shader-park version: 0.1.18"); /// Generate code for various targets
 
 export { baseUniforms, bindStaticData, createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, fragFooter, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, minimalHeader, minimalVertexSource, sculptToGLSL, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource, sculptureStarterCode, uniformsToGLSL, useHemisphereLight, usePBRHeader };
