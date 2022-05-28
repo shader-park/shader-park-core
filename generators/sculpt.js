@@ -1214,7 +1214,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		})();
 	}
 	
-	function repeatSpace(scale, spacing, counts) {
+	function repeatLinear(scale, spacing, counts) {
 		ensureDims("repeatSpace", 3, scale);
 		ensureDims("repeatSpace", 3, spacing);
 		ensureDims("repeatSpace", 3, counts);
@@ -1235,6 +1235,34 @@ export function sculptToGLSL(userProvidedSrc) {
 		return { "index": index, "local": coordScaled-index };
 	}
 	
+	// based on https://mercury.sexy/hg_sdf/
+	function repeatRadial(repeats) {
+		const s = getSpace();
+		const p = vec3(s.x, 0, s.z);
+		const angle = 2 * PI / repeats;
+		const a = atan(p.z, p.x) + angle / 2;
+		const r = length(p);
+		let c = floor(a / angle);
+		const ma = mod(a, angle) - angle / 2;
+		const px = cos(ma) * r;
+		const pz = sin(ma) * r;
+		setSpace(vec3(px, s.y, pz));
+		const absC = abs(c);
+		// account for odd number of repeats
+		const diff = step(absC, (repeats/2));
+		c = diff*absC + (1-diff)*c;
+		// return radial index
+		return c;
+	}
+	
+	function scaleShape(primitive, factor) {
+		return (...args) => {
+			setSpace(getSpace()/factor);
+			primitive(...args);
+			setSDF(getSDF()*factor);
+		};
+	}
+	
 	// Define any code that needs to reference auto generated from bindings.js code here
 	let postGeneratedFunctions = replaceMathOps([
 		getSpherical,
@@ -1243,7 +1271,9 @@ export function sculptToGLSL(userProvidedSrc) {
 		extrude2D,
 		mirrorN,
 		grid,
-		repeatSpace
+		repeatLinear,
+		repeatRadial,
+		scaleShape
 	].map(el => el.toString()).join('\n'));
 
 	eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
