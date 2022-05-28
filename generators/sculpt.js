@@ -922,6 +922,16 @@ export function sculptToGLSL(userProvidedSrc) {
 	function getSDF() {
 		return float(getCurrentDist(), true);
 	}
+	
+	function extractSDF(prim) {
+	  return (...args) => {
+	    const curD = float(getCurrentDist(), false);
+	    prim(...args);
+	    const extractedSDF = float(getCurrentDist(), false);
+	    appendSources(`${getCurrentDist()} = ${collapseToString(curD)};\n`);
+	    return extractedSDF;
+	  }
+	}
 
 	// Displacements
 
