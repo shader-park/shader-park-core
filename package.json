@@ -1,6 +1,6 @@
 {
   "name": "shader-park-core",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "description": "core glsl and js framework for shader-park",
   "main": "dist/shader-park-core.esm.js",
   "csj": "dist/shader-park-core.cjs.js",
@@ -61,6 +61,7 @@
     "png-js": "^1.0.0",
     "puppeteer": "^8.0.0",
     "rollup": "^2.42.4",
-    "rollup-plugin-babel": "^4.4.0"
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-version-injector": "^1.3.3"
   }
 }
