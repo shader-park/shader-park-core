@@ -1225,9 +1225,9 @@ export function sculptToGLSL(userProvidedSrc) {
 	}
 	
 	function repeatLinear(scale, spacing, counts) {
-		ensureDims("repeatSpace", 3, scale);
-		ensureDims("repeatSpace", 3, spacing);
-		ensureDims("repeatSpace", 3, counts);
+		ensureDims("repeatLinear", 3, scale);
+		ensureDims("repeatLinear", 3, spacing);
+		ensureDims("repeatLinear", 3, counts);
 		spacing *= 2 * scale;
 		counts -= 1;
 		const s = getSpace();
@@ -1247,6 +1247,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	
 	// based on https://mercury.sexy/hg_sdf/
 	function repeatRadial(repeats) {
+		ensureScalar('repeatRadial', repeats);
 		const s = getSpace();
 		const p = vec3(s.x, 0, s.z);
 		const angle = 2 * PI / repeats;
