@@ -3,8 +3,20 @@ on:
   release:
     types: [created]
 jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - run: npm ci
+      - run: npm test
+  
   publish-npm:
       runs-on: ubuntu-latest
+      needs: build
       steps:
         - uses: actions/checkout@v3
         - uses: actions/setup-node@v3
