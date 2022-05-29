@@ -3,20 +3,9 @@ on:
   release:
     types: [created]
 jobs:
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - run: npm ci
-      - run: npm test
   
   publish-npm:
       runs-on: ubuntu-latest
-      needs: build
       steps:
         - uses: actions/checkout@v3
         - uses: actions/setup-node@v3
@@ -27,4 +16,15 @@ jobs:
         - run: npm publish
           env:
             NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+            
+  discord-notification:
+      runs-on: ubuntu-latest
+      needs: publish-npm
+
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      steps:
+        - uses: Ilshidur/action-discord@0.3.2
+        - with:
+           args: 'shader-park-core {{ EVENT_PAYLOAD.package_version.version }} has been published! {{ EVENT_PAYLOAD.package_version.release.url }}'
 
