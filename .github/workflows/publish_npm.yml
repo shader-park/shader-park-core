@@ -20,11 +20,11 @@ jobs:
   discord-notification:
       runs-on: ubuntu-latest
       needs: publish-npm
-
-      env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       steps:
-        - uses: Ilshidur/action-discord@0.3.2
-        - with:
-           args: 'shader-park-core {{ EVENT_PAYLOAD.package_version.version }} has been published! {{ EVENT_PAYLOAD.package_version.release.url }}'
+      - name: Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@0.3.2
+        with:
+          args: 'shader-park-core {{ EVENT_PAYLOAD.package_version.version }} has been published! {{ EVENT_PAYLOAD.package_version.release.url }}'
 
