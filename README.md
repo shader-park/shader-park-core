@@ -2,7 +2,7 @@
 
 
 ## The library powering [Shader Park 🔮](https://shaderpark.com)     
-![Build Status](https://github.com/shader-park/shader-park-core/actions/workflows/node.js.yml/badge.svg)
+![Build Status](https://github.com/shader-park/shader-park-core/actions/workflows/build_test.yml/badge.svg)
 
 
 Shader Park simplifies creating procedural graphics using javascript.  
