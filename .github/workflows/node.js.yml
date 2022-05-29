@@ -31,6 +31,9 @@ jobs:
     
   publish-npm:
     needs: build
+    on:
+      release:
+        types: [created]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
