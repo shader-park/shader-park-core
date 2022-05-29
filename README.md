@@ -2,7 +2,8 @@
 
 
 ## The library powering [Shader Park 🔮](https://shaderpark.com)     
-[![Build Status](https://travis-ci.com/shader-park/shader-park-core.svg?branch=master)](https://travis-ci.com/shader-park/shader-park-core)  
+![Build Status](https://github.com/shader-park/shader-park-core/actions/workflows/node.js.yml/badge.svg)
+
 
 Shader Park simplifies creating procedural graphics using javascript.  
 With just a few lines of code, create shaders which are:
