@@ -199,7 +199,6 @@ export function replaceMathOps(codeSrc) {
 export function sculptToGLSL(userProvidedSrc) {
 	const PI = Math.PI;
 	const TWO_PI = Math.PI * 2;
-	const TAU = TWO_PI;
 	
 	let debug = false;
 	userProvidedSrc = replaceMathOps(userProvidedSrc);
