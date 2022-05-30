@@ -110,7 +110,7 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
     gl.linkProgram(shaderProgram);
 
     // Check if it linked.
-    var success = gl.getProgramParameter(shaderProgram, gl.LINK_STATUS);
+    const success = gl.getProgramParameter(shaderProgram, gl.LINK_STATUS);
     if (!success) {
         // something went wrong with the link; get the error
         console.error("program failed to link:" + gl.getProgramInfoLog(shaderProgram));
