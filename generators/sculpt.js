@@ -198,7 +198,6 @@ export function replaceMathOps(codeSrc) {
 
 export function sculptToGLSL(userProvidedSrc) {
 	const PI = Math.PI;
-	const TWO_PI = Math.PI * 2;
 	
 	let debug = false;
 	userProvidedSrc = replaceMathOps(userProvidedSrc);
@@ -1259,7 +1258,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		setSpace(vec3(px, s.y, pz));
 		const absC = abs(c);
 		// account for odd number of repeats
-		const diff = step(absC, (repeats/2));
+		const diff = step(absC, (repeats / 2));
 		c = diff*absC + (1-diff)*c;
 		// return radial index
 		return c;
