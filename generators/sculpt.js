@@ -205,7 +205,7 @@ export function sculptToGLSL(userProvidedSrc) {
 	userProvidedSrc = replaceMathOps(userProvidedSrc);
 
 	if (debug) {
-		console.log('tree', tree);
+		console.log('userProvidedSrc', userProvidedSrc);
 	}
 
 	let generatedJSFuncsSource = "";
