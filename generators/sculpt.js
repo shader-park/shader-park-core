@@ -9,7 +9,7 @@ import {
 	glslBuiltInOther
 } from '../glsl/bindings.js';
 
-import {convertFunctionToString} from '../targets/helpers.js'
+import { convertFunctionToString } from '../targets/helpers.js';
 
 import glsl from './glslParser.js';
 
@@ -68,7 +68,6 @@ ${lgt}
 
 // Converts binary math operators to our own version
 function replaceBinaryOp(syntaxTree) {
-
 	if (typeof syntaxTree === 'object') {
 		for (let node in syntaxTree) {
 			if (syntaxTree.hasOwnProperty(node)) {
@@ -343,7 +342,7 @@ export function sculptToGLSL(userProvidedSrc) {
 		boundSDFs[key] = glslSDF(value);
 	}
 
-	let {boxFrame, link, cappedTorus}  = boundSDFs;
+	let { boxFrame, link, cappedTorus }  = boundSDFs;
 
 	
 
