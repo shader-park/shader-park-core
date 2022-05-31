@@ -1,90 +1,410 @@
-/* Version: 0.1.26 - May 29, 2022 01:18:34 */
+/* Version: 0.1.26 - May 31, 2022 00:09:46 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global['shader-park-core'] = {}));
-}(this, (function (exports) { 'use strict';
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["shader-park-core"] = {}));
+})(this, (function (exports) { 'use strict';
 
-  function _typeof(obj) {
-    "@babel/helpers - typeof";
+  function createMetadataMethodsForProperty(metadataMap, kind, property) {
+    return {
+      getMetadata: function (key) {
+        if ("symbol" != typeof key) throw new TypeError("Metadata keys must be symbols, received: " + key);
+        var metadataForKey = metadataMap[key];
+        if (void 0 !== metadataForKey) if (1 === kind) {
+          var pub = metadataForKey.public;
+          if (void 0 !== pub) return pub[property];
+        } else if (2 === kind) {
+          var priv = metadataForKey.private;
+          if (void 0 !== priv) return priv.get(property);
+        } else if (Object.hasOwnProperty.call(metadataForKey, "constructor")) return metadataForKey.constructor;
+      },
+      setMetadata: function (key, value) {
+        if ("symbol" != typeof key) throw new TypeError("Metadata keys must be symbols, received: " + key);
+        var metadataForKey = metadataMap[key];
 
-    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-      _typeof = function (obj) {
-        return typeof obj;
-      };
-    } else {
-      _typeof = function (obj) {
-        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-      };
+        if (void 0 === metadataForKey && (metadataForKey = metadataMap[key] = {}), 1 === kind) {
+          var pub = metadataForKey.public;
+          void 0 === pub && (pub = metadataForKey.public = {}), pub[property] = value;
+        } else if (2 === kind) {
+          var priv = metadataForKey.priv;
+          void 0 === priv && (priv = metadataForKey.private = new Map()), priv.set(property, value);
+        } else metadataForKey.constructor = value;
+      }
+    };
+  }
+
+  function convertMetadataMapToFinal(obj, metadataMap) {
+    var parentMetadataMap = obj[Symbol.metadata || Symbol.for("Symbol.metadata")],
+        metadataKeys = Object.getOwnPropertySymbols(metadataMap);
+
+    if (0 !== metadataKeys.length) {
+      for (var i = 0; i < metadataKeys.length; i++) {
+        var key = metadataKeys[i],
+            metaForKey = metadataMap[key],
+            parentMetaForKey = parentMetadataMap ? parentMetadataMap[key] : null,
+            pub = metaForKey.public,
+            parentPub = parentMetaForKey ? parentMetaForKey.public : null;
+        pub && parentPub && Object.setPrototypeOf(pub, parentPub);
+        var priv = metaForKey.private;
+
+        if (priv) {
+          var privArr = Array.from(priv.values()),
+              parentPriv = parentMetaForKey ? parentMetaForKey.private : null;
+          parentPriv && (privArr = privArr.concat(parentPriv)), metaForKey.private = privArr;
+        }
+
+        parentMetaForKey && Object.setPrototypeOf(metaForKey, parentMetaForKey);
+      }
+
+      parentMetadataMap && Object.setPrototypeOf(metadataMap, parentMetadataMap), obj[Symbol.metadata || Symbol.for("Symbol.metadata")] = metadataMap;
+    }
+  }
+
+  function createAddInitializerMethod(initializers) {
+    return function (initializer) {
+      assertValidInitializer(initializer), initializers.push(initializer);
+    };
+  }
+
+  function memberDecCtx(base, name, desc, metadataMap, initializers, kind, isStatic, isPrivate) {
+    var kindStr;
+
+    switch (kind) {
+      case 1:
+        kindStr = "accessor";
+        break;
+
+      case 2:
+        kindStr = "method";
+        break;
+
+      case 3:
+        kindStr = "getter";
+        break;
+
+      case 4:
+        kindStr = "setter";
+        break;
+
+      default:
+        kindStr = "field";
     }
 
-    return _typeof(obj);
+    var metadataKind,
+        metadataName,
+        ctx = {
+      kind: kindStr,
+      name: isPrivate ? "#" + name : name,
+      isStatic: isStatic,
+      isPrivate: isPrivate
+    };
+
+    if (0 !== kind && (ctx.addInitializer = createAddInitializerMethod(initializers)), isPrivate) {
+      metadataKind = 2, metadataName = Symbol(name);
+      var access = {};
+      0 === kind ? (access.get = desc.get, access.set = desc.set) : 2 === kind ? access.get = function () {
+        return desc.value;
+      } : (1 !== kind && 3 !== kind || (access.get = function () {
+        return desc.get.call(this);
+      }), 1 !== kind && 4 !== kind || (access.set = function (v) {
+        desc.set.call(this, v);
+      })), ctx.access = access;
+    } else metadataKind = 1, metadataName = name;
+
+    return Object.assign(ctx, createMetadataMethodsForProperty(metadataMap, metadataKind, metadataName));
+  }
+
+  function assertValidInitializer(initializer) {
+    if ("function" != typeof initializer) throw new Error("initializers must be functions");
+  }
+
+  function assertValidReturnValue(kind, value) {
+    var type = typeof value;
+
+    if (1 === kind) {
+      if ("object" !== type || null === value) throw new Error("accessor decorators must return an object with get, set, or initializer properties or void 0");
+    } else if ("function" !== type) throw 0 === kind ? new Error("field decorators must return a initializer function or void 0") : new Error("method decorators must return a function or void 0");
+  }
+
+  function applyMemberDec(ret, base, decInfo, name, kind, isStatic, isPrivate, metadataMap, initializers) {
+    var desc,
+        initializer,
+        value,
+        decs = decInfo[0];
+    isPrivate ? desc = 0 === kind || 1 === kind ? {
+      get: decInfo[3],
+      set: decInfo[4]
+    } : 3 === kind ? {
+      get: decInfo[3]
+    } : 4 === kind ? {
+      set: decInfo[3]
+    } : {
+      value: decInfo[3]
+    } : 0 !== kind && (desc = Object.getOwnPropertyDescriptor(base, name)), 1 === kind ? value = {
+      get: desc.get,
+      set: desc.set
+    } : 2 === kind ? value = desc.value : 3 === kind ? value = desc.get : 4 === kind && (value = desc.set);
+    var newValue,
+        get,
+        set,
+        ctx = memberDecCtx(base, name, desc, metadataMap, initializers, kind, isStatic, isPrivate);
+    if ("function" == typeof decs) void 0 !== (newValue = decs(value, ctx)) && (assertValidReturnValue(kind, newValue), 0 === kind ? initializer = newValue : 1 === kind ? (initializer = newValue.initializer, get = newValue.get || value.get, set = newValue.set || value.set, value = {
+      get: get,
+      set: set
+    }) : value = newValue);else for (var i = decs.length - 1; i >= 0; i--) {
+      var newInit;
+      if (void 0 !== (newValue = (0, decs[i])(value, ctx))) assertValidReturnValue(kind, newValue), 0 === kind ? newInit = newValue : 1 === kind ? (newInit = newValue.initializer, get = newValue.get || value.get, set = newValue.set || value.set, value = {
+        get: get,
+        set: set
+      }) : value = newValue, void 0 !== newInit && (void 0 === initializer ? initializer = newInit : "function" == typeof initializer ? initializer = [initializer, newInit] : initializer.push(newInit));
+    }
+
+    if (0 === kind || 1 === kind) {
+      if (void 0 === initializer) initializer = function (instance, init) {
+        return init;
+      };else if ("function" != typeof initializer) {
+        var ownInitializers = initializer;
+
+        initializer = function (instance, init) {
+          for (var value = init, i = 0; i < ownInitializers.length; i++) value = ownInitializers[i].call(instance, value);
+
+          return value;
+        };
+      } else {
+        var originalInitializer = initializer;
+
+        initializer = function (instance, init) {
+          return originalInitializer.call(instance, init);
+        };
+      }
+      ret.push(initializer);
+    }
+
+    0 !== kind && (1 === kind ? (desc.get = value.get, desc.set = value.set) : 2 === kind ? desc.value = value : 3 === kind ? desc.get = value : 4 === kind && (desc.set = value), isPrivate ? 1 === kind ? (ret.push(function (instance, args) {
+      return value.get.call(instance, args);
+    }), ret.push(function (instance, args) {
+      return value.set.call(instance, args);
+    })) : 2 === kind ? ret.push(value) : ret.push(function (instance, args) {
+      return value.call(instance, args);
+    }) : Object.defineProperty(base, name, desc));
+  }
+
+  function applyMemberDecs(ret, Class, protoMetadataMap, staticMetadataMap, decInfos) {
+    for (var protoInitializers = [], staticInitializers = [], existingProtoNonFields = new Map(), existingStaticNonFields = new Map(), i = 0; i < decInfos.length; i++) {
+      var decInfo = decInfos[i];
+
+      if (Array.isArray(decInfo)) {
+        var base,
+            metadataMap,
+            initializers,
+            kind = decInfo[1],
+            name = decInfo[2],
+            isPrivate = decInfo.length > 3,
+            isStatic = kind >= 5;
+
+        if (isStatic ? (base = Class, metadataMap = staticMetadataMap, kind -= 5, initializers = staticInitializers) : (base = Class.prototype, metadataMap = protoMetadataMap, initializers = protoInitializers), 0 !== kind && !isPrivate) {
+          var existingNonFields = isStatic ? existingStaticNonFields : existingProtoNonFields,
+              existingKind = existingNonFields.get(name) || 0;
+          if (!0 === existingKind || 3 === existingKind && 4 !== kind || 4 === existingKind && 3 !== kind) throw new Error("Attempted to decorate a public method/accessor that has the same name as a previously decorated public method/accessor. This is not currently supported by the decorators plugin. Property name was: " + name);
+          !existingKind && kind > 2 ? existingNonFields.set(name, kind) : existingNonFields.set(name, !0);
+        }
+
+        applyMemberDec(ret, base, decInfo, name, kind, isStatic, isPrivate, metadataMap, initializers);
+      }
+    }
+
+    protoInitializers.length > 0 && pushInitializers(ret, protoInitializers), staticInitializers.length > 0 && pushInitializers(ret, staticInitializers);
+  }
+
+  function pushInitializers(ret, initializers) {
+    initializers.length > 0 ? (initializers = initializers.slice(), ret.push(function (instance) {
+      for (var i = 0; i < initializers.length; i++) initializers[i].call(instance, instance);
+
+      return instance;
+    })) : ret.push(function (instance) {
+      return instance;
+    });
+  }
+
+  function applyClassDecs(ret, targetClass, metadataMap, classDecs) {
+    for (var initializers = [], newClass = targetClass, name = targetClass.name, ctx = Object.assign({
+      kind: "class",
+      name: name,
+      addInitializer: createAddInitializerMethod(initializers)
+    }, createMetadataMethodsForProperty(metadataMap, 0, name)), i = classDecs.length - 1; i >= 0; i--) newClass = classDecs[i](newClass, ctx) || newClass;
+
+    ret.push(newClass), initializers.length > 0 ? ret.push(function () {
+      for (var i = 0; i < initializers.length; i++) initializers[i].call(newClass, newClass);
+    }) : ret.push(function () {});
+  }
+
+  function _applyDecs(targetClass, memberDecs, classDecs) {
+    var ret = [],
+        staticMetadataMap = {};
+
+    if (memberDecs) {
+      var protoMetadataMap = {};
+      applyMemberDecs(ret, targetClass, protoMetadataMap, staticMetadataMap, memberDecs), convertMetadataMapToFinal(targetClass.prototype, protoMetadataMap);
+    }
+
+    return classDecs && applyClassDecs(ret, targetClass, staticMetadataMap, classDecs), convertMetadataMapToFinal(targetClass, staticMetadataMap), ret;
+  }
+
+  function _asyncIterator(iterable) {
+    var method,
+        async,
+        sync,
+        retry = 2;
+
+    for ("undefined" != typeof Symbol && (async = Symbol.asyncIterator, sync = Symbol.iterator); retry--;) {
+      if (async && null != (method = iterable[async])) return method.call(iterable);
+      if (sync && null != (method = iterable[sync])) return new AsyncFromSyncIterator(method.call(iterable));
+      async = "@@asyncIterator", sync = "@@iterator";
+    }
+
+    throw new TypeError("Object is not async iterable");
+  }
+
+  function AsyncFromSyncIterator(s) {
+    function AsyncFromSyncIteratorContinuation(r) {
+      if (Object(r) !== r) return Promise.reject(new TypeError(r + " is not an object."));
+      var done = r.done;
+      return Promise.resolve(r.value).then(function (value) {
+        return {
+          value: value,
+          done: done
+        };
+      });
+    }
+
+    return AsyncFromSyncIterator = function (s) {
+      this.s = s, this.n = s.next;
+    }, AsyncFromSyncIterator.prototype = {
+      s: null,
+      n: null,
+      next: function () {
+        return AsyncFromSyncIteratorContinuation(this.n.apply(this.s, arguments));
+      },
+      return: function (value) {
+        var ret = this.s.return;
+        return void 0 === ret ? Promise.resolve({
+          value: value,
+          done: !0
+        }) : AsyncFromSyncIteratorContinuation(ret.apply(this.s, arguments));
+      },
+      throw: function (value) {
+        var thr = this.s.return;
+        return void 0 === thr ? Promise.reject(value) : AsyncFromSyncIteratorContinuation(thr.apply(this.s, arguments));
+      }
+    }, new AsyncFromSyncIterator(s);
   }
 
   var REACT_ELEMENT_TYPE;
 
   function _jsx(type, props, key, children) {
-    if (!REACT_ELEMENT_TYPE) {
-      REACT_ELEMENT_TYPE = typeof Symbol === "function" && Symbol["for"] && Symbol["for"]("react.element") || 0xeac7;
-    }
-
-    var defaultProps = type && type.defaultProps;
-    var childrenLength = arguments.length - 3;
-
-    if (!props && childrenLength !== 0) {
-      props = {
-        children: void 0
-      };
-    }
-
-    if (childrenLength === 1) {
-      props.children = children;
-    } else if (childrenLength > 1) {
-      var childArray = new Array(childrenLength);
-
-      for (var i = 0; i < childrenLength; i++) {
-        childArray[i] = arguments[i + 3];
-      }
+    REACT_ELEMENT_TYPE || (REACT_ELEMENT_TYPE = "function" == typeof Symbol && Symbol.for && Symbol.for("react.element") || 60103);
+    var defaultProps = type && type.defaultProps,
+        childrenLength = arguments.length - 3;
+    if (props || 0 === childrenLength || (props = {
+      children: void 0
+    }), 1 === childrenLength) props.children = children;else if (childrenLength > 1) {
+      for (var childArray = new Array(childrenLength), i = 0; i < childrenLength; i++) childArray[i] = arguments[i + 3];
 
       props.children = childArray;
     }
-
-    if (props && defaultProps) {
-      for (var propName in defaultProps) {
-        if (props[propName] === void 0) {
-          props[propName] = defaultProps[propName];
-        }
-      }
-    } else if (!props) {
-      props = defaultProps || {};
-    }
-
+    if (props && defaultProps) for (var propName in defaultProps) void 0 === props[propName] && (props[propName] = defaultProps[propName]);else props || (props = defaultProps || {});
     return {
       $$typeof: REACT_ELEMENT_TYPE,
       type: type,
-      key: key === undefined ? null : '' + key,
+      key: void 0 === key ? null : "" + key,
       ref: null,
       props: props,
       _owner: null
     };
   }
 
-  function _asyncIterator(iterable) {
-    var method;
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
 
-    if (typeof Symbol !== "undefined") {
-      if (Symbol.asyncIterator) {
-        method = iterable[Symbol.asyncIterator];
-        if (method != null) return method.call(iterable);
-      }
-
-      if (Symbol.iterator) {
-        method = iterable[Symbol.iterator];
-        if (method != null) return method.call(iterable);
-      }
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+      enumerableOnly && (symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      })), keys.push.apply(keys, symbols);
     }
 
-    throw new TypeError("Object is not async iterable");
+    return keys;
+  }
+
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = null != arguments[i] ? arguments[i] : {};
+      i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+
+    return target;
+  }
+
+  function _typeof(obj) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
+      return typeof obj;
+    } : function (obj) {
+      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    }, _typeof(obj);
+  }
+
+  function _wrapRegExp() {
+    _wrapRegExp = function (re, groups) {
+      return new BabelRegExp(re, void 0, groups);
+    };
+
+    var _super = RegExp.prototype,
+        _groups = new WeakMap();
+
+    function BabelRegExp(re, flags, groups) {
+      var _this = new RegExp(re, flags);
+
+      return _groups.set(_this, groups || _groups.get(re)), _setPrototypeOf(_this, BabelRegExp.prototype);
+    }
+
+    function buildGroups(result, re) {
+      var g = _groups.get(re);
+
+      return Object.keys(g).reduce(function (groups, name) {
+        return groups[name] = result[g[name]], groups;
+      }, Object.create(null));
+    }
+
+    return _inherits(BabelRegExp, RegExp), BabelRegExp.prototype.exec = function (str) {
+      var result = _super.exec.call(this, str);
+
+      return result && (result.groups = buildGroups(result, this)), result;
+    }, BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
+      if ("string" == typeof substitution) {
+        var groups = _groups.get(this);
+
+        return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
+          return "$" + groups[name];
+        }));
+      }
+
+      if ("function" == typeof substitution) {
+        var _this = this;
+
+        return _super[Symbol.replace].call(this, str, function () {
+          var args = arguments;
+          return "object" != typeof args[args.length - 1] && (args = [].slice.call(args)).push(buildGroups(args, _this)), substitution.apply(this, args);
+        });
+      }
+
+      return _super[Symbol.replace].call(this, str, substitution);
+    }, _wrapRegExp.apply(this, arguments);
   }
 
   function _AwaitValue(value) {
@@ -170,11 +490,9 @@
     }
   }
 
-  if (typeof Symbol === "function" && Symbol.asyncIterator) {
-    _AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-      return this;
-    };
-  }
+  _AsyncGenerator.prototype[typeof Symbol === "function" && Symbol.asyncIterator || "@@asyncIterator"] = function () {
+    return this;
+  };
 
   _AsyncGenerator.prototype.next = function (arg) {
     return this._invoke("next", arg);
@@ -215,11 +533,9 @@
 
     ;
 
-    if (typeof Symbol === "function" && Symbol.iterator) {
-      iter[Symbol.iterator] = function () {
-        return this;
-      };
-    }
+    iter[typeof Symbol !== "undefined" && Symbol.iterator || "@@iterator"] = function () {
+      return this;
+    };
 
     iter.next = function (value) {
       if (waiting) {
@@ -310,6 +626,9 @@
   function _createClass(Constructor, protoProps, staticProps) {
     if (protoProps) _defineProperties(Constructor.prototype, protoProps);
     if (staticProps) _defineProperties(Constructor, staticProps);
+    Object.defineProperty(Constructor, "prototype", {
+      writable: false
+    });
     return Constructor;
   }
 
@@ -390,7 +709,7 @@
       var ownKeys = Object.keys(source);
 
       if (typeof Object.getOwnPropertySymbols === 'function') {
-        ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
+        ownKeys.push.apply(ownKeys, Object.getOwnPropertySymbols(source).filter(function (sym) {
           return Object.getOwnPropertyDescriptor(source, sym).enumerable;
         }));
       }
@@ -398,40 +717,6 @@
       ownKeys.forEach(function (key) {
         _defineProperty(target, key, source[key]);
       });
-    }
-
-    return target;
-  }
-
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-      if (enumerableOnly) symbols = symbols.filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-      });
-      keys.push.apply(keys, symbols);
-    }
-
-    return keys;
-  }
-
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i] != null ? arguments[i] : {};
-
-      if (i % 2) {
-        ownKeys(Object(source), true).forEach(function (key) {
-          _defineProperty(target, key, source[key]);
-        });
-      } else if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-      } else {
-        ownKeys(Object(source)).forEach(function (key) {
-          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-      }
     }
 
     return target;
@@ -448,6 +733,9 @@
         writable: true,
         configurable: true
       }
+    });
+    Object.defineProperty(subClass, "prototype", {
+      writable: false
     });
     if (superClass) _setPrototypeOf(subClass, superClass);
   }
@@ -557,19 +845,17 @@
     };
   }
 
-  function _getRequireWildcardCache() {
+  function _getRequireWildcardCache(nodeInterop) {
     if (typeof WeakMap !== "function") return null;
-    var cache = new WeakMap();
-
-    _getRequireWildcardCache = function () {
-      return cache;
-    };
-
-    return cache;
+    var cacheBabelInterop = new WeakMap();
+    var cacheNodeInterop = new WeakMap();
+    return (_getRequireWildcardCache = function (nodeInterop) {
+      return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
+    })(nodeInterop);
   }
 
-  function _interopRequireWildcard(obj) {
-    if (obj && obj.__esModule) {
+  function _interopRequireWildcard(obj, nodeInterop) {
+    if (!nodeInterop && obj && obj.__esModule) {
       return obj;
     }
 
@@ -579,7 +865,7 @@
       };
     }
 
-    var cache = _getRequireWildcardCache();
+    var cache = _getRequireWildcardCache(nodeInterop);
 
     if (cache && cache.has(obj)) {
       return cache.get(obj);
@@ -589,7 +875,7 @@
     var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
 
     for (var key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
         var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
 
         if (desc && (desc.get || desc.set)) {
@@ -666,6 +952,8 @@
   function _possibleConstructorReturn(self, call) {
     if (call && (typeof call === "object" || typeof call === "function")) {
       return call;
+    } else if (call !== void 0) {
+      throw new TypeError("Derived constructors may only return object or undefined");
     }
 
     return _assertThisInitialized(self);
@@ -699,7 +987,7 @@
     return object;
   }
 
-  function _get(target, property, receiver) {
+  function _get() {
     if (typeof Reflect !== "undefined" && Reflect.get) {
       _get = Reflect.get;
     } else {
@@ -710,14 +998,14 @@
         var desc = Object.getOwnPropertyDescriptor(base, property);
 
         if (desc.get) {
-          return desc.get.call(receiver);
+          return desc.get.call(arguments.length < 3 ? target : receiver);
         }
 
         return desc.value;
       };
     }
 
-    return _get(target, property, receiver || target);
+    return _get.apply(this, arguments);
   }
 
   function set(target, property, value, receiver) {
@@ -847,18 +1135,21 @@
   }
 
   function _iterableToArray(iter) {
-    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+    if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
   }
 
   function _iterableToArrayLimit(arr, i) {
-    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+    var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
+
+    if (_i == null) return;
     var _arr = [];
     var _n = true;
     var _d = false;
-    var _e = undefined;
+
+    var _s, _e;
 
     try {
-      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
         _arr.push(_s.value);
 
         if (i && _arr.length === i) break;
@@ -878,10 +1169,12 @@
   }
 
   function _iterableToArrayLimitLoose(arr, i) {
-    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+    var _i = arr && (typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]);
+
+    if (_i == null) return;
     var _arr = [];
 
-    for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
+    for (_i = _i.call(arr), _step; !(_step = _i.next()).done;) {
       _arr.push(_step.value);
 
       if (i && _arr.length === i) break;
@@ -916,9 +1209,9 @@
   }
 
   function _createForOfIteratorHelper(o, allowArrayLike) {
-    var it;
+    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
 
-    if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+    if (!it) {
       if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
         if (it) o = it;
         var i = 0;
@@ -951,7 +1244,7 @@
         err;
     return {
       s: function () {
-        it = o[Symbol.iterator]();
+        it = it.call(o);
       },
       n: function () {
         var step = it.next();
@@ -973,28 +1266,24 @@
   }
 
   function _createForOfIteratorHelperLoose(o, allowArrayLike) {
-    var it;
+    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
+    if (it) return (it = it.call(o)).next.bind(it);
 
-    if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
-      if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
-        if (it) o = it;
-        var i = 0;
-        return function () {
-          if (i >= o.length) return {
-            done: true
-          };
-          return {
-            done: false,
-            value: o[i++]
-          };
+    if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+      if (it) o = it;
+      var i = 0;
+      return function () {
+        if (i >= o.length) return {
+          done: true
         };
-      }
-
-      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+        return {
+          done: false,
+          value: o[i++]
+        };
+      };
     }
 
-    it = o[Symbol.iterator]();
-    return it.next.bind(it);
+    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
   function _skipFirstGeneratorNext(fn) {
@@ -1603,73 +1892,30 @@
     return fn;
   }
 
+  function _checkPrivateRedeclaration(obj, privateCollection) {
+    if (privateCollection.has(obj)) {
+      throw new TypeError("Cannot initialize the same private elements twice on an object");
+    }
+  }
+
+  function _classPrivateFieldInitSpec(obj, privateMap, value) {
+    _checkPrivateRedeclaration(obj, privateMap);
+
+    privateMap.set(obj, value);
+  }
+
+  function _classPrivateMethodInitSpec(obj, privateSet) {
+    _checkPrivateRedeclaration(obj, privateSet);
+
+    privateSet.add(obj);
+  }
+
   function _classPrivateMethodSet() {
     throw new TypeError("attempted to reassign private method");
   }
 
-  function _wrapRegExp(re, groups) {
-    _wrapRegExp = function (re, groups) {
-      return new BabelRegExp(re, undefined, groups);
-    };
-
-    var _RegExp = _wrapNativeSuper(RegExp);
-
-    var _super = RegExp.prototype;
-
-    var _groups = new WeakMap();
-
-    function BabelRegExp(re, flags, groups) {
-      var _this = _RegExp.call(this, re, flags);
-
-      _groups.set(_this, groups || _groups.get(re));
-
-      return _this;
-    }
-
-    _inherits(BabelRegExp, _RegExp);
-
-    BabelRegExp.prototype.exec = function (str) {
-      var result = _super.exec.call(this, str);
-
-      if (result) result.groups = buildGroups(result, this);
-      return result;
-    };
-
-    BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
-      if (typeof substitution === "string") {
-        var groups = _groups.get(this);
-
-        return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
-          return "$" + groups[name];
-        }));
-      } else if (typeof substitution === "function") {
-        var _this = this;
-
-        return _super[Symbol.replace].call(this, str, function () {
-          var args = [];
-          args.push.apply(args, arguments);
-
-          if (typeof args[args.length - 1] !== "object") {
-            args.push(buildGroups(args, _this));
-          }
-
-          return substitution.apply(this, args);
-        });
-      } else {
-        return _super[Symbol.replace].call(this, str, substitution);
-      }
-    };
-
-    function buildGroups(result, re) {
-      var g = _groups.get(re);
-
-      return Object.keys(g).reduce(function (groups, name) {
-        groups[name] = result[g[name]];
-        return groups;
-      }, Object.create(null));
-    }
-
-    return _wrapRegExp.apply(this, arguments);
+  function _identity(x) {
+    return x;
   }
 
   // Numbers represent type - 
@@ -12387,8 +12633,8 @@
           if (!entry
           /*|| !entry.type*/
           ) {
-              this.ir_error(util.format("%s is undefined", name));
-            }
+            this.ir_error(util.format("%s is undefined", name));
+          }
 
           this.Type = entry.type;
           this.Entry = entry;
@@ -34403,7 +34649,7 @@
   	SourceNode: SourceNode
   };
 
-  const name="escodegen";const description="ECMAScript code generator";const homepage="http://github.com/estools/escodegen";const main="escodegen.js";const bin={esgenerate:"./bin/esgenerate.js",escodegen:"./bin/escodegen.js"};const files=["LICENSE.BSD","README.md","bin","escodegen.js","package.json"];const version="1.14.1";const engines={node:">=4.0"};const maintainers=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository={type:"git",url:"http://github.com/estools/escodegen.git"};const dependencies={estraverse:"^4.2.0",esutils:"^2.0.2",esprima:"^4.0.1",optionator:"^0.8.1"};const optionalDependencies={"source-map":"~0.6.1"};const devDependencies={acorn:"^7.1.0",bluebird:"^3.4.7","bower-registry-client":"^1.0.0",chai:"^3.5.0","commonjs-everywhere":"^0.9.7",gulp:"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1",semver:"^5.1.0"};const license="BSD-2-Clause";const scripts={test:"gulp travis","unit-test":"gulp test",lint:"gulp lint",release:"node tools/release.js","build-min":"./node_modules/.bin/cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",build:"./node_modules/.bin/cjsify -a path: tools/entry-point.js > escodegen.browser.js"};var require$$3 = {name:name,description:description,homepage:homepage,main:main,bin:bin,files:files,version:version,engines:engines,maintainers:maintainers,repository:repository,dependencies:dependencies,optionalDependencies:optionalDependencies,devDependencies:devDependencies,license:license,scripts:scripts};
+  const name="escodegen";const description="ECMAScript code generator";const homepage="http://github.com/estools/escodegen";const main="escodegen.js";const bin={esgenerate:"./bin/esgenerate.js",escodegen:"./bin/escodegen.js"};const files=["LICENSE.BSD","README.md","bin","escodegen.js","package.json"];const version="1.14.3";const engines={node:">=4.0"};const maintainers=[{name:"Yusuke Suzuki",email:"utatane.tea@gmail.com",web:"http://github.com/Constellation"}];const repository={type:"git",url:"http://github.com/estools/escodegen.git"};const dependencies={estraverse:"^4.2.0",esutils:"^2.0.2",esprima:"^4.0.1",optionator:"^0.8.1"};const optionalDependencies={"source-map":"~0.6.1"};const devDependencies={acorn:"^7.1.0",bluebird:"^3.4.7","bower-registry-client":"^1.0.0",chai:"^3.5.0","commonjs-everywhere":"^0.9.7",gulp:"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1",semver:"^5.1.0"};const license="BSD-2-Clause";const scripts={test:"gulp travis","unit-test":"gulp test",lint:"gulp lint",release:"node tools/release.js","build-min":"./node_modules/.bin/cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js",build:"./node_modules/.bin/cjsify -a path: tools/entry-point.js > escodegen.browser.js"};var require$$3 = {name:name,description:description,homepage:homepage,main:main,bin:bin,files:files,version:version,engines:engines,maintainers:maintainers,repository:repository,dependencies:dependencies,optionalDependencies:optionalDependencies,devDependencies:devDependencies,license:license,scripts:scripts};
 
   /*
     Copyright (C) 2012-2014 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -35391,7 +35637,7 @@
               result.push('[');
           }
 
-          result.push(this.generateExpression(expr, Precedence.Sequence, E_TTT));
+          result.push(this.generateExpression(expr, Precedence.Assignment, E_TTT));
 
           if (computed) {
               result.push(']');
@@ -36631,13 +36877,19 @@
               multiline = false;
               if (expr.properties.length === 1) {
                   property = expr.properties[0];
-                  if (property.value.type !== Syntax.Identifier) {
+                  if (
+                      property.type === Syntax.Property
+                      && property.value.type !== Syntax.Identifier
+                  ) {
                       multiline = true;
                   }
               } else {
                   for (i = 0, iz = expr.properties.length; i < iz; ++i) {
                       property = expr.properties[i];
-                      if (!property.shorthand) {
+                      if (
+                          property.type === Syntax.Property
+                          && !property.shorthand
+                      ) {
                           multiline = true;
                           break;
                       }
@@ -43747,13 +43999,13 @@
   }
 
   function buildColorSource(col, useLighting) {
-    var lgt = useLighting ? '' : '    return scope_0_material.albedo;';
+    var lgt = useLighting ? "" : "    return scope_0_material.albedo;";
     return "\nvec3 shade(vec3 p, vec3 normal) {\n    float d = 100.0;\n    vec3 op = p;\n\tvec3 lightDirection = vec3(0.0, 1.0, 0.0);\n\tvec3 backgroundColor = vec3(1.0, 1.0, 1.0);\n\tvec3 mouseIntersect = vec3(0.0,1.0,0.0);\n\t#ifdef USE_PBR\n\tMaterial material = Material(vec3(1.0),0.5,0.7,1.0);\n\tMaterial selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);\n\t#else\n\tfloat light = 1.0;\n\tfloat occ = 1.0;\n    vec3 color = vec3(1.0,1.0,1.0);\n\tvec3 selectedColor = vec3(1.0,1.0,1.0);\n\t#endif\n".concat(col, "\n").concat(lgt, "\n\t#ifdef USE_PBR\n\treturn pbrLighting(\n\t\tworldPos.xyz,\n\t\tnormal,\n\t\tlightDirection,\n\t\tscope_0_material,\n\t\tbackgroundColor\n\t\t);\n\t#else\n\treturn scope_0_material.albedo*simpleLighting(p, normal, lightDirection, );*occ;\n\t#endif\n}");
   } // Converts binary math operators to our own version
 
 
   function replaceBinaryOp(syntaxTree) {
-    if (_typeof(syntaxTree) === 'object') {
+    if (_typeof(syntaxTree) === "object") {
       for (var node in syntaxTree) {
         if (syntaxTree.hasOwnProperty(node)) {
           replaceBinaryOp(syntaxTree[node]);
@@ -43761,35 +44013,35 @@
       }
     }
 
-    if (syntaxTree !== null && syntaxTree['type'] === 'BinaryExpression') {
-      var op = syntaxTree['operator'];
+    if (syntaxTree !== null && syntaxTree["type"] === "BinaryExpression") {
+      var op = syntaxTree["operator"];
 
-      if (op === '*' || op === '/' || op === '-' || op === '+') {
-        if (op === '*') {
-          syntaxTree['callee'] = {
-            type: 'Identifier',
-            name: 'mult'
+      if (op === "*" || op === "/" || op === "-" || op === "+") {
+        if (op === "*") {
+          syntaxTree["callee"] = {
+            type: "Identifier",
+            name: "mult"
           };
-        } else if (op === '/') {
-          syntaxTree['callee'] = {
-            type: 'Identifier',
-            name: 'divide'
+        } else if (op === "/") {
+          syntaxTree["callee"] = {
+            type: "Identifier",
+            name: "divide"
           };
-        } else if (op === '-') {
-          syntaxTree['callee'] = {
-            type: 'Identifier',
-            name: 'sub'
+        } else if (op === "-") {
+          syntaxTree["callee"] = {
+            type: "Identifier",
+            name: "sub"
           };
-        } else if (op === '+') {
-          syntaxTree['callee'] = {
-            type: 'Identifier',
-            name: 'add'
+        } else if (op === "+") {
+          syntaxTree["callee"] = {
+            type: "Identifier",
+            name: "add"
           };
         }
 
-        syntaxTree['type'] = 'CallExpression';
-        syntaxTree['arguments'] = [syntaxTree['left'], syntaxTree['right']];
-        syntaxTree['operator'] = undefined;
+        syntaxTree["type"] = "CallExpression";
+        syntaxTree["arguments"] = [syntaxTree["left"], syntaxTree["right"]];
+        syntaxTree["operator"] = undefined;
       }
     }
   }
@@ -43804,27 +44056,27 @@
         }
       }
 
-      if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree.type === 'ExpressionStatement' && 'expression' in syntaxTree && syntaxTree.expression.type === 'AssignmentExpression') {
+      if (syntaxTree && _typeof(syntaxTree) === "object" && "type" in syntaxTree && syntaxTree.type === "ExpressionStatement" && "expression" in syntaxTree && syntaxTree.expression.type === "AssignmentExpression") {
         var op = syntaxTree.expression.operator;
 
-        if (op === '+=' || op === '-=' || op === '/=' || op === '*=' || op === '%=') {
+        if (op === "+=" || op === "-=" || op === "/=" || op === "*=" || op === "%=") {
           syntaxTree.expression.operator = "=";
           syntaxTree.expression.right = {
-            type: 'BinaryExpression',
+            type: "BinaryExpression",
             left: syntaxTree.expression.left,
             right: syntaxTree.expression.right
           };
 
-          if (op === '+=') {
-            syntaxTree.expression.right.operator = '+';
-          } else if (op === '-=') {
-            syntaxTree.expression.right.operator = '-';
-          } else if (op === '/=') {
-            syntaxTree.expression.right.operator = '/';
-          } else if (op === '*=') {
-            syntaxTree.expression.right.operator = '*';
-          } else if (op === '%=') {
-            syntaxTree.expression.right.operator = '%';
+          if (op === "+=") {
+            syntaxTree.expression.right.operator = "+";
+          } else if (op === "-=") {
+            syntaxTree.expression.right.operator = "-";
+          } else if (op === "/=") {
+            syntaxTree.expression.right.operator = "/";
+          } else if (op === "*=") {
+            syntaxTree.expression.right.operator = "*";
+          } else if (op === "%=") {
+            syntaxTree.expression.right.operator = "%";
           }
         }
       }
@@ -43844,11 +44096,11 @@
         }
       }
 
-      if (syntaxTree && _typeof(syntaxTree) === "object" && 'type' in syntaxTree && syntaxTree['type'] === 'VariableDeclaration') {
-        var d = syntaxTree['declarations'][0];
+      if (syntaxTree && _typeof(syntaxTree) === "object" && "type" in syntaxTree && syntaxTree["type"] === "VariableDeclaration") {
+        var d = syntaxTree["declarations"][0];
         var name = d.id.name;
 
-        if (d && d.init && d.init.callee !== undefined && (d.init.callee.name === 'input' || d.init.callee.name === 'input2D')) {
+        if (d && d.init && d.init.callee !== undefined && (d.init.callee.name === "input" || d.init.callee.name === "input2D")) {
           d.init.arguments.unshift({
             type: "Literal",
             value: name,
@@ -43863,7 +44115,7 @@
   }
 
   function uniformsToGLSL(uniforms) {
-    var uniformsHeader = '';
+    var uniformsHeader = "";
 
     for (var i = 0; i < uniforms.length; i++) {
       var uniform = uniforms[i];
@@ -43874,29 +44126,29 @@
   }
   function baseUniforms() {
     return [{
-      name: 'time',
-      type: 'float',
+      name: "time",
+      type: "float",
       value: 0.0
     }, {
-      name: 'opacity',
-      type: 'float',
+      name: "opacity",
+      type: "float",
       value: 1.0
     }, {
-      name: '_scale',
-      type: 'float',
+      name: "_scale",
+      type: "float",
       value: 1.0
     }, // {name:'sculptureCenter', type: 'vec3', value: [0,0,0]},
     {
-      name: 'mouse',
-      type: 'vec3',
+      name: "mouse",
+      type: "vec3",
       value: [0.5, 0.5, 0.5]
     }, {
-      name: 'stepSize',
-      type: 'float',
+      name: "stepSize",
+      type: "float",
       value: 0.85
     }, {
-      name: 'resolution',
-      type: 'vec2',
+      name: "resolution",
+      type: "vec2",
       value: [800, 600]
     }];
   }
@@ -43919,7 +44171,7 @@
     userProvidedSrc = replaceMathOps(userProvidedSrc);
 
     if (debug) {
-      console.log('tree', tree);
+      console.log("tree", tree);
     }
 
     var generatedJSFuncsSource = "";
@@ -43938,14 +44190,14 @@
     // Generates JS from headers referenced in the bindings.js
 
     var dimsMapping = {
-      'float': 1,
-      'vec2': 2,
-      'vec3': 3,
-      'vec4': 4
+      float: 1,
+      vec2: 2,
+      vec3: 3,
+      vec4: 4
     };
 
     function glslFunc(src) {
-      userGLSL += src + '\n';
+      userGLSL += src + "\n";
       var state = glslParser.runParse(src, {});
 
       if (state.errors.length) {
@@ -43991,7 +44243,7 @@
     }
 
     function glslFuncES3(src) {
-      userGLSL += src + '\n';
+      userGLSL += src + "\n";
       var parsedSrc;
 
       try {
@@ -44004,7 +44256,7 @@
       var funcName = prototype.header.name.identifier;
       var returnType = prototype.header.returnType.specifier.specifier.token;
       var params = prototype.parameters;
-      var checkTypes = returnType === 'void' || returnType in dimsMapping;
+      var checkTypes = returnType === "void" || returnType in dimsMapping;
 
       if (!checkTypes) {
         compileError("glsl error: glslFuncES3 currently supports binding to ".concat(Object.keys(dimsMapping), " Return type was ").concat(returnType));
@@ -44015,7 +44267,7 @@
         checkTypes = checkTypes && type in dimsMapping;
 
         if (debug) {
-          console.log('glslFunc', funcName, type, checkTypes);
+          console.log("glslFunc", funcName, type, checkTypes);
         }
 
         if (!checkTypes) {
@@ -44081,11 +44333,11 @@
 
     function box(arg_0, arg_1, arg_2) {
       if (arg_1 !== undefined) {
-        ensureScalar('box', arg_0);
-        ensureScalar('box', arg_1);
-        ensureScalar('box', arg_2);
+        ensureScalar("box", arg_0);
+        ensureScalar("box", arg_1);
+        ensureScalar("box", arg_2);
         applyMode("box(".concat(getCurrentState().p, ", ").concat(collapseToString(arg_0), ", ").concat(collapseToString(arg_1), ", ").concat(collapseToString(arg_2), ")"));
-      } else if (arg_0.type === 'vec3') {
+      } else if (arg_0.type === "vec3") {
         applyMode("box(".concat(getCurrentState().p, ", ").concat(collapseToString(arg_0), ")"));
       } else {
         compileError("'box' accepts either an x, y, z, or a vec3");
@@ -44093,11 +44345,11 @@
     }
 
     function torus(arg_0, arg_1) {
-      overloadVec2GeomFunc('torus', arg_0, arg_1);
+      overloadVec2GeomFunc("torus", arg_0, arg_1);
     }
 
     function cylinder(arg_0, arg_1) {
-      overloadVec2GeomFunc('cylinder', arg_0, arg_1);
+      overloadVec2GeomFunc("cylinder", arg_0, arg_1);
     }
 
     function overloadVec2GeomFunc(funcName, arg_0, arg_1) {
@@ -44105,7 +44357,7 @@
         ensureScalar(funcName, arg_0);
         ensureScalar(funcName, arg_1);
         applyMode("".concat(funcName, "(").concat(getCurrentState().p, ", ").concat(collapseToString(arg_0), ", ").concat(collapseToString(arg_1), ")"));
-      } else if (arg_0.type === 'vec2') {
+      } else if (arg_0.type === "vec2") {
         applyMode("".concat(funcName, "(").concat(getCurrentState().p, ", ").concat(collapseToString(arg_0), ")"));
       } else {
         compileError("'".concat(funcName, "' accepts either an x, y or a vec2"));
@@ -44119,7 +44371,7 @@
           funcName = _Object$entries2$_i[0],
           body = _Object$entries2$_i[1];
 
-      var argList = body['args'];
+      var argList = body["args"];
       primitivesJS += "function " + funcName + "(";
 
       for (var argIdx = 0; argIdx < argList.length; argIdx++) {
@@ -44138,7 +44390,7 @@
           var argDim = _step.value;
 
           if (argDim === 1) {
-            primitivesJS += "    ensureScalar(\"" + funcName + "\", arg_" + argIdxB + ");\n";
+            primitivesJS += '    ensureScalar("' + funcName + '", arg_' + argIdxB + ");\n";
           }
 
           argIdxB += 1;
@@ -44149,14 +44401,14 @@
         _iterator.f();
       }
 
-      primitivesJS += "    applyMode(\"" + funcName + "(\"+getCurrentState().p+\", \" + ";
+      primitivesJS += '    applyMode("' + funcName + '("+getCurrentState().p+", " + ';
 
       for (var _argIdx = 0; _argIdx < argList.length; _argIdx++) {
         primitivesJS += "collapseToString(arg_" + _argIdx + ") + ";
-        if (_argIdx < argList.length - 1) primitivesJS += "\", \" + ";
+        if (_argIdx < argList.length - 1) primitivesJS += '", " + ';
       }
 
-      primitivesJS += "\")\");\n}\n\n";
+      primitivesJS += '")");\n}\n\n';
     }
 
     generatedJSFuncsSource += primitivesJS;
@@ -44169,8 +44421,8 @@
             _funcName = _Object$entries3$_i[0],
             _body = _Object$entries3$_i[1];
 
-        var _argList = _body['args'];
-        var returnType = _body['ret'];
+        var _argList = _body["args"];
+        var returnType = _body["ret"];
         wrapperSrc += "function " + _funcName + "(";
 
         for (var _argIdx2 = 0; _argIdx2 < _argList.length; _argIdx2++) {
@@ -44197,29 +44449,29 @@
           _iterator2.f();
         }
 
-        wrapperSrc += "    return new makeVarWithDims(\"" + _funcName + "(\" + ";
+        wrapperSrc += '    return new makeVarWithDims("' + _funcName + '(" + ';
 
         for (var _argIdx3 = 0; _argIdx3 < _argList.length; _argIdx3++) {
           wrapperSrc += "arg_" + _argIdx3 + " + ";
-          if (_argIdx3 < _argList.length - 1) wrapperSrc += "\", \" + ";
+          if (_argIdx3 < _argList.length - 1) wrapperSrc += '", " + ';
         }
 
-        wrapperSrc += "\")\", " + returnType + ");\n}\n";
+        wrapperSrc += '")", ' + returnType + ");\n}\n";
       }
 
       return wrapperSrc;
     }
 
     function mix(arg_0, arg_1, arg_2) {
-      ensureSameDims('mix', arg_0, arg_1);
+      ensureSameDims("mix", arg_0, arg_1);
 
       if (arg_2.dims !== 1 && arg_2.dims !== arg_0.dims) {
         compileError("'mix' third argument must be float or match dim of first args");
       }
 
-      ensureScalar('mix', arg_2);
+      ensureScalar("mix", arg_2);
 
-      if (typeof arg_1 == 'number' || arg_1.type == 'float') {
+      if (typeof arg_1 == "number" || arg_1.type == "float") {
         arg_0 = tryMakeNum(arg_0);
         arg_1 = tryMakeNum(arg_1);
       }
@@ -44229,12 +44481,12 @@
     }
 
     function pow(arg_0, arg_1) {
-      if (typeof arg_1 == 'number' || arg_1.type == 'float') {
+      if (typeof arg_1 == "number" || arg_1.type == "float") {
         arg_0 = tryMakeNum(arg_0);
         arg_1 = tryMakeNum(arg_1);
       }
 
-      ensureSameDims('pow', arg_0, arg_1);
+      ensureSameDims("pow", arg_0, arg_1);
       return new makeVarWithDims("pow(".concat(collapseToString(arg_0), ", ").concat(collapseToString(arg_1), ")"), arg_0.dims);
     }
 
@@ -44286,7 +44538,7 @@
     // set step size directly
 
     function setStepSize(val) {
-      if (typeof val !== 'number') {
+      if (typeof val !== "number") {
         compileError("setStepSize accepts only a constant number. Was given: '" + val.type + "'");
       }
 
@@ -44295,7 +44547,7 @@
 
 
     function setGeometryQuality(val) {
-      if (typeof val !== 'number') {
+      if (typeof val !== "number") {
         compileError("setGeometryQuality accepts only a constant number between 0 and 100. Was given: '" + val.type + "'");
       }
 
@@ -44303,7 +44555,7 @@
     }
 
     function setMaxIterations(val) {
-      if (typeof val !== 'number' || val < 0) {
+      if (typeof val !== "number" || val < 0) {
         compileError("setMaxIterations accepts only a constant number >= 0. Was given: '" + val.type + "'");
       }
 
@@ -44369,7 +44621,7 @@
       //if (typeof source !== 'string') {
       source = collapseToString(source); //}
 
-      return new makeVar(source, 'float', 1, inline);
+      return new makeVar(source, "float", 1, inline);
     }
 
     function vec2(source, y, inline) {
@@ -44377,16 +44629,16 @@
         y = source;
       }
 
-      if (typeof source !== 'string') {
+      if (typeof source !== "string") {
         source = "vec2(" + collapseToString(source) + ", " + collapseToString(y) + ")";
       }
 
-      var self = new makeVar(source, 'vec2', 2, inline);
+      var self = new makeVar(source, "vec2", 2, inline);
       var currX = new makeVarWithDims(self.name + ".x", 1, true);
       var currY = new makeVarWithDims(self.name + ".y", 1, true);
       var objs = {
-        'x': currX,
-        'y': currY
+        x: currX,
+        y: currY
       };
       applyVectorAssignmentOverload(self, objs);
       return self;
@@ -44398,18 +44650,18 @@
         z = source;
       }
 
-      if (typeof source !== 'string') {
+      if (typeof source !== "string") {
         source = "vec3(" + collapseToString(source) + ", " + collapseToString(y) + ", " + collapseToString(z) + ")";
       }
 
-      var self = new makeVar(source, 'vec3', 3, inline);
+      var self = new makeVar(source, "vec3", 3, inline);
       var currX = new makeVarWithDims(self.name + ".x", 1, true);
       var currY = new makeVarWithDims(self.name + ".y", 1, true);
       var currZ = new makeVarWithDims(self.name + ".z", 1, true);
       var objs = {
-        'x': currX,
-        'y': currY,
-        'z': currZ
+        x: currX,
+        y: currY,
+        z: currZ
       };
       applyVectorAssignmentOverload(self, objs);
       return self;
@@ -44422,20 +44674,20 @@
         w = source;
       }
 
-      if (typeof source !== 'string') {
+      if (typeof source !== "string") {
         source = "vec4(" + collapseToString(source) + ", " + collapseToString(y) + ", " + collapseToString(z) + ", " + collapseToString(w) + ")";
       }
 
-      var self = new makeVar(source, 'vec4', 4, inline);
+      var self = new makeVar(source, "vec4", 4, inline);
       var currX = new makeVarWithDims(self.name + ".x", 1, true);
       var currY = new makeVarWithDims(self.name + ".y", 1, true);
       var currZ = new makeVarWithDims(self.name + ".z", 1, true);
       var currW = new makeVarWithDims(self.name + ".w", 1, true);
       var objs = {
-        'x': currX,
-        'y': currY,
-        'z': currZ,
-        'w': currW
+        x: currX,
+        y: currY,
+        z: currZ,
+        w: currW
       };
       applyVectorAssignmentOverload(self, objs);
       return self;
@@ -44503,7 +44755,7 @@
     function ensureScalar(funcName, val) {
       var tp = _typeof(val);
 
-      if (typeof val !== 'number' && val.type !== 'float') {
+      if (typeof val !== "number" && val.type !== "float") {
         compileError("'" + funcName + "'" + " accepts only a scalar. Was given: '" + val.type + "'");
       }
     }
@@ -44520,7 +44772,7 @@
     }
 
     function ensureGroupOp(funcName, a, b) {
-      if (typeof a !== 'string' && typeof b !== 'string') {
+      if (typeof a !== "string" && typeof b !== "string") {
         if (a.dims !== 1 && b.dims !== 1 && a.dims !== b.dims) {
           compileError("'" + funcName + "'" + " dimension mismatch. Was given: '" + a.type + "' and '" + b.type + "'");
         }
@@ -44528,9 +44780,9 @@
     }
 
     function collapseToString(val) {
-      if (typeof val === 'string') {
+      if (typeof val === "string") {
         return val;
-      } else if (typeof val === 'number') {
+      } else if (typeof val === "number") {
         return val.toFixed(8);
       } else {
         return val.toString();
@@ -44663,7 +44915,7 @@
     }
 
     function tryMakeNum(v) {
-      if (typeof v === 'number') {
+      if (typeof v === "number") {
         return new float(v);
       } else {
         return v;
@@ -44673,7 +44925,7 @@
 
 
     function mult(a, b) {
-      if (typeof a === 'number' && typeof b === 'number') return a * b;
+      if (typeof a === "number" && typeof b === "number") return a * b;
       a = tryMakeNum(a);
       b = tryMakeNum(b);
 
@@ -44689,7 +44941,7 @@
     }
 
     function add(a, b) {
-      if (typeof a === 'number' && typeof b === 'number') return a + b;
+      if (typeof a === "number" && typeof b === "number") return a + b;
       a = tryMakeNum(a);
       b = tryMakeNum(b);
 
@@ -44705,7 +44957,7 @@
     }
 
     function sub(a, b) {
-      if (typeof a === 'number' && typeof b === 'number') return a - b;
+      if (typeof a === "number" && typeof b === "number") return a - b;
       a = tryMakeNum(a);
       b = tryMakeNum(b);
 
@@ -44721,7 +44973,7 @@
     }
 
     function divide(a, b) {
-      if (typeof a === 'number' && typeof b === 'number') return a / b;
+      if (typeof a === "number" && typeof b === "number") return a / b;
       a = tryMakeNum(a);
       b = tryMakeNum(b);
 
@@ -44853,7 +45105,7 @@
         ensureScalar("color", blue);
         appendColorSource(getCurrentMaterial() + ".albedo = vec3(" + collapseToString(col) + ", " + collapseToString(green) + ", " + collapseToString(blue) + ");\n");
       } else {
-        if (col.type !== 'vec3') compileError("albedo must be vec3");
+        if (col.type !== "vec3") compileError("albedo must be vec3");
         appendColorSource(getCurrentMaterial() + ".albedo = " + collapseToString(col) + ";\n");
       }
     }
@@ -44893,7 +45145,7 @@
         ensureScalar("backgroundColor", z);
         appendColorSource("backgroundColor = vec3( " + collapseToString(x) + ", " + collapseToString(y) + ", " + collapseToString(z) + ");\n");
       }
-    } // should this also be 'op'? 
+    } // should this also be 'op'?
 
 
     function noLighting() {
@@ -44923,13 +45175,13 @@
       var min = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0.0;
       var max = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 1.0;
 
-      if (typeof value !== 'number' || typeof min !== 'number' || typeof max !== 'number') {
-        compileError('input value, min, and max must be constant numbers');
+      if (typeof value !== "number" || typeof min !== "number" || typeof max !== "number") {
+        compileError("input value, min, and max must be constant numbers");
       }
 
       uniforms.push({
         name: name,
-        type: 'float',
+        type: "float",
         value: value,
         min: min,
         max: max
@@ -44951,13 +45203,13 @@
         y: 1.0
       };
 
-      if (typeof value === 'number' && typeof min === 'number' && _typeof(max) === 'object') {
+      if (typeof value === "number" && typeof min === "number" && _typeof(max) === "object") {
         // syntax input2D(.2, 1.2);
         var x = value;
         var y = min;
         uniforms.push({
           name: name,
-          type: 'vec2',
+          type: "vec2",
           value: {
             x: x,
             y: y
@@ -44974,21 +45226,21 @@
         return new vec2(name, true);
       }
 
-      if (_typeof(value) !== 'object' || _typeof(min) !== 'object' || _typeof(max) !== 'object') {
-        compileError('input2D: value, min, and max must be a vec2');
+      if (_typeof(value) !== "object" || _typeof(min) !== "object" || _typeof(max) !== "object") {
+        compileError("input2D: value, min, and max must be a vec2");
       }
 
       var xyExist = [value, min, max].reduce(function (acc, curr) {
-        return acc && 'x' in curr && 'y' in curr;
+        return acc && "x" in curr && "y" in curr;
       });
 
       if (!xyExist) {
-        compileError('input2D: value, min, and max must be a vec2');
+        compileError("input2D: value, min, and max must be a vec2");
       }
 
       uniforms.push({
         name: name,
-        type: 'vec2',
+        type: "vec2",
         value: value,
         min: min,
         max: max
@@ -44997,15 +45249,15 @@
     }
 
     function getPixelCoord() {
-      return makeVarWithDims('gl_FragCoord.xy', 2, true);
+      return makeVarWithDims("gl_FragCoord.xy", 2, true);
     }
 
     function getResolution() {
-      return makeVarWithDims('resolution', 2, true);
+      return makeVarWithDims("resolution", 2, true);
     }
 
     function get2DCoords() {
-      return makeVarWithDims('vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)', 2, false);
+      return makeVarWithDims("vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)", 2, false);
     }
 
     function enable2D() {
@@ -45016,17 +45268,17 @@
     }
     /*
     function input2(name, x, y) {
-    	console.log('input2',name, x, y);
-    	let uniform = {name, type: 'vec2'};
-    	let out = x;
-    	if(y === undefined) {
-    		uniform.value = x;
-    	} else {
-    		out = new vec2(x, y, true);
-    		uniform.value = out;
-    	}
-    	uniforms.push(uniform);
-    	return out;
+    console.log('input2',name, x, y);
+    let uniform = {name, type: 'vec2'};
+    let out = x;
+    if(y === undefined) {
+    	uniform.value = x;
+    } else {
+    	out = new vec2(x, y, true);
+    	uniform.value = out;
+    }
+    uniforms.push(uniform);
+    return out;
     }
     */
 
@@ -45035,7 +45287,7 @@
 
     function revolve2D(sdf) {
       return function (r) {
-        ensureScalar('revolve2D', r);
+        ensureScalar("revolve2D", r);
         var s = getSpace();
         var q = vec2(length(vec3(s.x, s.z, 0)) - r, s.y);
 
@@ -45050,7 +45302,7 @@
 
     function extrude2D(sdf) {
       return function (h) {
-        ensureScalar('extrude2D', h);
+        ensureScalar("extrude2D", h);
         var s = getSpace();
 
         for (var _len4 = arguments.length, args = new Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
@@ -45069,7 +45321,7 @@
     }
 
     function mirrorN(iterations, scale) {
-      ensureScalar('mirrorN', scale);
+      ensureScalar("mirrorN", scale);
 
       for (var i = iterations - 1; i >= 0; i--) {
         mirrorXYZ();
@@ -45079,11 +45331,11 @@
 
     function grid() {
       var num = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 2;
-      var scale = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : .2;
-      var roundness = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : .05;
+      var scale = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0.2;
+      var roundness = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0.05;
       // ensureScalar('num', num);
-      ensureScalar('num', scale);
-      ensureScalar('num', roundness); // num = collapseToString(num);
+      ensureScalar("num", scale);
+      ensureScalar("num", roundness); // num = collapseToString(num);
       // scale = collapseToString(scale);
       // roundness = collapseToString(roundness);
 
@@ -45095,27 +45347,28 @@
     }
 
     function repeatLinear(scale, spacing, counts) {
-      ensureDims("repeatSpace", 3, scale);
-      ensureDims("repeatSpace", 3, spacing);
-      ensureDims("repeatSpace", 3, counts);
+      ensureDims("repeatLinear", 3, scale);
+      ensureDims("repeatLinear", 3, spacing);
+      ensureDims("repeatLinear", 3, counts);
       spacing *= 2 * scale;
       counts -= 1;
       var s = getSpace();
       var rounded = floor(s / spacing + 0.5);
       var clamped = vec3(clamp(rounded.x, -1 * counts.x, counts.x), clamp(rounded.y, -1 * counts.y, counts.y), clamp(rounded.z, -1 * counts.z, counts.z));
-      displace(spacing * clamped); // return instance x, y, z index 
+      displace(spacing * clamped); // return instance x, y, z index
       // and instances local coordinates
 
       var coordScaled = s / spacing;
       var index = floor(coordScaled + 0.5);
       return {
-        "index": index,
-        "local": coordScaled - index
+        index: index,
+        local: coordScaled - index
       };
     } // based on https://mercury.sexy/hg_sdf/
 
 
     function repeatRadial(repeats) {
+      ensureScalar("repeatRadial", repeats);
       var s = getSpace();
       var p = vec3(s.x, 0, s.z);
       var angle = 2 * PI / repeats;
@@ -45145,14 +45398,14 @@
 
     var postGeneratedFunctions = replaceMathOps([getSpherical, fresnel, revolve2D, extrude2D, mirrorN, grid, repeatLinear, repeatRadial, scaleShape].map(function (el) {
       return el.toString();
-    }).join('\n'));
+    }).join("\n"));
     eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
 
     if (enable2DFlag) {
       setSDF(0);
     }
 
-    var geoFinal = userGLSL + '\n' + buildGeoSource(geoSrc);
+    var geoFinal = userGLSL + "\n" + buildGeoSource(geoSrc);
     var colorFinal = buildColorSource(colorSrc, useLighting);
     return {
       uniforms: uniforms,
@@ -96392,4 +96645,4 @@
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));

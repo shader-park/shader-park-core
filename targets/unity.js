@@ -1,5 +1,3 @@
-
-
 function sculptToUnity(source) {
-    // do this based on unity branch
+  // do this based on unity branch
 }

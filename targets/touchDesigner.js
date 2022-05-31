@@ -1,15 +1,18 @@
-import {sculptToGLSL, baseUniforms, uniformsToGLSL} from '../generators/sculpt.js'
 import {
-    minimalVertexSource, 
-    usePBRHeader,
-    useHemisphereLight,
-    sculptureStarterCode
-} from '../glsl/glsl-lib.js'
-
+  sculptToGLSL,
+  baseUniforms,
+  uniformsToGLSL,
+} from "../generators/sculpt.js";
+import {
+  minimalVertexSource,
+  usePBRHeader,
+  useHemisphereLight,
+  sculptureStarterCode,
+} from "../glsl/glsl-lib.js";
 
 /**
  *  TD target for GLSL and  Sculpt/JS api.
- * 
+ *
  *  TODO: make these materials 'plug in' to Touch Designer's ' PBR lighting model.
  */
 
@@ -172,45 +175,61 @@ void main()
 `;
 
 export function glslToTouchDesignerShaderSource(source) {
-    return {
-        uniforms: baseUniforms(),
-        frag: TDHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + 'const int MAX_ITERATIONS = 300;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + TDFooter,
-        vert: minimalVertexSource
-    }
+  return {
+    uniforms: baseUniforms(),
+    frag:
+      TDHeader +
+      "const float STEP_SIZE_CONSTANT = 0.9;\n" +
+      "const int MAX_ITERATIONS = 300;\n" +
+      uniformsToGLSL(baseUniforms()) +
+      sculptureStarterCode +
+      source +
+      TDFooter,
+    vert: minimalVertexSource,
+  };
 }
 
 export function sculptToTouchDesignerShaderSource(source) {
-    const src = sculptToGLSL(source);
-    if (src.error) {
-        console.log(src.error);
-    }
-    let frg = 
-          TDHeader
-        + usePBRHeader
-        + useHemisphereLight
-        + uniformsToGLSL(src.uniforms) 
-        + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
-		+ 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
-        + sculptureStarterCode 
-        + src.geoGLSL 
-        + '\n' 
-        + src.colorGLSL 
-        + '\n' 
-        + TDFooter;
-	
-	let sdf = 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n'
-			+ 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n'
-			+ sculptureStarterCode 
-			+ src.geoGLSL ;
+  const src = sculptToGLSL(source);
+  if (src.error) {
+    console.log(src.error);
+  }
+  let frg =
+    TDHeader +
+    usePBRHeader +
+    useHemisphereLight +
+    uniformsToGLSL(src.uniforms) +
+    "const float STEP_SIZE_CONSTANT = " +
+    src.stepSizeConstant +
+    ";\n" +
+    "const int MAX_ITERATIONS = " +
+    src.maxIterations +
+    ";\n" +
+    sculptureStarterCode +
+    src.geoGLSL +
+    "\n" +
+    src.colorGLSL +
+    "\n" +
+    TDFooter;
 
-    return {
-        uniforms: src.uniforms,
-        frag: frg,
-        vert: minimalVertexSource,
-        error: src.error,
-        geoGLSL: src.geoGLSL,
-        colorGLSL: src.colorGLSL,
-		sdf: sdf,
-		glslUniforms: uniformsToGLSL(src.uniforms) 
-    };
+  let sdf =
+    "const float STEP_SIZE_CONSTANT = " +
+    src.stepSizeConstant +
+    ";\n" +
+    "const int MAX_ITERATIONS = " +
+    src.maxIterations +
+    ";\n" +
+    sculptureStarterCode +
+    src.geoGLSL;
+
+  return {
+    uniforms: src.uniforms,
+    frag: frg,
+    vert: minimalVertexSource,
+    error: src.error,
+    geoGLSL: src.geoGLSL,
+    colorGLSL: src.colorGLSL,
+    sdf: sdf,
+    glslUniforms: uniformsToGLSL(src.uniforms),
+  };
 }

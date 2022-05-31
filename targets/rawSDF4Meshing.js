@@ -1,10 +1,10 @@
-import {sculptToGLSL, uniformsToGLSL} from '../generators/sculpt.js'
+import { sculptToGLSL, uniformsToGLSL } from "../generators/sculpt.js";
 import {
-    usePBRHeader,
-    useHemisphereLight,
-    sculptureStarterCode, 
-    fragFooter,
-} from '../glsl/glsl-lib.js'
+  usePBRHeader,
+  useHemisphereLight,
+  sculptureStarterCode,
+  fragFooter,
+} from "../glsl/glsl-lib.js";
 
 /**
  * export for meshing with https://github.com/tdhooper/glsl-marching-cubes
@@ -12,8 +12,7 @@ import {
  * output - glsl containing "mapDistance"
  **/
 export function sculptToRawSDF4Meshing(source) {
-
-    const minimalHeader = `
+  const minimalHeader = `
 precision highp float;
 uniform float w_width;
 uniform float w_height;
@@ -28,13 +27,13 @@ uniform mat4 projectionMatrix;
 #define time 0.0
 `;
 
-    let generatedGLSL = sculptToGLSL(source);
-    let fullFrag =
-          minimalHeader
-        + usePBRHeader
-        + useHemisphereLight
-        //+ uniformsToGLSL(generatedGLSL.uniforms) 
-        + sculptureStarterCode 
-        + generatedGLSL.geoGLSL;
-    return fullFrag.replace(/surfaceDistance/g, 'mapDistance');
+  let generatedGLSL = sculptToGLSL(source);
+  let fullFrag =
+    minimalHeader +
+    usePBRHeader +
+    useHemisphereLight +
+    //+ uniformsToGLSL(generatedGLSL.uniforms)
+    sculptureStarterCode +
+    generatedGLSL.geoGLSL;
+  return fullFrag.replace(/surfaceDistance/g, "mapDistance");
 }

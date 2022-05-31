@@ -1,4 +1,3 @@
-
 /**
  * for fast tesing
  * input - sculpt code
@@ -6,15 +5,15 @@
  **/
 
 export function sculptToMinimalHTMLRenderer(spCode, libPath) {
-    return makeHTML(spCode, 'sculptToMinimalRenderer', libPath);
+  return makeHTML(spCode, "sculptToMinimalRenderer", libPath);
 }
 
 export function glslToMinimalHTMLRenderer(spCode, libPath) {
-    return makeHTML(spCode, 'glslToMinimalRenderer', libPath);
+  return makeHTML(spCode, "glslToMinimalRenderer", libPath);
 }
 
 function makeHTML(spCode, minRenderFunc, libPath) {
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Shader Park</title>
