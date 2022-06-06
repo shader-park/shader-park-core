@@ -487,7 +487,6 @@ export function sculptToGLSL(userProvidedSrc) {
         `'mix' third argument must be float or match dim of first args`
       );
     }
-    ensureScalar("mix", arg_2);
     if (typeof arg_1 == "number" || arg_1.type == "float") {
       arg_0 = tryMakeNum(arg_0);
       arg_1 = tryMakeNum(arg_1);
