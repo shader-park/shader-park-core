@@ -20,9 +20,9 @@ import {
   Vector3,
   ShaderMaterial,
   Mesh,
-  BoxBufferGeometry,
+  BoxGeometry,
   BackSide,
-  SphereBufferGeometry,
+  SphereGeometry,
 } from "three";
 
 /**
@@ -137,7 +137,7 @@ export function createSculpture(
     geometry = params.geometry;
   } else {
     let segments = "segments" in params ? params.segments : 8;
-    geometry = new SphereBufferGeometry(radius, segments, segments);
+    geometry = new SphereGeometry(radius, segments, segments);
   }
   let material = sculptToThreeJSMaterial(source);
 
@@ -214,5 +214,5 @@ function makeMaterial(unifs, vert, frag, payload) {
 
 // There should be more options supported like size and shape
 function makeBasicMesh(material) {
-  return new Mesh(new BoxBufferGeometry(2, 2, 2), material);
+  return new Mesh(new BoxGeometry(2, 2, 2), material);
 }
