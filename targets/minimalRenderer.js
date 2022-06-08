@@ -81,10 +81,15 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
   const gl = canvas.getContext("webgl2");
+  // Learn more: https://github.com/mrdoob/three.js/pull/21358
   const vertices = [
-    -1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0, 1.0, 0.0,
+    -1.0, -1.0, 0.0, 3.0, -1.0, 0.0, -1.0, 3.0, 0.0,
   ];
-  const indices = [3, 2, 1, 3, 1, 0];
+  const indices = [0, 1, 2];
+  // const vertices = [
+  //   -1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0, 1.0, 0.0,
+  // ];
+  // const indices = [3, 2, 1, 3, 1, 0];
   const vertex_buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
