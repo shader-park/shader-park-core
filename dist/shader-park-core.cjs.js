@@ -1,4 +1,4 @@
-/* Version: 0.1.26 - May 31, 2022 00:09:49 */
+/* Version: 0.1.26 - June 9, 2022 01:22:54 */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -96147,18 +96147,18 @@ if ( typeof window !== 'undefined' ) {
 
 /**
  *  Three targets are provided for both GLSL and Sculpt/JS api.
- * 
+ *
  *  1: source -> Threejs shader source components (easy customization)
  *  2: source -> Threejs material
  *  3: source -> Threejs mesh (easy to use)
- * 
+ *
  * TODO: make these materials 'plug in' to threejs' lighting model, like unity's surface shaders
  */
 
 function glslToThreeJSShaderSource(source) {
   return {
     uniforms: baseUniforms(),
-    frag: threeHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + 'const int MAX_ITERATIONS = 300;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + fragFooter,
+    frag: threeHeader + "const float STEP_SIZE_CONSTANT = 0.9;\n" + "const int MAX_ITERATIONS = 300;\n" + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + fragFooter,
     vert: threeJSVertexSource
   };
 }
@@ -96176,7 +96176,7 @@ function sculptToThreeJSShaderSource(source) {
     console.log(src.error);
   }
 
-  var frg = threeHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(src.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL + '\n' + src.colorGLSL + '\n' + fragFooter;
+  var frg = threeHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(src.uniforms) + "const float STEP_SIZE_CONSTANT = " + src.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + src.maxIterations + ";\n" + sculptureStarterCode + src.geoGLSL + "\n" + src.colorGLSL + "\n" + fragFooter;
   return {
     uniforms: src.uniforms,
     frag: frg,
@@ -96202,11 +96202,11 @@ function createSculptureWithGeometry(geometry, source) {
   };
   var params = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   geometry.computeBoundingSphere();
-  var radius = 'radius' in params ? params.radius : geometry.boundingSphere.radius;
+  var radius = "radius" in params ? params.radius : geometry.boundingSphere.radius;
   params.radius = radius;
   params.geometry = geometry;
   return createSculpture(source, uniformCallback, params);
-} // uniformCallback 
+} // uniformCallback
 
 function createSculpture(source) {
   var uniformCallback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function () {
@@ -96214,20 +96214,20 @@ function createSculpture(source) {
   };
   var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
   source = convertFunctionToString(source);
-  var radius = 'radius' in params ? params.radius : 2;
+  var radius = "radius" in params ? params.radius : 2;
   var geometry;
 
-  if ('geometry' in params) {
+  if ("geometry" in params) {
     geometry = params.geometry;
   } else {
-    var segments = 'segments' in params ? params.segments : 8;
+    var segments = "segments" in params ? params.segments : 8;
     geometry = new SphereGeometry(radius, segments, segments);
   }
 
   var material = sculptToThreeJSMaterial(source);
-  material.uniforms['opacity'].value = 1.0;
-  material.uniforms['mouse'].value = new Vector3();
-  material.uniforms['_scale'].value = radius;
+  material.uniforms["opacity"].value = 1.0;
+  material.uniforms["mouse"].value = new Vector3();
+  material.uniforms["_scale"].value = radius;
   var mesh = new Mesh(geometry, material);
 
   mesh.onBeforeRender = function (renderer, scene, camera, geometry, material, group) {
@@ -96260,19 +96260,19 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
   }
 
   unifs.forEach(function (uniform) {
-    if (uniform.type === 'float') {
+    if (uniform.type === "float") {
       finalUniforms[uniform.name] = {
         value: uniform.value
       };
-    } else if (uniform.type === 'vec2') {
+    } else if (uniform.type === "vec2") {
       finalUniforms[uniform.name] = {
         value: new Vector2(uniform.value.x, uniform.value.y)
       };
-    } else if (uniform.type === 'vec3') {
+    } else if (uniform.type === "vec3") {
       finalUniforms[uniform.name] = {
         value: new Vector3(uniform.value.x, uniform.value.y, uniform.value.z)
       };
-    } else if (uniform.type === 'vec4') {
+    } else if (uniform.type === "vec4") {
       finalUniforms[uniform.name] = {
         value: new Vector4(uniform.value.x, uniform.value.y, uniform.value.z, uniform.value.w)
       };
@@ -96300,31 +96300,31 @@ function makeBasicMesh(material) {
 }
 
 function uniformToCpp(uniforms) {
-  var res = '';
+  var res = "";
 
   for (var i = 0; i < uniforms.length; i++) {
     var unif = uniforms[i];
-    res += unif.type + ' ' + unif.name + ' = ';
+    res += unif.type + " " + unif.name + " = ";
 
-    if (typeof unif.value === 'number') {
+    if (typeof unif.value === "number") {
       // float
-      res += unif.value + 0.0000001 + 'f';
+      res += unif.value + 0.0000001 + "f";
     } else {
       // vec
-      res += 'vec' + unif.value.length + '(';
+      res += "vec" + unif.value.length + "(";
 
       for (var j = 0; j < unif.value.length; j++) {
-        res += unif.value[j] + 0.0000001 + 'f';
+        res += unif.value[j] + 0.0000001 + "f";
 
         if (j + 1 < unif.value.length) {
-          res += ', ';
+          res += ", ";
         }
       }
 
-      res += ')';
+      res += ")";
     }
 
-    res += ';\n';
+    res += ";\n";
   }
 
   return res;
@@ -96335,9 +96335,9 @@ var cppHeader = uniformToCpp(baseUniforms());
 
 function glslToGLM(source) {
   // converts all numbers to floats
-  var result = source.replace(/([^a-zA-Z][0-9]+([.][^a-zA-Z][0-9]*)|[.][0-9]+)()/g, '$1f'); // adds parentheses after swizzling for glm to pick up  
+  var result = source.replace(/([^a-zA-Z][0-9]+([.][^a-zA-Z][0-9]*)|[.][0-9]+)()/g, "$1f"); // adds parentheses after swizzling for glm to pick up
 
-  result = result.replace(/([a-zA-Z0-9][.][w-z]{2,})()/g, '$1()');
+  result = result.replace(/([a-zA-Z0-9][.][w-z]{2,})()/g, "$1()");
   return result;
 }
 
@@ -96345,11 +96345,11 @@ function glslToOfflineRenderer(source) {}
 function sculptToOfflineRenderer(source) {
   var src = sculptToGLSL(source); //console.log(filteredStarter);
 
-  return cppHeader + glslToGLM('const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + 'f;\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL + src.colorGLSL) + cppFooter;
+  return cppHeader + glslToGLM("const float STEP_SIZE_CONSTANT = " + src.stepSizeConstant + "f;\n" + "const int MAX_ITERATIONS = " + src.maxIterations + ";\n" + sculptureStarterCode + src.geoGLSL + src.colorGLSL) + cppFooter;
 }
 
 function glslToMinimalRenderer(canvas, source, updateUniforms) {
-  var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(baseUniforms()) + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + 'const int MAX_ITERATIONS = 300;\n' + sculptureStarterCode + source + fragFooter;
+  var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(baseUniforms()) + "const float STEP_SIZE_CONSTANT = 0.9;\n" + "const int MAX_ITERATIONS = 300;\n" + sculptureStarterCode + source + fragFooter;
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
 /**
@@ -96367,7 +96367,7 @@ function sculptToMinimalRenderer(canvas, source, updateUniforms) {
   }
 
   var generatedGLSL = sculptToGLSL(source);
-  var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + generatedGLSL.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + generatedGLSL.maxIterations + ';\n' + sculptureStarterCode + generatedGLSL.geoGLSL + '\n' + generatedGLSL.colorGLSL + '\n' + fragFooter;
+  var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
 
@@ -96392,10 +96392,15 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
   }
 
   resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  var gl = canvas.getContext('webgl2');
-  var vertices = [-1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0, 1.0, 0.0];
-  var indices = [3, 2, 1, 3, 1, 0];
+  window.addEventListener("resize", resizeCanvas);
+  var gl = canvas.getContext("webgl2"); // Learn more: https://github.com/mrdoob/three.js/pull/21358
+
+  var vertices = [-1.0, -1.0, 0.0, 3.0, -1.0, 0.0, -1.0, 3.0, 0.0];
+  var indices = [0, 1, 2]; // const vertices = [
+  //   -1.0, 1.0, 0.0, -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0, 1.0, 0.0,
+  // ];
+  // const indices = [3, 2, 1, 3, 1, 0];
+
   var vertex_buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
@@ -96413,9 +96418,9 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
 
   var logShaderComp = function logShaderComp(shader) {
     var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    console.log('Shader compiled successfully: ' + compiled);
+    console.log("Shader compiled successfully: " + compiled);
     var compilationLog = gl.getShaderInfoLog(shader);
-    if (!compiled) console.error('Shader compiler log: ' + compilationLog);
+    if (!compiled) console.error("Shader compiler log: " + compilationLog);
   };
 
   logShaderComp(vertShader);
@@ -96459,7 +96464,7 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
   }, false);
 
   function updateDraw() {
-    if (typeof updateUniforms === 'function') {
+    if (typeof updateUniforms === "function") {
       callUniformFuncs(userUniformUpdateFuncs, updateUniforms());
     }
 
@@ -96477,8 +96482,8 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
   updateDraw(); // loops through a dictionary and calls the function sotred in the value
 
   function callUniformFuncs(uniformFuncs, updatedUniforms) {
-    if (_typeof(updatedUniforms) !== 'object') {
-      console.error('updateUniforms must return a dictionary of uniform names and values. Instead got: ', updateUniforms);
+    if (_typeof(updatedUniforms) !== "object") {
+      console.error("updateUniforms must return a dictionary of uniform names and values. Instead got: ", updateUniforms);
       return;
     }
 
@@ -96494,15 +96499,15 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
   }
 
   function assignUniforms(updateUniforms) {
-    if (typeof updateUniforms !== 'function') {
-      console.error('updateUniforms must be a function that returns a dictionary of uniform names and values');
+    if (typeof updateUniforms !== "function") {
+      console.error("updateUniforms must be a function that returns a dictionary of uniform names and values");
       return {};
     }
 
     var userUniformUpdateFuncs = {};
     var uniformsDict = updateUniforms();
 
-    if (uniformsDict !== undefined && _typeof(uniformsDict) === 'object') {
+    if (uniformsDict !== undefined && _typeof(uniformsDict) === "object") {
       Object.entries(uniformsDict).forEach(function (keys) {
         var _keys2 = _slicedToArray(keys, 2),
             key = _keys2[0],
@@ -96510,7 +96515,7 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
 
         var unifLocation = gl.getUniformLocation(shaderProgram, key);
 
-        if (typeof val === 'number') {
+        if (typeof val === "number") {
           userUniformUpdateFuncs[key] = function (unif) {
             return gl.uniform1f(unifLocation, unif);
           };
@@ -96532,10 +96537,10 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
               return gl.uniform4iv(unifLocation, unif);
             };
           } else {
-            console.error('Uniforms must be either a float or an array with length 1, 2, 3 or 4');
+            console.error("Uniforms must be either a float or an array with length 1, 2, 3 or 4");
           }
         } else {
-          console.error('Uniforms must be either a float or an array with length 1, 2, 3 or 4');
+          console.error("Uniforms must be either a float or an array with length 1, 2, 3 or 4");
         }
       });
     }
@@ -96550,10 +96555,10 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
  * output - self-contained lightweight html which renders the sculpture
  **/
 function sculptToMinimalHTMLRenderer(spCode, libPath) {
-  return makeHTML(spCode, 'sculptToMinimalRenderer', libPath);
+  return makeHTML(spCode, "sculptToMinimalRenderer", libPath);
 }
 function glslToMinimalHTMLRenderer(spCode, libPath) {
-  return makeHTML(spCode, 'glslToMinimalRenderer', libPath);
+  return makeHTML(spCode, "glslToMinimalRenderer", libPath);
 }
 
 function makeHTML(spCode, minRenderFunc, libPath) {
@@ -96569,14 +96574,14 @@ function makeHTML(spCode, minRenderFunc, libPath) {
 function sculptToRawSDF4Meshing(source) {
   var minimalHeader = "\nprecision highp float;\nuniform float w_width;\nuniform float w_height;\nuniform mat4 projectionMatrix;\n#define cameraPosition vec3(0.0,0.0,-1.0)\n#define vUv vec2(0.0)\n#define worldPos vec4(vec2((gl_FragCoord.x/w_width-0.5)*(w_width/w_height),gl_FragCoord.y/w_height-0.5)*1.75,0.0,0.0)\n#define STEP_SIZE_CONSTANT 0.9\n#define MAX_ITERATIONS 300\n#define stepSize 0.9\n#define mouse vec3(0.0)\n#define time 0.0\n";
   var generatedGLSL = sculptToGLSL(source);
-  var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight //+ uniformsToGLSL(generatedGLSL.uniforms) 
-  + sculptureStarterCode + generatedGLSL.geoGLSL;
-  return fullFrag.replace(/surfaceDistance/g, 'mapDistance');
+  var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + //+ uniformsToGLSL(generatedGLSL.uniforms)
+  sculptureStarterCode + generatedGLSL.geoGLSL;
+  return fullFrag.replace(/surfaceDistance/g, "mapDistance");
 }
 
 /**
  *  TD target for GLSL and  Sculpt/JS api.
- * 
+ *
  *  TODO: make these materials 'plug in' to Touch Designer's ' PBR lighting model.
  */
 
@@ -96585,7 +96590,7 @@ var TDFooter = "\nvoid main()\n{\n\t// This allows things such as order independ
 function glslToTouchDesignerShaderSource(source) {
   return {
     uniforms: baseUniforms(),
-    frag: TDHeader + 'const float STEP_SIZE_CONSTANT = 0.9;\n' + 'const int MAX_ITERATIONS = 300;\n' + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + TDFooter,
+    frag: TDHeader + "const float STEP_SIZE_CONSTANT = 0.9;\n" + "const int MAX_ITERATIONS = 300;\n" + uniformsToGLSL(baseUniforms()) + sculptureStarterCode + source + TDFooter,
     vert: minimalVertexSource
   };
 }
@@ -96596,8 +96601,8 @@ function sculptToTouchDesignerShaderSource(source) {
     console.log(src.error);
   }
 
-  var frg = TDHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(src.uniforms) + 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL + '\n' + src.colorGLSL + '\n' + TDFooter;
-  var sdf = 'const float STEP_SIZE_CONSTANT = ' + src.stepSizeConstant + ';\n' + 'const int MAX_ITERATIONS = ' + src.maxIterations + ';\n' + sculptureStarterCode + src.geoGLSL;
+  var frg = TDHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(src.uniforms) + "const float STEP_SIZE_CONSTANT = " + src.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + src.maxIterations + ";\n" + sculptureStarterCode + src.geoGLSL + "\n" + src.colorGLSL + "\n" + TDFooter;
+  var sdf = "const float STEP_SIZE_CONSTANT = " + src.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + src.maxIterations + ";\n" + sculptureStarterCode + src.geoGLSL;
   return {
     uniforms: src.uniforms,
     frag: frg,
