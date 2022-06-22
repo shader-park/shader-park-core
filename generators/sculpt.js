@@ -76,6 +76,39 @@ function replaceBinaryOp(syntaxTree) {
     }
   }
 
+  
+  // handles -variable
+  if (syntaxTree !== null && syntaxTree["type"] === "UnaryExpression") {
+    if (syntaxTree["operator"] == '-' && syntaxTree["argument"] && 
+        syntaxTree["argument"]["type"] == "Identifier") {
+      Object.assign(syntaxTree, {
+        "type": "CallExpression",
+        "callee": {
+          "type": "Identifier",
+          "name": "mult"
+        },
+        "arguments": [
+          {
+            "type": "UnaryExpression",
+            "operator": "-",
+            "argument": {
+              "type": "Literal",
+              "value": 1,
+              "raw": "1"
+            },
+            "prefix": true
+          },
+          {
+            "type": "Identifier",
+            "name": syntaxTree["argument"]["name"]
+          }
+        ]
+      });
+      delete syntaxTree['prefix']
+    }
+  }
+  
+
   if (syntaxTree !== null && syntaxTree["type"] === "BinaryExpression") {
     let op = syntaxTree["operator"];
     if (op === "*" || op === "/" || op === "-" || op === "+") {

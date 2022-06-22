@@ -1,4 +1,4 @@
-/* Version: 0.1.26 - June 9, 2022 01:22:54 */
+/* Version: 0.1.27 - June 22, 2022 00:59:56 */
 function createMetadataMethodsForProperty(metadataMap, kind, property) {
   return {
     getMetadata: function (key) {
@@ -44005,6 +44005,33 @@ function replaceBinaryOp(syntaxTree) {
         replaceBinaryOp(syntaxTree[node]);
       }
     }
+  } // handles -variable
+
+
+  if (syntaxTree !== null && syntaxTree["type"] === "UnaryExpression") {
+    if (syntaxTree["operator"] == '-' && syntaxTree["argument"] && syntaxTree["argument"]["type"] == "Identifier") {
+      Object.assign(syntaxTree, {
+        "type": "CallExpression",
+        "callee": {
+          "type": "Identifier",
+          "name": "mult"
+        },
+        "arguments": [{
+          "type": "UnaryExpression",
+          "operator": "-",
+          "argument": {
+            "type": "Literal",
+            "value": 1,
+            "raw": "1"
+          },
+          "prefix": true
+        }, {
+          "type": "Identifier",
+          "name": syntaxTree["argument"]["name"]
+        }]
+      });
+      delete syntaxTree['prefix'];
+    }
   }
 
   if (syntaxTree !== null && syntaxTree["type"] === "BinaryExpression") {
@@ -44462,8 +44489,6 @@ function sculptToGLSL(userProvidedSrc) {
     if (arg_2.dims !== 1 && arg_2.dims !== arg_0.dims) {
       compileError("'mix' third argument must be float or match dim of first args");
     }
-
-    ensureScalar("mix", arg_2);
 
     if (typeof arg_1 == "number" || arg_1.type == "float") {
       arg_0 = tryMakeNum(arg_0);
@@ -96611,6 +96636,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park-core version: 0.1.26'); /// Generate code for various targets
+console.log('using shader-park-core version: 0.1.27'); /// Generate code for various targets
 
 export { baseUniforms, bindStaticData, createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, fragFooter, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, minimalHeader, minimalVertexSource, sculptToGLSL, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource, sculptureStarterCode, uniformsToGLSL, useHemisphereLight, usePBRHeader };
