@@ -92,8 +92,13 @@ export function sculptToThreeJSShaderSource(source) {
   };
 }
 
-export function sculptToThreeJSMaterial(source, payload) {
-  let src = sculptToThreeJSShaderSource(source);
+export function sculptToThreeJSMaterial(source, payload, generatedGLSL) {
+  let src;
+  if(generatedGLSL) {
+    src = generatedGLSL;
+  } else {
+    src = sculptToThreeJSShaderSource(source);
+  }
   let material = makeMaterial(src.uniforms, src.vert, src.frag, payload);
   material.uniformDescriptions = src.uniforms;
   return material;
@@ -110,14 +115,15 @@ export function createSculptureWithGeometry(
   uniformCallback = () => {
     return {};
   },
-  params = {}
+  params = {},
+  generatedGLSL
 ) {
   geometry.computeBoundingSphere();
   let radius =
     "radius" in params ? params.radius : geometry.boundingSphere.radius;
   params.radius = radius;
   params.geometry = geometry;
-  return createSculpture(source, uniformCallback, params);
+  return createSculpture(source, uniformCallback, params, generatedGLSL);
 }
 
 // uniformCallback
@@ -126,7 +132,8 @@ export function createSculpture(
   uniformCallback = () => {
     return {};
   },
-  params = {}
+  params = {},
+  generatedGLSL
 ) {
   source = convertFunctionToString(source);
 
@@ -139,7 +146,8 @@ export function createSculpture(
     let segments = "segments" in params ? params.segments : 8;
     geometry = new SphereGeometry(radius, segments, segments);
   }
-  let material = sculptToThreeJSMaterial(source);
+  
+  let material = sculptToThreeJSMaterial(source, null, generatedGLSL);
 
   material.uniforms["opacity"].value = 1.0;
   material.uniforms["mouse"].value = new Vector3();
