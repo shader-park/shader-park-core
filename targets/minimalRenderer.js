@@ -60,7 +60,7 @@ export function sculptToMinimalRenderer(canvas, source, updateUniforms) {
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
 
-export function generatedGLSLToMinimalRenderer(canvas, generatedGLSL) {
+export function generatedGLSLToMinimalRenderer(canvas, generatedGLSL, updateUniforms) {
   let fullFrag =
   minimalHeader +
   usePBRHeader +
