@@ -1,6 +1,6 @@
 {
   "name": "shader-park-core",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "core glsl and js framework for shader-park",
   "main": "dist/shader-park-core.esm.js",
   "csj": "dist/shader-park-core.cjs.js",

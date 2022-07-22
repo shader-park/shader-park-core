@@ -1,4 +1,4 @@
-/* Version: 0.1.28 - July 21, 2022 23:06:40 */
+/* Version: 0.1.29 - July 21, 2022 23:29:23 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -96406,7 +96406,7 @@
     var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
     return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
   }
-  function generatedGLSLToMinimalRenderer(generatedGLSL) {
+  function generatedGLSLToMinimalRenderer(canvas, generatedGLSL) {
     var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
     return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
   }
@@ -96655,7 +96655,7 @@
     };
   }
 
-  console.log('using shader-park-core version: 0.1.28'); /// Generate code for various targets
+  console.log('using shader-park-core version: 0.1.29'); /// Generate code for various targets
 
   exports.baseUniforms = baseUniforms;
   exports.bindStaticData = bindStaticData;

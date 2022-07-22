@@ -1,4 +1,4 @@
-/* Version: 0.1.28 - July 21, 2022 23:06:42 */
+/* Version: 0.1.29 - July 21, 2022 23:29:26 */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -96404,7 +96404,7 @@ function sculptToMinimalRenderer(canvas, source, updateUniforms) {
   var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
-function generatedGLSLToMinimalRenderer(generatedGLSL) {
+function generatedGLSLToMinimalRenderer(canvas, generatedGLSL) {
   var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
@@ -96653,7 +96653,7 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park-core version: 0.1.28'); /// Generate code for various targets
+console.log('using shader-park-core version: 0.1.29'); /// Generate code for various targets
 
 exports.baseUniforms = baseUniforms;
 exports.bindStaticData = bindStaticData;
