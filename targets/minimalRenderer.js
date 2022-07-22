@@ -60,6 +60,27 @@ export function sculptToMinimalRenderer(canvas, source, updateUniforms) {
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
 
+export function generatedGLSLToMinimalRenderer(generatedGLSL) {
+  let fullFrag =
+  minimalHeader +
+  usePBRHeader +
+  useHemisphereLight +
+  uniformsToGLSL(generatedGLSL.uniforms) +
+  "const float STEP_SIZE_CONSTANT = " +
+  generatedGLSL.stepSizeConstant +
+  ";\n" +
+  "const int MAX_ITERATIONS = " +
+  generatedGLSL.maxIterations +
+  ";\n" +
+  sculptureStarterCode +
+  generatedGLSL.geoGLSL +
+  "\n" +
+  generatedGLSL.colorGLSL +
+  "\n" +
+  fragFooter;
+  return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);  
+}
+
 function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
   // if no update function is provided assume no-op
   if (updateUniforms === undefined) {

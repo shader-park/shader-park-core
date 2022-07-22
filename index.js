@@ -16,7 +16,8 @@ import {
 
 import {
     sculptToMinimalRenderer,
-    glslToMinimalRenderer
+    glslToMinimalRenderer,
+    generatedGLSLToMinimalRenderer
 } from './targets/minimalRenderer.js'
 
 import {
@@ -69,6 +70,7 @@ export {
     glslToTouchDesignerShaderSource,
     sculptToTouchDesignerShaderSource,
     sculptToMinimalRenderer,
+    generatedGLSLToMinimalRenderer,
     sculptToMinimalHTMLRenderer,
     glslToMinimalRenderer,
     glslToMinimalHTMLRenderer,

@@ -1,4 +1,4 @@
-/* Version: 0.1.27 - June 22, 2022 00:59:56 */
+/* Version: 0.1.27 - July 21, 2022 20:52:46 */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -96211,8 +96211,15 @@ function sculptToThreeJSShaderSource(source) {
     colorGLSL: src.colorGLSL
   };
 }
-function sculptToThreeJSMaterial(source, payload) {
-  var src = sculptToThreeJSShaderSource(source);
+function sculptToThreeJSMaterial(source, payload, generatedGLSL) {
+  var src;
+
+  if (generatedGLSL) {
+    src = generatedGLSL;
+  } else {
+    src = sculptToThreeJSShaderSource(source);
+  }
+
   var material = makeMaterial(src.uniforms, src.vert, src.frag, payload);
   material.uniformDescriptions = src.uniforms;
   return material;
@@ -96226,11 +96233,12 @@ function createSculptureWithGeometry(geometry, source) {
     return {};
   };
   var params = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+  var generatedGLSL = arguments.length > 4 ? arguments[4] : undefined;
   geometry.computeBoundingSphere();
   var radius = "radius" in params ? params.radius : geometry.boundingSphere.radius;
   params.radius = radius;
   params.geometry = geometry;
-  return createSculpture(source, uniformCallback, params);
+  return createSculpture(source, uniformCallback, params, generatedGLSL);
 } // uniformCallback
 
 function createSculpture(source) {
@@ -96238,6 +96246,7 @@ function createSculpture(source) {
     return {};
   };
   var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var generatedGLSL = arguments.length > 3 ? arguments[3] : undefined;
   source = convertFunctionToString(source);
   var radius = "radius" in params ? params.radius : 2;
   var geometry;
@@ -96249,7 +96258,7 @@ function createSculpture(source) {
     geometry = new SphereGeometry(radius, segments, segments);
   }
 
-  var material = sculptToThreeJSMaterial(source);
+  var material = sculptToThreeJSMaterial(source, null, generatedGLSL);
   material.uniforms["opacity"].value = 1.0;
   material.uniforms["mouse"].value = new Vector3();
   material.uniforms["_scale"].value = radius;
@@ -96392,6 +96401,10 @@ function sculptToMinimalRenderer(canvas, source, updateUniforms) {
   }
 
   var generatedGLSL = sculptToGLSL(source);
+  var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
+  return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
+}
+function generatedGLSLToMinimalRenderer(generatedGLSL) {
   var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
@@ -96648,6 +96661,7 @@ exports.createSculpture = createSculpture;
 exports.createSculptureWithGeometry = createSculptureWithGeometry;
 exports.defaultFragSourceGLSL = defaultFragSourceGLSL;
 exports.fragFooter = fragFooter;
+exports.generatedGLSLToMinimalRenderer = generatedGLSLToMinimalRenderer;
 exports.glslToMinimalHTMLRenderer = glslToMinimalHTMLRenderer;
 exports.glslToMinimalRenderer = glslToMinimalRenderer;
 exports.glslToOfflineRenderer = glslToOfflineRenderer;
