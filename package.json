@@ -57,7 +57,7 @@
     "@rollup/plugin-json": "^4.0.2",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "chai": "^4.3.4",
-    "mocha": "^8.3.2",
+    "mocha": "^10.1.0",
     "png-js": "^1.0.0",
     "puppeteer": "^8.0.0",
     "rollup": "^2.42.4",
