@@ -8,6 +8,10 @@
   "browser": "dist/shader-park-core.umd.js",
   "bundle": "dist/shader-park-core.bundle.js",
   "private": false,
+  "exports": {
+    ".": "./dist/shader-park-core.esm.js",
+    "./minimalRenderer": "./dist/shader-park-minimal.esm.js"
+  },
   "scripts": {
     "build": "rollup -c --no-treeshake",
     "watch": "rollup -c -w --no-treeshake",
