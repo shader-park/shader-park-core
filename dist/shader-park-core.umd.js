@@ -1,4 +1,4 @@
-/* Version: 0.1.32 - November 20, 2022 20:40:34 */
+/* Version: 0.1.33 - November 20, 2022 21:45:24 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -95649,13 +95649,7 @@
     var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(baseUniforms()) + "const float STEP_SIZE_CONSTANT = 0.9;\n" + "const int MAX_ITERATIONS = 300;\n" + sculptureStarterCode + source + fragFooter;
     return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
   }
-  /**
-   * for fast and efficient use on the web
-   * input - sculpt code
-   * output - a fully self-contained lightweight html file which renders the sculpture
-   **/
-
-  function sculptToMinimalRenderer(canvas, source, updateUniforms) {
+  function sculptToFullGLSLSource(source) {
     if (typeof source === "function") {
       source = source.toString();
       source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
@@ -95665,6 +95659,16 @@
 
     var generatedGLSL = sculptToGLSL(source);
     var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
+    return fullFrag;
+  }
+  /**
+   * for fast and efficient use on the web
+   * input - sculpt code
+   * output - a fully self-contained lightweight html file which renders the sculpture
+   **/
+
+  function sculptToMinimalRenderer(canvas, source, updateUniforms) {
+    var fullFrag = sculptToFullGLSLSource(source);
     return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
   }
   function generatedGLSLToMinimalRenderer(canvas, generatedGLSL, updateUniforms) {
@@ -95916,7 +95920,7 @@
     };
   }
 
-  console.log('using shader-park-core version: 0.1.32'); /// Generate code for various targets
+  console.log('using shader-park-core version: 0.1.33'); /// Generate code for various targets
 
   exports.baseUniforms = baseUniforms;
   exports.bindStaticData = bindStaticData;
@@ -95934,6 +95938,7 @@
   exports.glslToTouchDesignerShaderSource = glslToTouchDesignerShaderSource;
   exports.minimalHeader = minimalHeader;
   exports.minimalVertexSource = minimalVertexSource;
+  exports.sculptToFullGLSLSource = sculptToFullGLSLSource;
   exports.sculptToGLSL = sculptToGLSL;
   exports.sculptToMinimalHTMLRenderer = sculptToMinimalHTMLRenderer;
   exports.sculptToMinimalRenderer = sculptToMinimalRenderer;

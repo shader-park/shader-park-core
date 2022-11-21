@@ -26,12 +26,7 @@ export function glslToMinimalRenderer(canvas, source, updateUniforms) {
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
 
-/**
- * for fast and efficient use on the web
- * input - sculpt code
- * output - a fully self-contained lightweight html file which renders the sculpture
- **/
-export function sculptToMinimalRenderer(canvas, source, updateUniforms) {
+export function sculptToFullGLSLSource(source) {
   if (typeof source === "function") {
     source = source.toString();
     source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
@@ -57,6 +52,16 @@ export function sculptToMinimalRenderer(canvas, source, updateUniforms) {
     generatedGLSL.colorGLSL +
     "\n" +
     fragFooter;
+  return fullFrag;
+}
+
+/**
+ * for fast and efficient use on the web
+ * input - sculpt code
+ * output - a fully self-contained lightweight html file which renders the sculpture
+ **/
+export function sculptToMinimalRenderer(canvas, source, updateUniforms) {
+  let fullFrag = sculptToFullGLSLSource(source);
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
 

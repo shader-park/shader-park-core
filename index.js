@@ -17,7 +17,8 @@ import {
 import {
     sculptToMinimalRenderer,
     glslToMinimalRenderer,
-    generatedGLSLToMinimalRenderer
+    generatedGLSLToMinimalRenderer,
+    sculptToFullGLSLSource
 } from './targets/minimalRenderer.js'
 
 import {
@@ -77,6 +78,7 @@ export {
     sculptToRawSDF4Meshing,
     defaultFragSourceGLSL,
     sculptToGLSL,
+    sculptToFullGLSLSource,
     baseUniforms, 
     uniformsToGLSL,
     usePBRHeader,
