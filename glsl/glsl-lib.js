@@ -744,7 +744,7 @@ void main() {
         
         //outputColor = mix(outputColor, col.color, reflectionCoefficient);
         // outputColor += col.mat.albedo;
-        outputColor += col.color *  reflectionCoefficient;
+        outputColor += col.color * reflectionCoefficient;
         reflectionCoefficient *= col.mat.albedo * (1.0 - col.mat.roughness);
 
         

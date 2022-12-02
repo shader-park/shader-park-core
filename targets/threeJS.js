@@ -87,8 +87,6 @@ export function sculptToThreeJSShaderSource(source) {
     "\n" +
     fragFooter;
 
-    console.log("OUTPUTTTT", frg)
-
   return {
     uniforms: src.uniforms,
     frag: frg,
