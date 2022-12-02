@@ -40,8 +40,10 @@ export function glslToThreeJSShaderSource(source) {
     uniforms: baseUniforms(),
     frag:
       threeHeader +
+      "#define MAX_REFLECTIONS 0\n" +
       "const float STEP_SIZE_CONSTANT = 0.9;\n" +
       "const int MAX_ITERATIONS = 300;\n" +
+      
       uniformsToGLSL(baseUniforms()) +
       sculptureStarterCode +
       source +
@@ -75,12 +77,17 @@ export function sculptToThreeJSShaderSource(source) {
     "const int MAX_ITERATIONS = " +
     src.maxIterations +
     ";\n" +
+    "#define MAX_REFLECTIONS " +
+    src.maxReflections +
+    "\n" +    
     sculptureStarterCode +
     src.geoGLSL +
     "\n" +
     src.colorGLSL +
     "\n" +
     fragFooter;
+
+    console.log("OUTPUTTTT", frg)
 
   return {
     uniforms: src.uniforms,

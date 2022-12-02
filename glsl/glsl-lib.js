@@ -654,8 +654,8 @@ ShadedMaterial pbrLighting(vec3 WordPos, vec3 N, vec3 lightdir, Material mat, ve
     color += 16.0*lt*(0.2+mat.albedo)*mat.metallic*backgroundColor*(1.3-mat.roughness);
     ///
     
-    color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0/2.2));
+    // Caps color range close to 0-1. Things above 1 stay close to 1
+    
     return ShadedMaterial(mat, color, backgroundColor);
 }
 
@@ -710,35 +710,52 @@ void main() {
         vec3 normal = calcNormal(p);
         // p *= _scale;
         col = shade(p, normal);
-        pc_fragColor = col.color;
+        outputColor = col.color;
     } else {
         discard;
     }
 
-    float reflectionCoefficient = 1. - col.mat.roughness;
-    const int max_bounces = 10;
-    for(int i = 0; i < max_bounces; i++) {
-        if(reflectionCoefficient < .001) {
+    vec3 reflectionCoefficient = col.mat.albedo * (1.0 - col.mat.roughness);
+    // const int max_bounces = 10;
+
+    #if MAX_REFLECTIONS > 0
+    for(int i = 0; i < MAX_REFLECTIONS; i++) {
+        if(length(reflectionCoefficient) < .001) {
             break;
         }
         rayOrigin = (rayOrigin + rayDirection*t);
         vec3 normal = calcNormal(rayOrigin);
         rayDirection = reflect(rayDirection, normal);
         rayOrigin += .001 * rayDirection;
-        float t = intersect(rayOrigin, rayDirection, stepSize);
+        t = intersect(rayOrigin, rayDirection, stepSize);
         vec3 p = (rayOrigin + rayDirection * t);
+        
         ShadedMaterial col;
+
         if(t < max_dist) {
+            normal = calcNormal(p);
             col = shade(p, normal);
         } else {
-            outputColor = mix(outputColor, col.backgroundColor, reflectionCoefficient);
+            //outputColor = mix(outputColor, col.backgroundColor, reflectionCoefficient);
+            // TODO col is undefined
+            //outputColor += col.backgroundColor *  reflectionCoefficient;
             break;
         }
         
-        outputColor = mix(outputColor, col.color, reflectionCoefficient);
+        //outputColor = mix(outputColor, col.color, reflectionCoefficient);
+        // outputColor += col.mat.albedo;
+        outputColor += col.color *  reflectionCoefficient;
+        reflectionCoefficient *= col.mat.albedo * (1.0 - col.mat.roughness);
 
-        reflectionCoefficient *= 1. - col.mat.roughness;
+        
     }
-    gl_FragColor = vec4(outputColor, opacity);
+    #endif
+    // TODO turn off with noLighting
+    
+    outputColor = outputColor / (outputColor + vec3(1.0));
+    outputColor = pow(outputColor, vec3(1.0/2.2));
+    
+
+    pc_fragColor = vec4(outputColor, opacity);
 }
 `;

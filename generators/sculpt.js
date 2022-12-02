@@ -33,7 +33,8 @@ ${geo}
 }
 
 function buildColorSource(col, useLighting) {
-	let lgt = useLighting ? '' : '    return ShadedMaterial(scope_0_material, scope_0_material.albedo);';
+	
+
 	return `
 ShadedMaterial shade(vec3 p, vec3 normal) {
     float d = 100.0;
@@ -51,7 +52,7 @@ ShadedMaterial shade(vec3 p, vec3 normal) {
 	vec3 selectedColor = vec3(1.0,1.0,1.0);
 	#endif
 ${col}
-${lgt}
+${useLighting ? '' : '    return ShadedMaterial(scope_0_material, scope_0_material.albedo, backgroundColor);'}
 	#ifdef USE_PBR
 	return pbrLighting(worldPos.xyz, normal, lightDirection, scope_0_material, backgroundColor);
 	#else
@@ -270,6 +271,7 @@ export function sculptToGLSL(userProvidedSrc) {
 
   let stepSizeConstant = 0.85;
   let maxIterations = 300;
+  let maxReflections = 0;
 
   ////////////////////////////////////////////////////////////
   // Generates JS from headers referenced in the bindings.js
@@ -610,6 +612,17 @@ export function sculptToGLSL(userProvidedSrc) {
     }
     maxIterations = Math.round(val);
   }
+
+  function setMaxReflections(val) {
+    if (typeof val !== "number" || val < 0) {
+      compileError(
+        "reflections accepts only a constant int >= 0. Was given: '" +
+          val.type +
+          "'"
+      );
+    }
+    maxReflections = Math.round(val);
+  }  
 
   function getCurrentState() {
     return stateStack[stateStack.length - 1];
@@ -1586,6 +1599,7 @@ export function sculptToGLSL(userProvidedSrc) {
     uniforms: uniforms,
     stepSizeConstant: stepSizeConstant,
     maxIterations: maxIterations,
+    maxReflections: maxReflections,
     userGLSL: userGLSL,
     geoGLSL: geoFinal,
     colorGLSL: colorFinal,
