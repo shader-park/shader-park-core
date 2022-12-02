@@ -46,6 +46,9 @@ export function sculptToFullGLSLSource(source) {
     "const int MAX_ITERATIONS = " +
     generatedGLSL.maxIterations +
     ";\n" +
+    "#define MAX_REFLECTIONS " +
+    generatedGLSL.maxReflections +
+    "\n" + 
     sculptureStarterCode +
     generatedGLSL.geoGLSL +
     "\n" +
@@ -77,6 +80,9 @@ export function generatedGLSLToMinimalRenderer(canvas, generatedGLSL, updateUnif
   "const int MAX_ITERATIONS = " +
   generatedGLSL.maxIterations +
   ";\n" +
+  "#define MAX_REFLECTIONS " +
+  generatedGLSL.maxReflections +
+  "\n" +
   sculptureStarterCode +
   generatedGLSL.geoGLSL +
   "\n" +

@@ -40,7 +40,6 @@ export function glslToThreeJSShaderSource(source) {
     uniforms: baseUniforms(),
     frag:
       threeHeader +
-      "#define MAX_REFLECTIONS 0\n" +
       "const float STEP_SIZE_CONSTANT = 0.9;\n" +
       "const int MAX_ITERATIONS = 300;\n" +
       

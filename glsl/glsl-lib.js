@@ -67,6 +67,7 @@ const float intersection_threshold = 0.00001;
 
 struct Material {
     vec3 albedo;
+    vec3 reflectiveAlbedo;
     float metallic;
     float roughness;
     float ao;
@@ -81,6 +82,7 @@ struct ShadedMaterial {
 Material blendMaterial(Material a, Material b, float amount) {
     return Material(
         mix(a.albedo, b.albedo, amount), 
+        mix(a.reflectiveAlbedo, b.reflectiveAlbedo, amount), 
         mix(a.metallic, b.metallic, amount), 
         mix(a.roughness, b.roughness, amount), 
         mix(a.ao, b.ao, amount)
@@ -715,8 +717,8 @@ void main() {
         discard;
     }
 
-    vec3 reflectionCoefficient = col.mat.albedo * (1.0 - col.mat.roughness);
-    // const int max_bounces = 10;
+    vec3 reflectionCoefficient = col.mat.reflectiveAlbedo;
+    #ifdef MAX_REFLECTIONS
 
     #if MAX_REFLECTIONS > 0
     for(int i = 0; i < MAX_REFLECTIONS; i++) {
@@ -745,10 +747,12 @@ void main() {
         //outputColor = mix(outputColor, col.color, reflectionCoefficient);
         // outputColor += col.mat.albedo;
         outputColor += col.color * reflectionCoefficient;
-        reflectionCoefficient *= col.mat.albedo * (1.0 - col.mat.roughness);
+        
+        reflectionCoefficient *= col.mat.reflectiveAlbedo ;
 
         
     }
+    #endif
     #endif
     // TODO turn off with noLighting
     

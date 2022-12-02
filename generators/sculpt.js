@@ -43,8 +43,8 @@ ShadedMaterial shade(vec3 p, vec3 normal) {
 	vec3 backgroundColor = vec3(1.0, 1.0, 1.0);
 	vec3 mouseIntersect = vec3(0.0,1.0,0.0);
 	#ifdef USE_PBR
-	Material material = Material(vec3(1.0),0.5,0.7,1.0);
-	Material selectedMaterial = Material(vec3(1.0),0.5,0.7,1.0);
+	Material material = Material(vec3(1.0), vec3(1.0),0.5,0.7,1.0);
+	Material selectedMaterial = Material(vec3(1.0), vec3(1.0),0.5,0.7,1.0);
 	#else
 	float light = 1.0;
 	float occ = 1.0;
@@ -1289,13 +1289,49 @@ export function sculptToGLSL(userProvidedSrc) {
           collapseToString(blue) +
           ");\n"
       );
+      appendColorSource(
+        getCurrentMaterial() +
+          ".reflectiveAlbedo = vec3(" +
+          collapseToString(col) +
+          ", " +
+          collapseToString(green) +
+          ", " +
+          collapseToString(blue) +
+          ");\n"
+      );      
     } else {
       if (col.type !== "vec3") compileError("albedo must be vec3");
       appendColorSource(
         getCurrentMaterial() + ".albedo = " + collapseToString(col) + ";\n"
       );
+      appendColorSource(
+        getCurrentMaterial() + ".reflectiveAlbedo = " + collapseToString(col) + ";\n"
+      );
     }
   }
+
+  function reflectiveColor(col, green, blue) {
+    if (green !== undefined) {
+      ensureScalar("color", col);
+      ensureScalar("color", green);
+      ensureScalar("color", blue);
+      appendColorSource(
+        getCurrentMaterial() +
+          ".reflectiveAlbedo = vec3(" +
+          collapseToString(col) +
+          ", " +
+          collapseToString(green) +
+          ", " +
+          collapseToString(blue) +
+          ");\n"
+      );      
+    } else {
+      if (col.type !== "vec3") compileError("albedo must be vec3");
+      appendColorSource(
+        getCurrentMaterial() + ".reflectiveAlbedo = " + collapseToString(col) + ";\n"
+      );
+    }
+  }  
 
   function metal(val) {
     ensureScalar("metal", val);
