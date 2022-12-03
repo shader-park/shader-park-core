@@ -64,11 +64,59 @@ void main()
 	vec3 specularSum = vec3(0.0, 0.0, 0.0);
 
 	vec3 worldSpaceNorm = normalize(iVert.worldSpaceNorm.xyz);
+	ShadedMaterial col;
+    vec3 outputColor = vec3(0.);
+
 	// vec3 normal = normalize(worldSpaceNorm.xyz);
 	if(t < 2.5) {
 		vec3 p = (rayOrigin + rayDirection*t);
 		vec3 normal = calcNormal(p);
-		vec3 raymarchedColor = shade(p, normal);
+		
+		col = shade(p, normal);
+        outputColor = col.color;
+
+
+		vec3 reflectionCoefficient = col.mat.reflectiveAlbedo;
+		#ifdef MAX_REFLECTIONS
+	
+		#if MAX_REFLECTIONS > 0
+		for(int i = 0; i < MAX_REFLECTIONS; i++) {
+			if(length(reflectionCoefficient) < .001) {
+				break;
+			}
+			rayOrigin = (rayOrigin + rayDirection*t);
+			vec3 normal = calcNormal(rayOrigin);
+			rayDirection = reflect(rayDirection, normal);
+			rayOrigin += .001 * rayDirection;
+			t = intersect(rayOrigin, rayDirection, stepSize);
+			vec3 p = (rayOrigin + rayDirection * t);
+			
+			ShadedMaterial col;
+	
+			if(t < max_dist) {
+				normal = calcNormal(p);
+				col = shade(p, normal);
+			} else {
+				//outputColor = mix(outputColor, col.backgroundColor, reflectionCoefficient);
+				// TODO col is undefined
+				//outputColor += col.backgroundColor *  reflectionCoefficient;
+				break;
+			}
+			
+			//outputColor = mix(outputColor, col.color, reflectionCoefficient);
+			// outputColor += col.mat.albedo;
+			outputColor += col.color * reflectionCoefficient;
+			
+			reflectionCoefficient *= col.mat.reflectiveAlbedo ;
+	
+			
+		}
+		#endif
+		#endif
+		
+		outputColor = outputColor / (outputColor + vec3(1.0));
+		outputColor = pow(outputColor, vec3(1.0/2.2));
+		vec3 raymarchedColor = outputColor;
 	
 		vec3 baseColor = uBaseColor.rgb;
 
@@ -205,6 +253,9 @@ export function sculptToTouchDesignerShaderSource(source) {
     "const int MAX_ITERATIONS = " +
     src.maxIterations +
     ";\n" +
+    "#define MAX_REFLECTIONS " +
+    src.maxReflections +
+    "\n" +	
     sculptureStarterCode +
     src.geoGLSL +
     "\n" +
@@ -219,6 +270,9 @@ export function sculptToTouchDesignerShaderSource(source) {
     "const int MAX_ITERATIONS = " +
     src.maxIterations +
     ";\n" +
+    "#define MAX_REFLECTIONS " +
+    src.maxReflections +
+    "\n" +    	
     sculptureStarterCode +
     src.geoGLSL;
 
