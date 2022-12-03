@@ -57,6 +57,9 @@ export function sculptToOfflineRenderer(source) {
         "const int MAX_ITERATIONS = " +
         src.maxIterations +
         ";\n" +
+        "#define MAX_REFLECTIONS " +
+        src.maxReflections +
+        "\n" +        
         sculptureStarterCode +
         src.geoGLSL +
         src.colorGLSL

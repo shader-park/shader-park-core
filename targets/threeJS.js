@@ -10,6 +10,7 @@ import {
   useHemisphereLight,
   sculptureStarterCode,
   fragFooter,
+  glslFragFooter
 } from "../glsl/glsl-lib.js";
 
 import { convertFunctionToString } from "./helpers.js";
@@ -42,11 +43,11 @@ export function glslToThreeJSShaderSource(source) {
       threeHeader +
       "const float STEP_SIZE_CONSTANT = 0.9;\n" +
       "const int MAX_ITERATIONS = 300;\n" +
-      
+      "#define MAX_REFLECTIONS 0 \n" +
       uniformsToGLSL(baseUniforms()) +
       sculptureStarterCode +
       source +
-      fragFooter,
+      glslFragFooter,
     vert: threeJSVertexSource,
   };
 }

@@ -10,6 +10,7 @@ import {
   minimalHeader,
   minimalVertexSource,
   fragFooter,
+  glslFragFooter
 } from "../glsl/glsl-lib.js";
 
 export function glslToMinimalRenderer(canvas, source, updateUniforms) {
@@ -20,9 +21,10 @@ export function glslToMinimalRenderer(canvas, source, updateUniforms) {
     uniformsToGLSL(baseUniforms()) +
     "const float STEP_SIZE_CONSTANT = 0.9;\n" +
     "const int MAX_ITERATIONS = 300;\n" +
+    "#define MAX_REFLECTIONS 0 \n" +
     sculptureStarterCode +
     source +
-    fragFooter;
+    glslFragFooter;
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
 }
 

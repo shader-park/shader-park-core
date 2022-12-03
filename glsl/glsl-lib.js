@@ -763,3 +763,25 @@ void main() {
     pc_fragColor = vec4(outputColor, opacity);
 }
 `;
+
+
+
+export const glslFragFooter = `
+// For advanced users //
+
+void main() {
+    vec3 rayOrigin = (cameraPosition - sculptureCenter) / max(intersection_threshold, _scale);
+    vec3 rayDirection = getRayDirection();
+    float t = intersect(rayOrigin, rayDirection, stepSize);
+    vec3 col;
+
+    if(t < max_dist) {
+        vec3 p = (rayOrigin + rayDirection*t);
+        vec3 normal = calcNormal(p);
+        col = shade(p, normal);
+    } else {
+        discard;
+    }
+    pc_fragColor = vec4(col, opacity);
+}
+`;
