@@ -1,4 +1,4 @@
-/* Version: 0.1.36 - December 8, 2022 23:22:49 */
+/* Version: 0.1.37 - December 9, 2022 00:01:31 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -95949,7 +95949,7 @@
     };
   }
 
-  console.log('using shader-park-core version: 0.1.36'); /// Generate code for various targets
+  console.log('using shader-park-core version: 0.1.37'); /// Generate code for various targets
 
   exports.baseUniforms = baseUniforms;
   exports.bindStaticData = bindStaticData;
