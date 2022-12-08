@@ -1,4 +1,4 @@
-/* Version: 0.1.37 - December 9, 2022 00:01:34 */
+/* Version: 0.1.38 - December 9, 2022 00:06:34 */
 function createMetadataMethodsForProperty(metadataMap, kind, property) {
   return {
     getMetadata: function (key) {
@@ -45436,10 +45436,10 @@ function sculptToGLSL(userProvidedSrc) {
     };
   }
 
-  var vectorContourNoise = function vectorContourNoise(s, offset) {
+  function vectorContourNoise(s, offset) {
     var sinScale = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
     return vec3(sin(noise(s + offset) * sinScale), sin(noise(s + offset * 2) * sinScale), sin(noise(s + offset * 3) * sinScale));
-  }; // Define any code that needs to reference auto generated from bindings.js code here
+  } // Define any code that needs to reference auto generated from bindings.js code here
 
 
   var postGeneratedFunctions = replaceMathOps([getSpherical, fresnel, revolve2D, extrude2D, mirrorN, grid, repeatLinear, repeatRadial, scaleShape, vectorContourNoise].map(function (el) {
@@ -95943,6 +95943,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park-core version: 0.1.37'); /// Generate code for various targets
+console.log('using shader-park-core version: 0.1.38'); /// Generate code for various targets
 
 export { baseUniforms, bindStaticData, createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, fragFooter, generatedGLSLToMinimalRenderer, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, minimalHeader, minimalVertexSource, sculptToFullGLSLSource, sculptToGLSL, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource, sculptureStarterCode, uniformsToGLSL, useHemisphereLight, usePBRHeader };

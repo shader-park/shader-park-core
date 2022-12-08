@@ -1606,7 +1606,7 @@ export function sculptToGLSL(userProvidedSrc) {
     };
   }
 
-  let vectorContourNoise = (s, offset, sinScale = 1) => {
+  function vectorContourNoise(s, offset, sinScale = 1) {
     return vec3(
       sin(noise(s + offset)* sinScale),
       sin(noise(s + offset*2)* sinScale),

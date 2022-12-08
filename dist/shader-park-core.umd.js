@@ -1,4 +1,4 @@
-/* Version: 0.1.37 - December 9, 2022 00:01:31 */
+/* Version: 0.1.38 - December 9, 2022 00:06:32 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -45442,10 +45442,10 @@
       };
     }
 
-    var vectorContourNoise = function vectorContourNoise(s, offset) {
+    function vectorContourNoise(s, offset) {
       var sinScale = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
       return vec3(sin(noise(s + offset) * sinScale), sin(noise(s + offset * 2) * sinScale), sin(noise(s + offset * 3) * sinScale));
-    }; // Define any code that needs to reference auto generated from bindings.js code here
+    } // Define any code that needs to reference auto generated from bindings.js code here
 
 
     var postGeneratedFunctions = replaceMathOps([getSpherical, fresnel, revolve2D, extrude2D, mirrorN, grid, repeatLinear, repeatRadial, scaleShape, vectorContourNoise].map(function (el) {
@@ -95949,7 +95949,7 @@
     };
   }
 
-  console.log('using shader-park-core version: 0.1.37'); /// Generate code for various targets
+  console.log('using shader-park-core version: 0.1.38'); /// Generate code for various targets
 
   exports.baseUniforms = baseUniforms;
   exports.bindStaticData = bindStaticData;
