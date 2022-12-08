@@ -1606,6 +1606,14 @@ export function sculptToGLSL(userProvidedSrc) {
     };
   }
 
+  let vectorContourNoise = (s, offset, sinScale = 1) => {
+    return vec3(
+      sin(noise(s + offset)* sinScale),
+      sin(noise(s + offset*2)* sinScale),
+      sin(noise(s + offset*3) * sinScale)
+    )
+  }
+
   // Define any code that needs to reference auto generated from bindings.js code here
   let postGeneratedFunctions = replaceMathOps(
     [
@@ -1618,6 +1626,7 @@ export function sculptToGLSL(userProvidedSrc) {
       repeatLinear,
       repeatRadial,
       scaleShape,
+      vectorContourNoise
     ]
       .map((el) => el.toString())
       .join("\n")

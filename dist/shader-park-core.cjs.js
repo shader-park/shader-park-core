@@ -1,4 +1,4 @@
-/* Version: 0.1.35 - December 3, 2022 10:56:35 */
+/* Version: 0.1.36 - December 8, 2022 23:22:50 */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -45438,10 +45438,15 @@ function sculptToGLSL(userProvidedSrc) {
       primitive.apply(void 0, arguments);
       setSDF(getSDF() * factor);
     };
-  } // Define any code that needs to reference auto generated from bindings.js code here
+  }
+
+  var vectorContourNoise = function vectorContourNoise(s, offset) {
+    var sinScale = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+    return vec3(sin(noise(s + offset) * sinScale), sin(noise(s + offset * 2) * sinScale), sin(noise(s + offset * 3) * sinScale));
+  }; // Define any code that needs to reference auto generated from bindings.js code here
 
 
-  var postGeneratedFunctions = replaceMathOps([getSpherical, fresnel, revolve2D, extrude2D, mirrorN, grid, repeatLinear, repeatRadial, scaleShape].map(function (el) {
+  var postGeneratedFunctions = replaceMathOps([getSpherical, fresnel, revolve2D, extrude2D, mirrorN, grid, repeatLinear, repeatRadial, scaleShape, vectorContourNoise].map(function (el) {
     return el.toString();
   }).join("\n"));
   eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
@@ -95942,7 +95947,7 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park-core version: 0.1.35'); /// Generate code for various targets
+console.log('using shader-park-core version: 0.1.36'); /// Generate code for various targets
 
 exports.baseUniforms = baseUniforms;
 exports.bindStaticData = bindStaticData;
