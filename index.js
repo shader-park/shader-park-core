@@ -22,6 +22,11 @@ import {
 } from './targets/minimalRenderer.js'
 
 import {
+   sculptToHydraRenderer,
+   sculptToHydraGLSL,
+} from './targets/hydraRenderer.js'
+
+import {
     sculptToMinimalHTMLRenderer,
     glslToMinimalHTMLRenderer,
 } from './targets/minimalHTMLRenderer.js'
@@ -74,6 +79,8 @@ export {
     generatedGLSLToMinimalRenderer,
     sculptToMinimalHTMLRenderer,
     glslToMinimalRenderer,
+    sculptToHydraRenderer,
+    sculptToHydraGLSL,
     glslToMinimalHTMLRenderer,
     sculptToRawSDF4Meshing,
     defaultFragSourceGLSL,

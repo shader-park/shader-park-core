@@ -52,6 +52,14 @@ out vec4 pc_fragColor;
 #define worldPos vec4(vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)*1.75,0.0,0.0)
 `;
 
+export const hydraHeader = `precision highp float;
+uniform mat4 projectionMatrix;
+#define sculptureCenter vec3(0.0)
+#define cameraPosition vec3(0.0,0.0,-2.0)
+#define vUv vec2(0.0)
+#define worldPos vec4(vec2((gl_FragCoord.x/resolution.x-0.5)*(resolution.x/resolution.y),gl_FragCoord.y/resolution.y-0.5)*1.75,0.0,0.0)
+`;
+
 export const usePBRHeader = '#define USE_PBR\n';
 export const useHemisphereLight = '#define HEMISPHERE_LIGHT\n';
 
@@ -504,7 +512,7 @@ vec4 sphericalDistribution( vec3 p, float n )
 
     float k = max(2.0, floor( log(n * PI * sqrt(5.0) * (1.0 - cosTheta*cosTheta))/ log(PHI+1.0)));
     float Fk = pow(PHI, k)/sqrt(5.0);
-    vec2 F = vec2( round(Fk), round(Fk * PHI) ); // k, k+1
+    vec2 F = vec2( floor(Fk + 0.5), floor(Fk * PHI + 0.5) ); // k, k+1
 
     vec2 ka = 2.0*F/n;
     vec2 kb = 2.0*PI*( fract((F+1.0)*PHI) - (PHI-1.0) );
@@ -764,7 +772,73 @@ void main() {
 }
 `;
 
+export const hydraFragFooter = `
+// For advanced users //
 
+void main() {
+    vec3 rayOrigin = (cameraPosition - sculptureCenter) / max(intersection_threshold, _scale);
+    vec3 rayDirection = getRayDirection();
+    float t = intersect(rayOrigin, rayDirection, stepSize);
+    ShadedMaterial col;
+    vec3 outputColor = vec3(0.);
+
+    if(t < max_dist) {
+        vec3 p = (rayOrigin + rayDirection*t);
+        //vec4 sp = projectionMatrix*viewMatrix*vec4(p,1.0); //could be used to set FragDepth
+        vec3 normal = calcNormal(p);
+        // p *= _scale;
+        col = shade(p, normal);
+        outputColor = col.color;
+    } else {
+        discard;
+    }
+
+    vec3 reflectionCoefficient = col.mat.reflectiveAlbedo;
+    #ifdef MAX_REFLECTIONS
+
+    #if MAX_REFLECTIONS > 0
+    for(int i = 0; i < MAX_REFLECTIONS; i++) {
+        if(length(reflectionCoefficient) < .001) {
+            break;
+        }
+        rayOrigin = (rayOrigin + rayDirection*t);
+        vec3 normal = calcNormal(rayOrigin);
+        rayDirection = reflect(rayDirection, normal);
+        rayOrigin += .001 * rayDirection;
+        t = intersect(rayOrigin, rayDirection, stepSize);
+        vec3 p = (rayOrigin + rayDirection * t);
+        
+        ShadedMaterial col;
+
+        if(t < max_dist) {
+            normal = calcNormal(p);
+            col = shade(p, normal);
+        } else {
+            //outputColor = mix(outputColor, col.backgroundColor, reflectionCoefficient);
+            // TODO col is undefined
+            //outputColor += col.backgroundColor *  reflectionCoefficient;
+            break;
+        }
+        
+        //outputColor = mix(outputColor, col.color, reflectionCoefficient);
+        // outputColor += col.mat.albedo;
+        outputColor += col.color * reflectionCoefficient;
+        
+        reflectionCoefficient *= col.mat.reflectiveAlbedo ;
+
+        
+    }
+    #endif
+    #endif
+    // TODO turn off with noLighting
+    
+    outputColor = outputColor / (outputColor + vec3(1.0));
+    outputColor = pow(outputColor, vec3(1.0/2.2));
+    
+
+    gl_FragColor = vec4(outputColor, opacity);
+}
+`;
 
 export const glslFragFooter = `
 // For advanced users //
