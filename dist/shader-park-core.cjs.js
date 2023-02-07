@@ -1,4 +1,4 @@
-/* Version: 0.1.38 - January 19, 2023 15:44:27 */
+/* Version: 0.1.38 - February 7, 2023 15:08:43 */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -95883,25 +95883,24 @@ function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
   }
 }
 
-function sculptToHydraRenderer(source) {
+function sculptToHydraRenderer(source, userUniforms) {
   var frag = sculptToHydraGLSL(source);
   return {
     out: function out(output) {
-      var uniforms = {
+      var uniforms = _objectSpread2({
         time: output.regl.prop('time'),
         opacity: 0.5,
         _scale: 1.0,
         resolution: output.regl.prop('resolution'),
         stepSize: 0.85
-      }; // By default hydra doesn't clear the framebuffers
+      }, userUniforms); // By default hydra doesn't clear the framebuffers
+
 
       output.tick = function (props) {
-        /*
         output.regl.clear({
           color: [0, 0, 0, 1],
-          framebuffer: output.getCurrent(),
-        })
-        */
+          framebuffer: output.getTexture()
+        });
         output.draw(props);
       };
 

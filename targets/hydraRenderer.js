@@ -10,7 +10,7 @@ import {
   hydraFragFooter,
 } from "../glsl/glsl-lib.js";
 
-export function sculptToHydraRenderer(source) {
+export function sculptToHydraRenderer(source, userUniforms) {
   const frag = sculptToHydraGLSL(source);
   return {
     out: (output) => {
@@ -20,16 +20,15 @@ export function sculptToHydraRenderer(source) {
         _scale: 1.0,
         resolution: output.regl.prop('resolution'),
         stepSize: 0.85,
+        ...userUniforms
       }
 
       // By default hydra doesn't clear the framebuffers
       output.tick = (props) => {
-        /*
         output.regl.clear({
           color: [0, 0, 0, 1],
-          framebuffer: output.getCurrent(),
+          framebuffer: output.getTexture(),
         })
-        */
         output.draw(props)
       }
 
