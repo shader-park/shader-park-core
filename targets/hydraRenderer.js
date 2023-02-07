@@ -16,9 +16,9 @@ export function sculptToHydraRenderer(source, userUniforms) {
     out: (output) => {
       const uniforms = {
         time: output.regl.prop('time'),
+        resolution: output.regl.prop('resolution'),
         opacity: 0.5,
         _scale: 1.0,
-        resolution: output.regl.prop('resolution'),
         stepSize: 0.85,
         ...userUniforms
       }

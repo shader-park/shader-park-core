@@ -1,4 +1,4 @@
-/* Version: 0.1.38 - February 7, 2023 15:08:43 */
+/* Version: 0.1.38 - February 7, 2023 17:48:33 */
 function createMetadataMethodsForProperty(metadataMap, kind, property) {
   return {
     getMetadata: function (key) {
@@ -95885,9 +95885,9 @@ function sculptToHydraRenderer(source, userUniforms) {
     out: function out(output) {
       var uniforms = _objectSpread2({
         time: output.regl.prop('time'),
+        resolution: output.regl.prop('resolution'),
         opacity: 0.5,
         _scale: 1.0,
-        resolution: output.regl.prop('resolution'),
         stepSize: 0.85
       }, userUniforms); // By default hydra doesn't clear the framebuffers
 
