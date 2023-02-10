@@ -1560,19 +1560,19 @@ export function sculptToGLSL(userProvidedSrc) {
     ensureDims("repeatLinear", 3, scale);
     ensureDims("repeatLinear", 3, spacing);
     ensureDims("repeatLinear", 3, counts);
-    spacing *= 2 * scale;
-    counts -= 1;
+    const spc = 2 * scale * spacing;
+    const c = counts - 1;
     const s = getSpace();
-    const rounded = floor(s / spacing + 0.5);
+    const rounded = floor(s / spc + 0.5);
     const clamped = vec3(
-      clamp(rounded.x, -1 * counts.x, counts.x),
-      clamp(rounded.y, -1 * counts.y, counts.y),
-      clamp(rounded.z, -1 * counts.z, counts.z)
+      clamp(rounded.x, -1 * c.x, c.x),
+      clamp(rounded.y, -1 * c.y, c.y),
+      clamp(rounded.z, -1 * c.z, c.z)
     );
-    displace(spacing * clamped);
+    displace(spc * clamped);
     // return instance x, y, z index
     // and instances local coordinates
-    const coordScaled = s / spacing;
+    const coordScaled = s / spc;
     const index = floor(coordScaled + 0.5);
     return { index: index, local: coordScaled - index };
   }

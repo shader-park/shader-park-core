@@ -1,4 +1,4 @@
-/* Version: 0.1.38 - February 7, 2023 17:48:31 */
+/* Version: 0.1.38 - February 9, 2023 22:09:16 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -45397,15 +45397,15 @@
       ensureDims("repeatLinear", 3, scale);
       ensureDims("repeatLinear", 3, spacing);
       ensureDims("repeatLinear", 3, counts);
-      spacing *= 2 * scale;
-      counts -= 1;
+      var spc = 2 * scale * spacing;
+      var c = counts - 1;
       var s = getSpace();
-      var rounded = floor(s / spacing + 0.5);
-      var clamped = vec3(clamp(rounded.x, -1 * counts.x, counts.x), clamp(rounded.y, -1 * counts.y, counts.y), clamp(rounded.z, -1 * counts.z, counts.z));
-      displace(spacing * clamped); // return instance x, y, z index
+      var rounded = floor(s / spc + 0.5);
+      var clamped = vec3(clamp(rounded.x, -1 * c.x, c.x), clamp(rounded.y, -1 * c.y, c.y), clamp(rounded.z, -1 * c.z, c.z));
+      displace(spc * clamped); // return instance x, y, z index
       // and instances local coordinates
 
-      var coordScaled = s / spacing;
+      var coordScaled = s / spc;
       var index = floor(coordScaled + 0.5);
       return {
         index: index,
