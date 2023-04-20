@@ -44,7 +44,47 @@ export default [
       })
     ]
   },
-  
+
+  // browser-friendly UMD build for p5
+  {
+    input: 'targets/p5.js',
+    output: {
+      // No dashes so the global variable is easier to access
+      name: 'shaderPark',
+      file: pkg.p5,
+      format: 'umd'
+    },
+    plugins: [
+      resolve(), // so Rollup can find `ms`
+      versionInjector(),
+      commonjs({
+        namedExports: {
+          // left-hand side can be an absolute path, a path
+          // relative to the current directory, or the name
+          // of a module in node_modules
+          'node_modules/esprima/dist/esprima.js': ['parse'],
+          //'node_modules/escodegen/escodegen.js': ['generate']
+
+        },
+      }), // so Rollup can convert `ms` to an ES module
+
+      babel({
+        exclude: ['node_modules/**']
+      }),
+      json({
+        // All JSON files will be parsed by default,
+        // but you can also specifically include/exclude files
+        include: 'node_modules/**',
+        //exclude: ['node_modules/foo/**', 'node_modules/bar/**'],
+        // for tree-shaking, properties will be declared as
+        // variables, using either `var` or `const`
+        preferConst: true, // Default: false
+        indent: '  ',
+        // ignores indent and generates the smallest code
+        compact: true, // Default: false
+      })
+    ]
+  },
 
   // CommonJS (for Node) and ES module (for bundlers) build.
   // (We could have three entries in the configuration array
