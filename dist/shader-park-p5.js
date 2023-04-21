@@ -1,4 +1,4 @@
-/* Version: 0.1.38 - April 20, 2023 20:23:04 */
+/* Version: 0.1.38 - April 21, 2023 07:29:34 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -45489,7 +45489,7 @@
       source = source.toString();
       source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
     } else if (!(typeof source === "string")) {
-      throw "sculptToHydraRenderer requires the source code to be a function, or a string";
+      throw "toGLSL requires the source code to be a function, or a string";
     }
 
     var vert = "#version 300 es\nprecision highp float;\nin vec3 aPosition;\nuniform mat4 uModelViewMatrix;\nuniform mat4 uInverseModelViewMatrix;\nuniform mat4 uProjectionMatrix;\nout vec4 worldPos;\nout vec3 sculptureCenter;\nout vec3 cameraPosition;\nvoid main() {\n  vec4 mvPosition = uModelViewMatrix * vec4(aPosition, 1.0);\n\n  mat4 modelMatrix = uModelViewMatrix;\n\n  worldPos = vec4(aPosition, 1.);\n  sculptureCenter = vec3(0.);\n  cameraPosition = (uInverseModelViewMatrix * vec4(0., 0., 0., 1.0)).xyz;\n\n  gl_Position = uProjectionMatrix * mvPosition;\n}\n";
@@ -45519,6 +45519,8 @@
 
         var inverseModelViewMatrix = new p5.Matrix().invert(_renderer.uMVMatrix);
         var gl = window._renderer.GL;
+        var faceCullingEnabled = gl.isEnabled(gl.CULL_FACE);
+        var cullFaceMode = gl.getParameter(gl.CULL_FACE_MODE);
         gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.FRONT);
         target.push();
@@ -45532,7 +45534,13 @@
         output.shader.setUniform('stepSize', 0.85);
         output.shader.setUniform('resolution', [width * target.pixelDensity(), height * target.pixelDensity()]);
         drawGeometry();
-        gl.disable(gl.CULL_FACE);
+
+        if (!faceCullingEnabled) {
+          gl.disable(gl.CULL_FACE);
+        } else {
+          gl.cullFace(cullFaceMode);
+        }
+
         pop();
       }
     };
@@ -45554,25 +45562,12 @@
     });
     return output;
   }
-  function createFromSrc(target, src, options) {
+  function create(target, src, options) {
     var output = createRenderer(target, options);
 
     var _toGLSL2 = toGLSL(src),
         vert = _toGLSL2.vert,
         frag = _toGLSL2.frag;
-
-    output.shader = new p5.Shader();
-    output.shader._vertSrc = vert;
-    output.shader._fragSrc = frag;
-    return output;
-  }
-  function create(target, fn, options) {
-    var output = createRenderer(target, options);
-    var src = fn.toString().slice(12, -1);
-
-    var _toGLSL3 = toGLSL(src),
-        vert = _toGLSL3.vert,
-        frag = _toGLSL3.frag;
 
     output.shader = new p5.Shader();
     output.shader._vertSrc = vert;
@@ -45587,13 +45582,6 @@
   p5.prototype.loadShaderPark = _loadShaderPark;
   p5.Graphics.prototype.loadShaderPark = _loadShaderPark;
 
-  function _createShaderParkFromSrc(src, options) {
-    return createFromSrc(this, src, options);
-  }
-
-  p5.prototype.createShaderParkFromSrc = _createShaderParkFromSrc;
-  p5.Graphics.prototype.createShaderParkFromSrc = _createShaderParkFromSrc;
-
   function _createShaderPark(fn, options) {
     return create(this, fn, options);
   }
@@ -45602,7 +45590,6 @@
   p5.Graphics.prototype.createShaderPark = _createShaderPark;
 
   exports.create = create;
-  exports.createFromSrc = createFromSrc;
   exports.load = load;
   exports.toGLSL = toGLSL;
 

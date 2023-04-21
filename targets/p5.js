@@ -14,7 +14,7 @@ export function toGLSL(source) {
     source = source.toString();
     source = source.slice(source.indexOf("{") + 1, source.lastIndexOf("}"));
   } else if (!(typeof source === "string")) {
-    throw "sculptToHydraRenderer requires the source code to be a function, or a string";
+    throw "toGLSL requires the source code to be a function, or a string";
   }
 
   const vert = `#version 300 es
@@ -100,6 +100,8 @@ function createRenderer(target, {
       const inverseModelViewMatrix =
         new p5.Matrix().invert(_renderer.uMVMatrix)
       const gl = window._renderer.GL;
+      const faceCullingEnabled = gl.isEnabled(gl.CULL_FACE);
+      const cullFaceMode = gl.getParameter(gl.CULL_FACE_MODE);
       gl.enable(gl.CULL_FACE);
       gl.cullFace(gl.FRONT);
 
@@ -127,7 +129,11 @@ function createRenderer(target, {
         [width * target.pixelDensity(), height * target.pixelDensity()]
       );
       drawGeometry();
-      gl.disable(gl.CULL_FACE);
+      if (!faceCullingEnabled) {
+        gl.disable(gl.CULL_FACE);
+      } else {
+        gl.cullFace(cullFaceMode);
+      }
       pop();
     },
   };
@@ -148,19 +154,8 @@ export function load(target, url, options) {
   return output;
 }
 
-export function createFromSrc(target, src, options) {
+export function create(target, src, options) {
   const output = createRenderer(target, options);
-  const { vert, frag } = toGLSL(src);
-  output.shader = new p5.Shader();
-  output.shader._vertSrc = vert;
-  output.shader._fragSrc = frag;
-
-  return output;
-}
-
-export function create(target, fn, options) {
-  const output = createRenderer(target, options);
-  const src = fn.toString().slice(12, -1);
   const { vert, frag } = toGLSL(src);
   output.shader = new p5.Shader();
   output.shader._vertSrc = vert;
@@ -174,12 +169,6 @@ function _loadShaderPark(url, options) {
 }
 p5.prototype.loadShaderPark = _loadShaderPark;
 p5.Graphics.prototype.loadShaderPark = _loadShaderPark;
-
-function _createShaderParkFromSrc(src, options) {
-  return createFromSrc(this, src, options);
-}
-p5.prototype.createShaderParkFromSrc = _createShaderParkFromSrc;
-p5.Graphics.prototype.createShaderParkFromSrc = _createShaderParkFromSrc;
 
 function _createShaderPark(fn, options) {
   return create(this, fn, options);
