@@ -52,9 +52,11 @@ void main()
 	// and Dual-Paraboloid rendering to work properly
 	TDCheckDiscard();
 
-	// Raymarching
-	vec3 rayOrigin = worldPos.xyz-sculptureCenter;
-	vec3 rayDirection = getRayDirection();
+    vec3 camPos = uTDMats[iVert.cameraIndex].camInverse[3].xyz;
+
+    // Raymarching
+    vec3 rayOrigin = iVert.worldSpacePos.xyz - sculptureCenter;
+    vec3 rayDirection = normalize(iVert.worldSpacePos.xyz-camPos);
 	rayOrigin -= rayDirection*2.0;
 	float t = intersect(rayOrigin, rayDirection, stepSize);
     depthTexture = t;
