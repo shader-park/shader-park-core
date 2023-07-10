@@ -85,6 +85,7 @@ export default [
       })
     ]
   },
+  
 
   // CommonJS (for Node) and ES module (for bundlers) build.
   // (We could have three entries in the configuration array
@@ -126,6 +127,69 @@ export default [
         preferConst: true, // Default: false
         indent: '  ',
         // ignores indent and generates the smallest code
+        compact: true, // Default: false
+      })
+    ]
+  },
+  // Minimal Renderer
+  {
+    input: 'targets/minimalGLSLRenderer.js',
+    output: [
+      { file: pkg.minimalGLSLRendererCJS, format: 'cjs' },
+      { file: pkg.minimalGLSLRendererESM, format: 'es' }
+    ],
+    plugins: [
+      resolve(), // so Rollup can find `ms`
+      versionInjector(),
+      commonjs({
+        namedExports: {
+          // left-hand side can be an absolute path, a path
+          // relative to the current directory, or the name
+          // of a module in node_modules
+          // 'node_modules/esprima/dist/esprima.js': ['parse'],
+
+        },
+        // include: ['node_modules/**'],
+      }), // so Rollup can convert `ms` to 
+      babel({
+        exclude: ['node_modules/**']
+      }),
+      json({
+        // All JSON files will be parsed by default,
+        // but you can also specifically include/exclude files
+        include: 'node_modules/**',
+        //exclude: ['node_modules/foo/**', 'node_modules/bar/**'],
+        // for tree-shaking, properties will be declared as
+        // variables, using either `var` or `const`
+        preferConst: true, // Default: false
+        indent: '  ',
+        // ignores indent and generates the smallest code
+        compact: true, // Default: false
+      })
+    ]
+  },
+
+  //TouchDesigner 
+  {
+    input: 'targets/touchDesigner.js',
+    output: { name: 'SPTD',
+      file: pkg.TouchDesigner,
+      format: 'umd'
+    },
+    plugins: [
+      resolve(), // so Rollup can find `ms`
+      versionInjector(),
+      commonjs({
+        namedExports: { 'node_modules/esprima/dist/esprima.js': ['parse'],
+        },
+      }), 
+      babel({
+        exclude: ['node_modules/**']
+      }),
+      json({
+        include: 'node_modules/**',
+        preferConst: true, // Default: false
+        indent: '  ',
         compact: true, // Default: false
       })
     ]
