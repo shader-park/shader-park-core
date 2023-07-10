@@ -1,4 +1,4 @@
-/* Version: 0.1.39 - May 16, 2023 13:01:40 */
+/* Version: 0.1.40 - July 9, 2023 22:12:19 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -95689,8 +95689,27 @@
     }
 
     var generatedGLSL = sculptToGLSL(source);
-    var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + "#define MAX_REFLECTIONS " + generatedGLSL.maxReflections + "\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
-    return fullFrag;
+    return generatedGLSL; // let fullFrag =
+    //   minimalHeader +
+    //   usePBRHeader +
+    //   useHemisphereLight +
+    //   uniformsToGLSL(generatedGLSL.uniforms) +
+    //   "const float STEP_SIZE_CONSTANT = " +
+    //   generatedGLSL.stepSizeConstant +
+    //   ";\n" +
+    //   "const int MAX_ITERATIONS = " +
+    //   generatedGLSL.maxIterations +
+    //   ";\n" +
+    //   "#define MAX_REFLECTIONS " +
+    //   generatedGLSL.maxReflections +
+    //   "\n" + 
+    //   sculptureStarterCode +
+    //   generatedGLSL.geoGLSL +
+    //   "\n" +
+    //   generatedGLSL.colorGLSL +
+    //   "\n" +
+    //   fragFooter;
+    // return fullFrag;
   }
   /**
    * for fast and efficient use on the web
@@ -95992,7 +96011,7 @@
     };
   }
 
-  console.log('using shader-park-core version: 0.1.39'); /// Generate code for various targets
+  console.log('using shader-park-core version: 0.1.40'); /// Generate code for various targets
 
   exports.baseUniforms = baseUniforms;
   exports.bindStaticData = bindStaticData;

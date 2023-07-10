@@ -1,4 +1,4 @@
-/* Version: 0.1.39 - May 16, 2023 13:01:44 */
+/* Version: 0.1.40 - July 9, 2023 22:12:23 */
 function createMetadataMethodsForProperty(metadataMap, kind, property) {
   return {
     getMetadata: function (key) {
@@ -95683,8 +95683,27 @@ function sculptToFullGLSLSource(source) {
   }
 
   var generatedGLSL = sculptToGLSL(source);
-  var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + "#define MAX_REFLECTIONS " + generatedGLSL.maxReflections + "\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
-  return fullFrag;
+  return generatedGLSL; // let fullFrag =
+  //   minimalHeader +
+  //   usePBRHeader +
+  //   useHemisphereLight +
+  //   uniformsToGLSL(generatedGLSL.uniforms) +
+  //   "const float STEP_SIZE_CONSTANT = " +
+  //   generatedGLSL.stepSizeConstant +
+  //   ";\n" +
+  //   "const int MAX_ITERATIONS = " +
+  //   generatedGLSL.maxIterations +
+  //   ";\n" +
+  //   "#define MAX_REFLECTIONS " +
+  //   generatedGLSL.maxReflections +
+  //   "\n" + 
+  //   sculptureStarterCode +
+  //   generatedGLSL.geoGLSL +
+  //   "\n" +
+  //   generatedGLSL.colorGLSL +
+  //   "\n" +
+  //   fragFooter;
+  // return fullFrag;
 }
 /**
  * for fast and efficient use on the web
@@ -95986,6 +96005,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park-core version: 0.1.39'); /// Generate code for various targets
+console.log('using shader-park-core version: 0.1.40'); /// Generate code for various targets
 
 export { baseUniforms, bindStaticData, createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, fragFooter, generatedGLSLToMinimalRenderer, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, minimalHeader, minimalVertexSource, sculptToFullGLSLSource, sculptToGLSL, sculptToHydraGLSL, sculptToHydraRenderer, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource, sculptureStarterCode, uniformsToGLSL, useHemisphereLight, usePBRHeader };
