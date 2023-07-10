@@ -1,4 +1,4 @@
-/* Version: 0.1.40 - July 9, 2023 22:12:19 */
+/* Version: 0.1.41 - July 9, 2023 22:26:41 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -95689,27 +95689,8 @@
     }
 
     var generatedGLSL = sculptToGLSL(source);
-    return generatedGLSL; // let fullFrag =
-    //   minimalHeader +
-    //   usePBRHeader +
-    //   useHemisphereLight +
-    //   uniformsToGLSL(generatedGLSL.uniforms) +
-    //   "const float STEP_SIZE_CONSTANT = " +
-    //   generatedGLSL.stepSizeConstant +
-    //   ";\n" +
-    //   "const int MAX_ITERATIONS = " +
-    //   generatedGLSL.maxIterations +
-    //   ";\n" +
-    //   "#define MAX_REFLECTIONS " +
-    //   generatedGLSL.maxReflections +
-    //   "\n" + 
-    //   sculptureStarterCode +
-    //   generatedGLSL.geoGLSL +
-    //   "\n" +
-    //   generatedGLSL.colorGLSL +
-    //   "\n" +
-    //   fragFooter;
-    // return fullFrag;
+    var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + "#define MAX_REFLECTIONS " + generatedGLSL.maxReflections + "\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
+    return fullFrag;
   }
   /**
    * for fast and efficient use on the web
@@ -95725,7 +95706,6 @@
     var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(generatedGLSL.uniforms) + "const float STEP_SIZE_CONSTANT = " + generatedGLSL.stepSizeConstant + ";\n" + "const int MAX_ITERATIONS = " + generatedGLSL.maxIterations + ";\n" + "#define MAX_REFLECTIONS " + generatedGLSL.maxReflections + "\n" + sculptureStarterCode + generatedGLSL.geoGLSL + "\n" + generatedGLSL.colorGLSL + "\n" + fragFooter;
     return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
   }
-
   function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
     // if no update function is provided assume no-op
     if (updateUniforms === undefined) {
@@ -96011,7 +95991,7 @@
     };
   }
 
-  console.log('using shader-park-core version: 0.1.40'); /// Generate code for various targets
+  console.log('using shader-park-core version: 0.1.41'); /// Generate code for various targets
 
   exports.baseUniforms = baseUniforms;
   exports.bindStaticData = bindStaticData;
@@ -96019,6 +95999,7 @@
   exports.createSculptureWithGeometry = createSculptureWithGeometry;
   exports.defaultFragSourceGLSL = defaultFragSourceGLSL;
   exports.fragFooter = fragFooter;
+  exports.fragToMinimalRenderer = fragToMinimalRenderer;
   exports.generatedGLSLToMinimalRenderer = generatedGLSLToMinimalRenderer;
   exports.glslToMinimalHTMLRenderer = glslToMinimalHTMLRenderer;
   exports.glslToMinimalRenderer = glslToMinimalRenderer;

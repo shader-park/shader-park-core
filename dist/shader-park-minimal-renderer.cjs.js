@@ -1,4 +1,4 @@
-/* Version: 0.1.40 - July 9, 2023 22:12:23 */
+/* Version: 0.1.41 - July 9, 2023 22:26:45 */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -1961,7 +1961,7 @@ function uniformsToGLSL(uniforms) {
 //     generatedGLSLToMinimalRenderer
 // } from "./minimalRenderer";
 
-console.log('using shader-park-core version: 0.1.40');
+console.log('using shader-park-core version: 0.1.41');
 function glslToMinimalRenderer(canvas, source, updateUniforms) {
   var fullFrag = minimalHeader + usePBRHeader + useHemisphereLight + uniformsToGLSL(baseUniforms()) + "const float STEP_SIZE_CONSTANT = 0.9;\n" + "const int MAX_ITERATIONS = 300;\n" + "#define MAX_REFLECTIONS 0 \n" + sculptureStarterCode + source + glslFragFooter;
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);

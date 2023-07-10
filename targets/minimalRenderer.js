@@ -94,7 +94,7 @@ export function generatedGLSLToMinimalRenderer(canvas, generatedGLSL, updateUnif
   return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);  
 }
 
-function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
+export function fragToMinimalRenderer(canvas, fullFrag, updateUniforms) {
   // if no update function is provided assume no-op
   if (updateUniforms === undefined) {
     updateUniforms = () => {
