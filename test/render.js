@@ -1,9 +1,9 @@
-const fs = require('fs');
-const http = require('http');
-const puppeteer = require('puppeteer');
-const pngJS = require('png-js');
-const assert = require('chai').assert;
-const converters = require('../dist/shader-park-core.cjs.js'); 
+import fs from 'fs';
+import http from 'http';
+import puppeteer from 'puppeteer';
+import pngJS from 'png-js';
+import { assert } from 'chai';
+import * as converters from '../dist/shader-park-core.esm.js';
 
 describe('Compiling, rendering, checking pixels', () => {
 
