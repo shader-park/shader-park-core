@@ -1,4 +1,4 @@
-/* Version: 0.1.41 - July 9, 2023 22:26:45 */
+/* Version: 0.1.42 - August 26, 2023 16:15:30 */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -95989,7 +95989,7 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park-core version: 0.1.41'); /// Generate code for various targets
+console.log('using shader-park-core version: 0.1.42'); /// Generate code for various targets
 
 exports.baseUniforms = baseUniforms;
 exports.bindStaticData = bindStaticData;

@@ -1,4 +1,4 @@
-/* Version: 0.1.41 - July 9, 2023 22:26:45 */
+/* Version: 0.1.42 - August 26, 2023 16:15:30 */
 function createMetadataMethodsForProperty(metadataMap, kind, property) {
   return {
     getMetadata: function (key) {
@@ -95985,6 +95985,6 @@ function sculptToTouchDesignerShaderSource(source) {
   };
 }
 
-console.log('using shader-park-core version: 0.1.41'); /// Generate code for various targets
+console.log('using shader-park-core version: 0.1.42'); /// Generate code for various targets
 
 export { baseUniforms, bindStaticData, createSculpture, createSculptureWithGeometry, defaultFragSourceGLSL, fragFooter, fragToMinimalRenderer, generatedGLSLToMinimalRenderer, glslToMinimalHTMLRenderer, glslToMinimalRenderer, glslToOfflineRenderer, glslToThreeJSMaterial, glslToThreeJSMesh, glslToThreeJSShaderSource, glslToTouchDesignerShaderSource, minimalHeader, minimalVertexSource, sculptToFullGLSLSource, sculptToGLSL, sculptToHydraGLSL, sculptToHydraRenderer, sculptToMinimalHTMLRenderer, sculptToMinimalRenderer, sculptToOfflineRenderer, sculptToRawSDF4Meshing, sculptToThreeJSMaterial, sculptToThreeJSMesh, sculptToThreeJSShaderSource, sculptToTouchDesignerShaderSource, sculptureStarterCode, uniformsToGLSL, useHemisphereLight, usePBRHeader };

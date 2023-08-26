@@ -1,4 +1,4 @@
-/* Version: 0.1.41 - July 9, 2023 22:26:47 */
+/* Version: 0.1.42 - August 26, 2023 16:15:31 */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
