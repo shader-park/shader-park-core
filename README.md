@@ -1,7 +1,5 @@
-<img width="1536" alt="Shader Park HeroF Crop2" src="https://user-images.githubusercontent.com/6014011/159131472-2f26c33f-2023-4980-b6e0-3d2c5bd53d6f.png">
-
-
-## The library powering [Shader Park 🔮](https://shaderpark.com)     
+<a href="https://shaderpark.com"><img width="1536" alt="Shader Park HeroF Crop2" src="https://user-images.githubusercontent.com/6014011/159131472-2f26c33f-2023-4980-b6e0-3d2c5bd53d6f.png"></a>
+  
 ![Build Status](https://github.com/shader-park/shader-park-core/actions/workflows/build_test.yml/badge.svg)
 <span class="badge-npmversion"><a href="https://npmjs.org/package/shader-park-core" title="View this project on NPM"><img src="https://img.shields.io/npm/v/shader-park-core.svg" alt="NPM version" /></a></span>
 <span class="badge-npmdownloads"><a href="https://npmjs.org/package/shader-park-core" title="View this project on NPM"><img src="https://img.shields.io/npm/dm/shader-park-core.svg" alt="NPM downloads" /></a></span>
