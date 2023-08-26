@@ -3,6 +3,8 @@
 
 ## The library powering [Shader Park 🔮](https://shaderpark.com)     
 ![Build Status](https://github.com/shader-park/shader-park-core/actions/workflows/build_test.yml/badge.svg)
+<span class="badge-npmversion"><a href="https://npmjs.org/package/shader-park-core" title="View this project on NPM"><img src="https://img.shields.io/npm/v/shader-park-core.svg" alt="NPM version" /></a></span>
+<span class="badge-npmdownloads"><a href="https://npmjs.org/package/shader-park-core" title="View this project on NPM"><img src="https://img.shields.io/npm/dm/shader-park-core.svg" alt="NPM downloads" /></a></span>
 
 
 Shader Park simplifies creating procedural graphics using javascript.  
