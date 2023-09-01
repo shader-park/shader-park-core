@@ -336,6 +336,11 @@ float uTriangle( vec3 p, vec3 a, vec3 b, vec3 c )
      dot(nor,pa)*dot(nor,pa)/dot2(nor) );
 }
 
+float overwrite( float d1, float d2 )
+{
+    return d1;
+}
+
 float add( float d1, float d2 )
 {
     return min(d1,d2);

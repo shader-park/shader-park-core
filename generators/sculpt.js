@@ -780,8 +780,9 @@ export function sculptToGLSL(userProvidedSrc) {
     INTERSECT: 12,
     BLEND: 13,
     MIXGEO: 14,
+    OVERWRITE: 15,
   };
-  const additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO];
+  const additiveModes = [modes.UNION, modes.BLEND, modes.MIXGEO, modes.OVERWRITE];
 
   const materialModes = {
     NORMAL: 20, // F it let's start at 20 why not
@@ -901,6 +902,11 @@ export function sculptToGLSL(userProvidedSrc) {
     getCurrentState().mixAmount = amount;
   }
 
+  // possible names: 'overwrite', 'set', 'replace'
+  function overwrite() {
+    getCurrentState().mode = modes.OVERWRITE;
+  }
+
   function getMode() {
     switch (getCurrentMode()) {
       case modes.UNION:
@@ -918,6 +924,9 @@ export function sculptToGLSL(userProvidedSrc) {
       case modes.MIXGEO:
         return ["mix", getCurrentState().mixAmount];
         break;
+      case modes.OVERWRITE:
+        return ["overwrite"];
+	break;
       default:
         return ["add"];
     }
@@ -929,7 +938,11 @@ export function sculptToGLSL(userProvidedSrc) {
     appendSources("float " + primName + " = " + prim + ";\n");
     if (additiveModes.includes(getCurrentMode())) {
       let selectedCC = finalCol !== undefined ? finalCol : getCurrentMaterial();
-      if (getCurrentState().materialMode === materialModes.NORMAL) {
+      if (getCurrentMode() === modes.OVERWRITE) {
+        appendColorSource(
+	  getMainMaterial() + " = " + selectedCC + ";\n"
+	);
+      } else if (getCurrentState().materialMode === materialModes.NORMAL) {
         appendColorSource(
           "if (" +
             primName +
