@@ -28,7 +28,8 @@ export default [
       }), // so Rollup can convert `ms` to an ES module
       
       babel({
-        exclude: ['node_modules/**']
+        exclude: ['node_modules/**'],
+        babelHelpers: "bundled"
       }),
       json({
         // All JSON files will be parsed by default,
@@ -69,7 +70,8 @@ export default [
       }), // so Rollup can convert `ms` to an ES module
 
       babel({
-        exclude: ['node_modules/**']
+        exclude: ['node_modules/**'],
+        babelHelpers: "bundled"
       }),
       json({
         // All JSON files will be parsed by default,
@@ -115,7 +117,8 @@ export default [
         // include: ['node_modules/**'],
       }), // so Rollup can convert `ms` to 
       babel({
-        exclude: ['node_modules/**']
+        exclude: ['node_modules/**'],
+        babelHelpers: "bundled"
       }),
       json({
         // All JSON files will be parsed by default,
@@ -152,7 +155,8 @@ export default [
         // include: ['node_modules/**'],
       }), // so Rollup can convert `ms` to 
       babel({
-        exclude: ['node_modules/**']
+        exclude: ['node_modules/**'],
+        babelHelpers: "bundled"
       }),
       json({
         // All JSON files will be parsed by default,
@@ -184,7 +188,8 @@ export default [
         },
       }), 
       babel({
-        exclude: ['node_modules/**']
+        exclude: ['node_modules/**'],
+        babelHelpers: "bundled"
       }),
       json({
         include: 'node_modules/**',
