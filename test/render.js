@@ -119,6 +119,8 @@ describe('Compiling, rendering, checking pixels', () => {
             logs.push(msg);
         });
         await page.goto(pagename);
+        // For some reason p5 hasn't rendered yet, so it needs extra time
+        await page.waitForTimeout(50);
         await page.screenshot({ path: outpath, fullPage: true });
         for (const perr of pageErrors) {
             assert.fail(`Page javascript error: ${perr}`);
