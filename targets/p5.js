@@ -21,7 +21,6 @@ export function toGLSL(source) {
 precision highp float;
 in vec3 aPosition;
 uniform mat4 uModelViewMatrix;
-uniform mat4 uInverseModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 out vec4 worldPos;
 out vec3 sculptureCenter;
@@ -29,11 +28,11 @@ out vec3 cameraPosition;
 void main() {
   vec4 mvPosition = uModelViewMatrix * vec4(aPosition, 1.0);
 
-  mat4 modelMatrix = uModelViewMatrix;
+  mat4 inverseModelViewMatrix = inverse(uModelViewMatrix);
 
   worldPos = vec4(aPosition, 1.);
   sculptureCenter = vec3(0.);
-  cameraPosition = (uInverseModelViewMatrix * vec4(0., 0., 0., 1.0)).xyz;
+  cameraPosition = (inverseModelViewMatrix * vec4(0., 0., 0., 1.0)).xyz;
 
   gl_Position = uProjectionMatrix * mvPosition;
 }
@@ -97,8 +96,6 @@ function createRenderer(target, {
         );
       }
 
-      const inverseModelViewMatrix =
-        new p5.Matrix().invert(_renderer.uMVMatrix)
       const gl = window._renderer.GL;
       const faceCullingEnabled = gl.isEnabled(gl.CULL_FACE);
       const cullFaceMode = gl.getParameter(gl.CULL_FACE_MODE);
@@ -108,10 +105,6 @@ function createRenderer(target, {
       target.push();
       target.noStroke();
       target.shader(output.shader);
-      output.shader.setUniform(
-        'uInverseModelViewMatrix',
-        inverseModelViewMatrix.mat4
-      );
       output.shader.setUniform('time', millis() / 1000);
       output.shader.setUniform('opacity', 1);
       output.shader.setUniform(
