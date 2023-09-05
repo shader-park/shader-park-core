@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <!-- keep the line below for OpenProcessing compatibility -->
+        <!-- <script src="https://openprocessing.org/openprocessing_sketch.js"></script> -->
+        <script src="https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.js"></script>
+        <script type="module" src="../../dist/shader-park-p5.js"></script>
+        <script>
+            let sdf;
+
+            function setup() {
+                createCanvas(windowWidth, windowHeight, WEBGL);
+                    
+                sdf = createShaderPark(`
+                    color(0,0,0);
+                    box(0.5,0.5,0.5);
+                `);
+            }
+
+            function draw() {
+            //clear();
+                background(255);
+                orbitControl();
+                //scale(3);
+                sdf.draw();
+
+            }
+        </script>
+    </head>
+
+<body style="margin: 0; padding:0;">   
+    
+</body>
+
+</html>

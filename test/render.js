@@ -17,6 +17,7 @@ describe('Compiling, rendering, checking pixels', () => {
     const pageY = 300;
     const testSculptDir = 'test/sculptExamples/';
     const testGLSLDir = 'test/glslExamples/';
+    const testp5Dir = 'test/p5Examples/';
     const outDir = 'test/out/';
     const libPath = '../../dist/shader-park-core.esm.js';
 
@@ -58,6 +59,9 @@ describe('Compiling, rendering, checking pixels', () => {
 
     const sculptFiles = generateHTMLFiles(testSculptDir, outDir, 'js', converters.sculptToMinimalHTMLRenderer);
     testExamples(sculptFiles, outDir);
+
+    const p5Files = generateHTMLFiles(testp5Dir, outDir, 'html', (x) => x);
+    testExamples(p5Files, outDir);
 
     function generateHTMLFiles(inputDir, outputDir, fileType, convertFunc) {
         const testFiles = fs.readdirSync(inputDir).map(filePath => {
