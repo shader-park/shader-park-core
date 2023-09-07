@@ -1,6 +1,6 @@
 {
   "name": "shader-park-core",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "core glsl and js framework for shader-park",
   "main": "dist/shader-park-core.esm.js",
   "csj": "dist/shader-park-core.cjs.js",
@@ -12,6 +12,13 @@
   "minimalGLSLRendererCJS": "dist/shader-park-minimal-renderer.cjs.js",
   "bundle": "dist/shader-park-core.bundle.js",
   "private": false,
+  "sideEffects": [
+    "./glsl/bindings.js",
+    "./glsl/glsl-lib.js",
+    "./glsl/sdfs.js",
+    "./generators/glslParser.js",
+    "./generators/sculpt.js"
+  ],
   "bin": {
     "toThreeJS": "converters/convertThreeJS.js",
     "toMinimal": "converters/convertMinimalRender.js"
