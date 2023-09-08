@@ -3,7 +3,10 @@ import http from 'http';
 import puppeteer from 'puppeteer';
 import pngJS from 'png-js';
 import { assert } from 'chai';
-import * as converters from '../dist/shader-park-core.esm.js';
+import {
+    glslToMinimalHTMLRenderer, 
+    sculptToMinimalHTMLRenderer
+} from '../dist/shader-park-core.esm.js';
 
 describe('Compiling, rendering, checking pixels', () => {
 
@@ -52,12 +55,12 @@ describe('Compiling, rendering, checking pixels', () => {
 
     // Test GLSL minimal renderer
 
-    const glslFiles = generateHTMLFiles(testGLSLDir, outDir, 'glsl', converters.glslToMinimalHTMLRenderer);
+    const glslFiles = generateHTMLFiles(testGLSLDir, outDir, 'glsl', glslToMinimalHTMLRenderer);
     testExamples(glslFiles, outDir);
 
     // Test sculpt minimal renderer
 
-    const sculptFiles = generateHTMLFiles(testSculptDir, outDir, 'js', converters.sculptToMinimalHTMLRenderer);
+    const sculptFiles = generateHTMLFiles(testSculptDir, outDir, 'js', sculptToMinimalHTMLRenderer);
     testExamples(sculptFiles, outDir);
 
     const p5Files = generateHTMLFiles(testp5Dir, outDir, 'html', (x) => x);
