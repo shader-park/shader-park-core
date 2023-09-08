@@ -99,7 +99,7 @@ export default [
     input: 'index.js',
     //external: ['escodegen', 'esprima'],
     output: [
-      { file: pkg.csj, format: 'cjs' },
+      { file: pkg.cjs, format: 'cjs' },
       { file: pkg.module, format: 'es' }
     ],
     plugins: [
