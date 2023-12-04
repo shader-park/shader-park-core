@@ -96,7 +96,7 @@ function createRenderer(target, {
         );
       }
 
-      const gl = window._renderer.GL;
+      const gl = target._renderer.GL;
       const faceCullingEnabled = gl.isEnabled(gl.CULL_FACE);
       const cullFaceMode = gl.getParameter(gl.CULL_FACE_MODE);
       gl.enable(gl.CULL_FACE);
@@ -105,7 +105,7 @@ function createRenderer(target, {
       target.push();
       target.noStroke();
       target.shader(output.shader);
-      output.shader.setUniform('time', millis() / 1000);
+      output.shader.setUniform('time', target.millis() / 1000);
       output.shader.setUniform('opacity', 1);
       output.shader.setUniform(
         'mouse',
@@ -119,7 +119,7 @@ function createRenderer(target, {
       output.shader.setUniform('stepSize', 0.85);
       output.shader.setUniform(
         'resolution',
-        [width * target.pixelDensity(), height * target.pixelDensity()]
+        [target.width * target.pixelDensity(), target.height * target.pixelDensity()]
       );
       drawGeometry();
       if (!faceCullingEnabled) {
@@ -127,7 +127,7 @@ function createRenderer(target, {
       } else {
         gl.cullFace(cullFaceMode);
       }
-      pop();
+      target.pop();
     },
   };
 
