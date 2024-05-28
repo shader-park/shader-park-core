@@ -42,7 +42,6 @@ in Vertex
 #define sculptureCenter iVert.sculptureCenter;
 #define worldPos iVert.worldSpacePos
 layout(location = 0) out vec4 oFragColor[TD_NUM_COLOR_BUFFERS];
-out float depthTexture;
 `;
 
 let TDFooter = `
@@ -55,11 +54,13 @@ void main()
     vec3 camPos = uTDMats[iVert.cameraIndex].camInverse[3].xyz;
 
     // Raymarching
-    vec3 rayOrigin = iVert.worldSpacePos.xyz - sculptureCenter;
-    vec3 rayDirection = normalize(iVert.worldSpacePos.xyz-camPos);
-	rayOrigin -= rayDirection*2.0;
+    vec3 rayOrigin = (uTDMats[iVert.cameraIndex].worldInverse*vec4(camPos,1)).xyz;
+    vec3 rayDirection = (vec4(normalize(iVert.worldSpacePos.xyz-camPos),1)).xyz;
+
 	float t = intersect(rayOrigin, rayDirection, stepSize);
-    depthTexture = t;
+	vec4 T = uTDMats[iVert.cameraIndex].proj*vec4(0,0,-t,1);
+	gl_FragDepth = T.z/T.w;
+	vec3 hitP = (uTDMats[iVert.cameraIndex].world*vec4(rayOrigin+t*rayDirection,1)).xyz;
 
 	vec4 outcol = vec4(0.0, 0.0, 0.0, 0.0);
 	vec3 diffuseSum = vec3(0.0, 0.0, 0.0);
@@ -70,7 +71,7 @@ void main()
     vec3 outputColor = vec3(0.);
 
 	// vec3 normal = normalize(worldSpaceNorm.xyz);
-	if(t < 2.5) {
+	if(t < 100) {
 		vec3 p = (rayOrigin + rayDirection*t);
 		vec3 normal = calcNormal(p);
 		
@@ -157,7 +158,7 @@ void main()
 			res = TDLightingPBR(i,
 								pbrDiffuseColor,
 								pbrSpecularColor,
-								iVert.worldSpacePos.xyz,
+								hitP+viewVec*0.001,
 								normal,
 								uShadowStrength, uShadowColor,
 								viewVec,
