@@ -2,6 +2,7 @@ import fs from 'fs';
 import http from 'http';
 import puppeteer from 'puppeteer';
 import { PNG } from 'pngjs';
+import pixelmatch from 'pixelmatch';
 import { assert } from 'chai';
 import {
     glslToMinimalHTMLRenderer,
@@ -93,7 +94,84 @@ describe('Compiling, rendering, checking pixels', () => {
     const p5Files = generateHTMLFiles(testp5Dir, outDir, 'html', (x) => x);
     testExamples(p5Files, outDir);
 
-    function generateHTMLFiles(inputDir, outputDir, fileType, convertFunc) {
+    // Test the three.js target through the real user path: createSculpture from
+    // the bundle, rendered by THREE.WebGLRenderer. The camera reproduces the
+    // minimal renderer's view, so both renders should show the same sculpture.
+
+    const threeFiles = generateHTMLFiles(testSculptDir, outDir, 'js', threeJSHTML, '.three');
+    testExamples(threeFiles, outDir, (fname) => compareToMinimal(fname, outDir));
+
+    function threeJSHTML(src) {
+        // The minimal renderer casts rays from (0, 0, -2) through a plane at
+        // z = 0 that is 1.75 units tall, and its image is mirrored horizontally
+        // relative to a camera at that position (compareToMinimal flips it back)
+        const fov = 2 * Math.atan(0.875 / 2) * 180 / Math.PI;
+        return `<!DOCTYPE html>
+<html>
+<head>
+    <style>html, body { margin: 0; padding: 0; background: white; }</style>
+    <script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js" } }</script>
+</head>
+<body>
+    <script type="module">
+    import * as THREE from 'three';
+    import { createSculpture } from '/dist/shader-park-core.esm.js';
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio(1);
+    renderer.setSize(${pageX}, ${pageY});
+    renderer.setClearColor(0xffffff, 1);
+    document.body.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(${fov}, ${pageX} / ${pageY}, 0.1, 100);
+    camera.position.set(0, 0, -2);
+    camera.lookAt(0, 0, 0);
+    // radius 1 keeps _scale at 1 like the minimal renderer; the larger
+    // geometry just bounds the area the raymarcher runs in
+    const mesh = createSculpture(${JSON.stringify(src).replace(/</g, '\\u003c')}, () => ({}), {
+        radius: 1,
+        geometry: new THREE.SphereGeometry(1.6, 48, 24),
+    });
+    // the minimal renderer leaves input() sliders at 0; do the same here
+    const base = ['time', 'opacity', '_scale', 'mouse', 'stepSize', 'resolution'];
+    for (const u of mesh.material.uniformDescriptions) {
+        if (base.includes(u.name)) continue;
+        const value = mesh.material.uniforms[u.name].value;
+        if (typeof value === 'number') mesh.material.uniforms[u.name].value = 0;
+        else value.setScalar(0);
+    }
+    scene.add(mesh);
+    function frame() {
+        renderer.render(scene, camera);
+        requestAnimationFrame(frame);
+    }
+    frame();
+    </script>
+</body>
+</html>`;
+    }
+
+    function compareToMinimal(fname, outputDir) {
+        const name = fname.replace(/\.three$/, '');
+        const three = readPNG(`${outputDir}${fname}.png`);
+        const minimal = readPNG(`${outputDir}${name}.png`);
+        const { width, height } = three;
+        const flipped = new PNG({ width, height });
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                three.data.copy(flipped.data, (y * width + x) * 4,
+                    (y * width + (width - 1 - x)) * 4, (y * width + (width - 1 - x)) * 4 + 4);
+            }
+        }
+        const diff = new PNG({ width, height });
+        const changed = pixelmatch(flipped.data, minimal.data, diff.data, width, height, { threshold: 0.1 });
+        const ratio = changed / (width * height);
+        fs.writeFileSync(`${outputDir}${fname}.diff.png`, PNG.sync.write(diff));
+        // small differences come from interpolated ray directions on the mesh
+        assert.isAtMost(ratio, 0.005, `${name}: the three.js render differs from the minimal renderer on ` +
+            `${(ratio * 100).toFixed(2)}% of pixels. See ${outputDir}${fname}.diff.png`);
+    }
+
+    function generateHTMLFiles(inputDir, outputDir, fileType, convertFunc, suffix = '') {
         const testFiles = fs.readdirSync(inputDir).map(filePath => {
             const pieces = filePath.split('.');
             return pieces[pieces.length - 2];
@@ -101,17 +179,18 @@ describe('Compiling, rendering, checking pixels', () => {
 
         testFiles.forEach(fileName => {
             const src = fs.readFileSync(inputDir + fileName + '.' + fileType).toString();
-            fs.writeFileSync('./' + outputDir + fileName + '.html', convertFunc(src, libPath));
+            fs.writeFileSync('./' + outputDir + fileName + suffix + '.html', convertFunc(src, libPath));
         });
 
-        return testFiles;
+        return testFiles.map((name) => name + suffix);
     }
 
-    function testExamples(files, outputDir) {
+    function testExamples(files, outputDir, extraCheck) {
         files.forEach(fname => {
             it(`Example: '${fname}'`, async () => {
                 await verifyRender(fname, outputDir);
                 checkNotBlank(fname, outputDir);
+                if (extraCheck) extraCheck(fname);
             }).timeout(30000);
         });
     }
@@ -167,7 +246,11 @@ describe('Compiling, rendering, checking pixels', () => {
         page.on('console', (msg) => {
             logs.push(msg);
         });
-        await page.goto(pagename);
+        const response = await page.goto(pagename);
+        if (!response.ok()) {
+            await page.close();
+            assert.fail(`Loading ${pagename} failed: HTTP ${response.status()}`);
+        }
         await page.waitForFunction(
             (n) => window.__spFrames >= n,
             { timeout: 20000 },
