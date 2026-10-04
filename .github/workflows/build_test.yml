@@ -20,6 +20,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        # the harness compares against the commit this branch forked from main
+        fetch-depth: 0
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
@@ -27,3 +30,4 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
+    - run: npm run harness -- --render

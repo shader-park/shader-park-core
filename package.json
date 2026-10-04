@@ -29,6 +29,7 @@
     "pretest": "npm run build",
     "prepublishOnly": "npm run build && npm run test",
     "test": "mocha --reporter spec",
+    "harness": "node test/harness/run.mjs",
     "toThreeJS": "node converters/convertThreeJS.js",
     "toOffline": "node converters/convertOfflineRenderer.js",
     "toMinimal": "node converters/convertMinimalRenderer.js",
@@ -77,8 +78,9 @@
     "chai": "^4.3.8",
     "mocha": "^10.2.0",
     "p5": "^1.7.0",
-    "png-js": "^1.0.0",
-    "puppeteer": "^21.1.0",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
+    "puppeteer": "^25.12.0",
     "rollup": "^3.28.1",
     "rollup-plugin-version-injector": "^1.3.3"
   }

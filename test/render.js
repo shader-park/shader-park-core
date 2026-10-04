@@ -1,12 +1,23 @@
 import fs from 'fs';
 import http from 'http';
 import puppeteer from 'puppeteer';
-import pngJS from 'png-js';
+import { PNG } from 'pngjs';
 import { assert } from 'chai';
 import {
-    glslToMinimalHTMLRenderer, 
+    glslToMinimalHTMLRenderer,
     sculptToMinimalHTMLRenderer
 } from '../dist/shader-park-core.esm.js';
+
+// End-to-end check: builds pages that use the bundled library (dist/), renders
+// every example in headless Chrome and fails on page errors, shader errors or a
+// blank image. Pixel-level regressions against main are checked by the faster
+// harness: npm run harness
+//
+// Rendering uses SwiftShader (Chrome's software GL) so results match across
+// machines and CI, and time is pinned to 0 so animated sculptures are stable.
+
+// number of animation frames to wait for before taking the screenshot
+const FRAMES_BEFORE_CAPTURE = 2;
 
 describe('Compiling, rendering, checking pixels', () => {
 
@@ -28,15 +39,20 @@ describe('Compiling, rendering, checking pixels', () => {
     let server;
 
     before(async function() {
-        this.timeout(15000);
+        this.timeout(30000);
         server = http.createServer((req, res) => {
+            if (req.url === '/favicon.ico') {
+                res.writeHead(204);
+                res.end();
+                return;
+            }
             fs.readFile('./' + req.url, (err,data) => {
                 if (err) {
                     res.writeHead(404);
                     res.end(JSON.stringify(err));
                     return;
                 }
-                const mimeType = mimeTypes[req.url.split('.').pop()];
+                let mimeType = mimeTypes[req.url.split('.').pop()];
                 if (!mimeType) {
                     mimeType = 'text/plain';
                 }
@@ -45,12 +61,23 @@ describe('Compiling, rendering, checking pixels', () => {
             });
         });
         server.listen(port);
-        browser = await puppeteer.launch();
+        browser = await puppeteer.launch({
+            headless: true,
+            args: [
+                '--use-angle=swiftshader',
+                '--enable-unsafe-swiftshader',
+                '--ignore-gpu-blocklist',
+                // GitHub's Ubuntu runners don't allow Chrome's sandbox
+                ...(process.env.CI ? ['--no-sandbox'] : []),
+            ],
+        });
     });
 
-    after(async () => {
-        server.close();
+    after(async function() {
+        this.timeout(15000);
         await browser.close();
+        server.closeAllConnections();
+        server.close();
     });
 
     // Test GLSL minimal renderer
@@ -71,9 +98,7 @@ describe('Compiling, rendering, checking pixels', () => {
             const pieces = filePath.split('.');
             return pieces[pieces.length - 2];
         });
-    
-        console.log(`Testing ${fileType} examples: `, testFiles);
-    
+
         testFiles.forEach(fileName => {
             const src = fs.readFileSync(inputDir + fileName + '.' + fileType).toString();
             fs.writeFileSync('./' + outputDir + fileName + '.html', convertFunc(src, libPath));
@@ -86,29 +111,46 @@ describe('Compiling, rendering, checking pixels', () => {
         files.forEach(fname => {
             it(`Example: '${fname}'`, async () => {
                 await verifyRender(fname, outputDir);
-            }).timeout(12000);
-            it(`Check pixels '${fname}'`, (done) => {
-                pngJS.decode(`${outputDir}${fname}.png`, function(pixels) {
-                    // pixels is a 1d array (in rgba order) of decoded pixel data
-                    let sum = 0;
-                    for (const v of pixels) {
-                        sum += v;
-                    }
-                    const avg = sum/pixels.length;
-                    //console.log(`${fname} average pixel value : ${avg}`);
-                    assert.isAbove(avg, 2, 'average pixel value is less than 2. This may mean the rendered image is all white/blank.');
-                    assert.isBelow(avg, 254, 'average pixel value greater than 254. This may mean the rendering has failed.');
-                    done();
-                });
-            });
+                checkNotBlank(fname, outputDir);
+            }).timeout(30000);
         });
+    }
+
+    function readPNG(path) {
+        return PNG.sync.read(fs.readFileSync(path));
+    }
+
+    // Catches renders that failed outright (all white / all black)
+    function checkNotBlank(fname, outputDir) {
+        const { data } = readPNG(`${outputDir}${fname}.png`);
+        let sum = 0;
+        for (const v of data) {
+            sum += v;
+        }
+        const avg = sum / data.length;
+        assert.isAbove(avg, 2, `${fname}: average pixel value is less than 2. This may mean the rendered image is all black/blank.`);
+        assert.isBelow(avg, 254, `${fname}: average pixel value greater than 254. This may mean the rendering has failed.`);
     }
 
     async function verifyRender(fname, outputDir) {
         const pagename = `http://localhost:${port}/${outputDir}${fname}.html`;
         const outpath = `${outputDir}${fname}.png`;
         const page = await browser.newPage();
-        await page.setViewport({ width: pageX, height: pageY });
+        await page.setViewport({ width: pageX, height: pageY, deviceScaleFactor: 1 });
+
+        // Pin time to 0 and count animation frames so we can screenshot
+        // as soon as the sculpture has actually been drawn.
+        await page.evaluateOnNewDocument(() => {
+            const fixedNow = Date.now();
+            Date.now = () => fixedNow;
+            window.__spFrames = 0;
+            const raf = window.requestAnimationFrame.bind(window);
+            window.requestAnimationFrame = (cb) => raf((t) => {
+                window.__spFrames++;
+                cb(t);
+            });
+        });
+
         const pageErrors = [];
         page.on('pageerror', (e) => {
             pageErrors.push(e);
@@ -122,9 +164,16 @@ describe('Compiling, rendering, checking pixels', () => {
             logs.push(msg);
         });
         await page.goto(pagename);
-        // For some reason p5 hasn't rendered yet, so it needs extra time
-        await page.waitForTimeout(50);
-        await page.screenshot({ path: outpath, fullPage: true });
+        await page.waitForFunction(
+            (n) => window.__spFrames >= n,
+            { timeout: 20000 },
+            FRAMES_BEFORE_CAPTURE
+        ).catch(() => {
+            errors.push(new Error(`Timed out waiting for ${FRAMES_BEFORE_CAPTURE} rendered frames`));
+        });
+        await page.screenshot({ path: outpath });
+        await page.close();
+
         for (const perr of pageErrors) {
             assert.fail(`Page javascript error: ${perr}`);
         }
@@ -136,8 +185,6 @@ describe('Compiling, rendering, checking pixels', () => {
                 assert.fail(`console error: ${msg.text()}`);
             }
         }
-        await page.close();
     }
 
 });
-
