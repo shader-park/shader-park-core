@@ -19,6 +19,7 @@ import {
   Texture,
   Vector2,
   Vector3,
+  Vector4,
   ShaderMaterial,
   Mesh,
   BoxGeometry,
