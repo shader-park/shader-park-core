@@ -44,7 +44,7 @@ function makeHTML(spCode, minRenderFunc, libPath) {
     <script type="module">
     import {${minRenderFunc}} from '${libPath}';
     let canvas = document.querySelector('.my-canvas');
-    ${minRenderFunc}(canvas, \`${spCode}\`);          
+    ${minRenderFunc}(canvas, ${JSON.stringify(spCode).replace(/</g, "\\u003c")});
     </script>
 </body>
 </html>`;

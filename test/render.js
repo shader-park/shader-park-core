@@ -124,12 +124,16 @@ describe('Compiling, rendering, checking pixels', () => {
     function checkNotBlank(fname, outputDir) {
         const { data } = readPNG(`${outputDir}${fname}.png`);
         let sum = 0;
-        for (const v of data) {
-            sum += v;
+        let drawn = 0;
+        for (let i = 0; i < data.length; i += 4) {
+            sum += data[i] + data[i + 1] + data[i + 2];
+            // anything visibly different from the white page background
+            if (data[i] < 250 || data[i + 1] < 250 || data[i + 2] < 250) drawn++;
         }
-        const avg = sum / data.length;
+        const pixels = data.length / 4;
+        const avg = sum / (pixels * 3);
         assert.isAbove(avg, 2, `${fname}: average pixel value is less than 2. This may mean the rendered image is all black/blank.`);
-        assert.isBelow(avg, 254, `${fname}: average pixel value greater than 254. This may mean the rendering has failed.`);
+        assert.isAbove(drawn / pixels, 0.001, `${fname}: fewer than 0.1% of pixels differ from the white background. This may mean the rendering has failed.`);
     }
 
     async function verifyRender(fname, outputDir) {
