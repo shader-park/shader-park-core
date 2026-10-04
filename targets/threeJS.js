@@ -168,6 +168,10 @@ export function createSculpture(
     material,
     group
   ) {
+    // used by getPixelCoord(), getResolution() and enable2D()
+    if (material.uniforms.resolution) {
+      renderer.getDrawingBufferSize(material.uniforms.resolution.value);
+    }
     let uniformsToUpdate = uniformCallback();
     if (!(typeof uniformsToUpdate === "object")) {
       throw "createSculpture takes, (source, uniformCallback, params) the uniformCallback must be a function that returns a dictionary of uniforms to update";
@@ -188,25 +192,23 @@ function uniformDescriptionToThreeJSFormat(unifs, payload) {
   if (payload && payload !== undefined && payload.msdfTexture !== undefined) {
     finalUniforms["msdf"] = { value: payload.msdfTexture || new Texture() };
   }
+  // values are either arrays (baseUniforms) or {x, y, ...} objects (input2D)
+  const components = (value, keys) =>
+    Array.isArray(value) ? value : keys.map((k) => value[k]);
   unifs.forEach((uniform) => {
     if (uniform.type === "float") {
       finalUniforms[uniform.name] = { value: uniform.value };
     } else if (uniform.type === "vec2") {
       finalUniforms[uniform.name] = {
-        value: new Vector2(uniform.value.x, uniform.value.y),
+        value: new Vector2(...components(uniform.value, ["x", "y"])),
       };
     } else if (uniform.type === "vec3") {
       finalUniforms[uniform.name] = {
-        value: new Vector3(uniform.value.x, uniform.value.y, uniform.value.z),
+        value: new Vector3(...components(uniform.value, ["x", "y", "z"])),
       };
     } else if (uniform.type === "vec4") {
       finalUniforms[uniform.name] = {
-        value: new Vector4(
-          uniform.value.x,
-          uniform.value.y,
-          uniform.value.z,
-          uniform.value.w
-        ),
+        value: new Vector4(...components(uniform.value, ["x", "y", "z", "w"])),
       };
     }
   });
