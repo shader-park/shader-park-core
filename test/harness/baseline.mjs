@@ -31,7 +31,7 @@ export function resolveBase(root, requested) {
 
 export async function buildBaseline(root, sha) {
   const dir = path.join(root, 'test/.baseline', sha);
-  const bundlePath = path.join(dir, 'compiler.mjs');
+  const bundlePath = path.join(dir, 'compiler-v2.mjs');
   if (fs.existsSync(bundlePath)) return { bundlePath, cached: true };
 
   const src = path.join(dir, 'src');
@@ -47,7 +47,7 @@ export async function buildBaseline(root, sha) {
   fs.writeFileSync(entry, [
     "export * from './targets/minimalRenderer.js';",
     "export * as glslLib from './glsl/glsl-lib.js';",
-    "export { baseUniforms, uniformsToGLSL } from './generators/sculpt.js';",
+    "export { baseUniforms, uniformsToGLSL, sculptToGLSL } from './generators/sculpt.js';",
   ].join('\n'));
 
   const bundle = await rollup({

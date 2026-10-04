@@ -25,10 +25,10 @@ import fs from 'fs';
 import path from 'path';
 import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import puppeteer from 'puppeteer';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 import { resolveBase, buildBaseline } from './baseline.mjs';
+import { launchRenderer, pixelsToImage } from './renderer.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const dirs = {
@@ -84,113 +84,6 @@ function compile(entry, jobs) {
   return JSON.parse(out.toString());
 }
 
-// Mirrors fragToMinimalRenderer in targets/minimalRenderer.js, with time pinned to 0
-const PAGE_HTML = `<!DOCTYPE html><html><head><style>
-  html, body { margin: 0; padding: 0; border: 0; background: white; }
-  canvas { display: block; width: ${WIDTH}px; height: ${HEIGHT}px; }
-</style></head><body><canvas width="${WIDTH}" height="${HEIGHT}"></canvas><script>
-  const canvas = document.querySelector('canvas');
-  const gl = canvas.getContext('webgl2');
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), gl.STATIC_DRAW);
-  const indices = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2]), gl.STATIC_DRAW);
-
-  function compileShader(type, src) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, src);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      const log = gl.getShaderInfoLog(shader);
-      gl.deleteShader(shader);
-      throw new Error(log);
-    }
-    return shader;
-  }
-
-  window.renderFrag = async (vert, frag) => {
-    const start = performance.now();
-    let program;
-    try {
-      const vs = compileShader(gl.VERTEX_SHADER, vert);
-      const fs = compileShader(gl.FRAGMENT_SHADER, frag);
-      program = gl.createProgram();
-      gl.attachShader(program, vs);
-      gl.attachShader(program, fs);
-      gl.linkProgram(program);
-      gl.deleteShader(vs);
-      gl.deleteShader(fs);
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        throw new Error('link failed: ' + gl.getProgramInfoLog(program));
-      }
-    } catch (e) {
-      if (program) gl.deleteProgram(program);
-      return { error: e.message };
-    }
-    gl.useProgram(program);
-    const coord = gl.getAttribLocation(program, 'coordinates');
-    gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(coord);
-    gl.clearColor(1.0, 1.0, 1.0, 0.9);
-    gl.enable(gl.DEPTH_TEST);
-    const u = (name) => gl.getUniformLocation(program, name);
-    gl.uniform1f(u('opacity'), 1.0);
-    gl.uniform1f(u('_scale'), 1.0);
-    gl.uniform1f(u('time'), 0.0);
-    gl.uniform2fv(u('resolution'), [canvas.width, canvas.height]);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 0);
-    gl.finish();
-    // Read pixels directly (much faster than a page screenshot)
-    const pixels = new Uint8Array(canvas.width * canvas.height * 4);
-    gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    const ms = performance.now() - start;
-    gl.deleteProgram(program);
-    let binary = '';
-    for (let i = 0; i < pixels.length; i += 0x8000) {
-      binary += String.fromCharCode.apply(null, pixels.subarray(i, i + 0x8000));
-    }
-    return { ms, pixels: btoa(binary) };
-  };
-</script></body></html>`;
-
-async function launch() {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--use-angle=swiftshader',
-      '--enable-unsafe-swiftshader',
-      '--ignore-gpu-blocklist',
-      ...(process.env.CI ? ['--no-sandbox'] : []),
-    ],
-  });
-  const page = await browser.newPage();
-  await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 });
-  await page.setContent(PAGE_HTML);
-  return { browser, page };
-}
-
-// WebGL pixels are bottom-up and premultiplied (the context default). Flip them
-// and composite over the white page the way the browser compositor does.
-function pixelsToImage(raw) {
-  const png = new PNG({ width: WIDTH, height: HEIGHT });
-  for (let y = 0; y < HEIGHT; y++) {
-    const src = (HEIGHT - 1 - y) * WIDTH * 4;
-    const dst = y * WIDTH * 4;
-    for (let x = 0; x < WIDTH * 4; x += 4) {
-      const a = raw[src + x + 3];
-      for (let c = 0; c < 3; c++) {
-        png.data[dst + x + c] = Math.min(255, raw[src + x + c] + (255 - a));
-      }
-      png.data[dst + x + 3] = 255;
-    }
-  }
-  return png;
-}
-
 // Catches renders that failed outright (all white / all black)
 function blankCheck(png) {
   let sum = 0;
@@ -202,14 +95,14 @@ function blankCheck(png) {
 }
 
 // The browser is only launched once something actually needs rendering
-let browserPromise;
-const getPage = () => (browserPromise ??= launch()).then((b) => b.page);
+let rendererPromise;
+const getRenderer = () => (rendererPromise ??= launchRenderer());
 
 async function render(vert, frag, pngPath) {
-  const page = await getPage();
-  const result = await page.evaluate((v, f) => window.renderFrag(v, f), vert, frag);
+  const renderer = await getRenderer();
+  const result = await renderer.renderFrag(vert, frag, WIDTH, HEIGHT);
   if (result.error) return { error: result.error.trim().split('\n').slice(0, 3).join(' | ') };
-  const png = pixelsToImage(Buffer.from(result.pixels, 'base64'));
+  const png = pixelsToImage(Buffer.from(result.pixels, 'base64'), WIDTH, HEIGHT);
   fs.writeFileSync(pngPath, PNG.sync.write(png));
   return { png, ms: result.ms };
 }
@@ -350,7 +243,7 @@ async function runOnce() {
 
 if (!watch) {
   const ok = await runOnce();
-  if (browserPromise) await (await browserPromise).browser.close();
+  if (rendererPromise) await (await rendererPromise).close();
   process.exit(ok ? 0 : 1);
 }
 
