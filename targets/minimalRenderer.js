@@ -14,7 +14,11 @@ import {
 } from "../glsl/glsl-lib.js";
 
 export function glslToMinimalRenderer(canvas, source, updateUniforms) {
-  const fullFrag =
+  return fragToMinimalRenderer(canvas, glslToFullGLSLSource(source), updateUniforms);
+}
+
+export function glslToFullGLSLSource(source) {
+  return (
     minimalHeader +
     usePBRHeader +
     useHemisphereLight +
@@ -24,8 +28,8 @@ export function glslToMinimalRenderer(canvas, source, updateUniforms) {
     "#define MAX_REFLECTIONS 0 \n" +
     sculptureStarterCode +
     source +
-    glslFragFooter;
-  return fragToMinimalRenderer(canvas, fullFrag, updateUniforms);
+    glslFragFooter
+  );
 }
 
 export function sculptToFullGLSLSource(source) {

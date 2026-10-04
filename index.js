@@ -19,7 +19,8 @@ import {
     glslToMinimalRenderer,
     generatedGLSLToMinimalRenderer,
     fragToMinimalRenderer,
-    sculptToFullGLSLSource
+    sculptToFullGLSLSource,
+    glslToFullGLSLSource
 } from './targets/minimalRenderer.js'
 
 import {
@@ -88,6 +89,7 @@ export {
     fragToMinimalRenderer,
     sculptToGLSL,
     sculptToFullGLSLSource,
+    glslToFullGLSLSource,
     baseUniforms, 
     uniformsToGLSL,
     usePBRHeader,

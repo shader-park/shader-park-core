@@ -11,9 +11,10 @@ import {
 
 import { convertFunctionToString } from "../targets/helpers.js";
 
-import glsl from "./glslParser.js";
+import glsl from "./glslParser.cjs";
 
-import { parser } from "@shaderfrog/glsl-parser";
+import glslParserPkg from "@shaderfrog/glsl-parser";
+const { parser } = glslParserPkg;
 
 import { sdfs } from "../glsl/sdfs.js";
 
