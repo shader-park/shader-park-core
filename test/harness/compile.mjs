@@ -3,7 +3,7 @@
 //
 // usage:  node compile.mjs <entry module path> [--parts]
 // stdin:  JSON [{ name, kind: 'sculpt' | 'glsl', src }]
-// stdout: JSON { vert, results: [{ name, frag, error, ms }] }
+// stdout: JSON { vert, results: [{ name, frag, targets: { three, td }, error, ms }] }
 //         with --parts, each result has `parts` (the pieces of the shader,
 //         for assembling custom/debug shaders) instead of `frag`, and the
 //         output includes `lib` (the GLSL library strings)
@@ -67,7 +67,16 @@ const results = jobs.map(({ name, kind, src }) => {
   try {
     if (partsMode) return { name, kind, parts: compileParts(kind, src), ms: performance.now() - start };
     const frag = kind === 'glsl' ? glslToFullGLSLSource(src) : lib.sculptToFullGLSLSource(src);
-    return { name, frag, ms: performance.now() - start };
+    // Shader source for targets we can't render here; compared as text
+    const targets = {};
+    for (const [target, fn] of [['three', 'ThreeJSShaderSource'], ['td', 'TouchDesignerShaderSource']]) {
+      try {
+        targets[target] = (kind === 'glsl' ? lib['glslTo' + fn] : lib['sculptTo' + fn])(src).frag;
+      } catch (e) {
+        targets[target] = { error: String(e?.message ?? e) };
+      }
+    }
+    return { name, frag, targets, ms: performance.now() - start };
   } catch (e) {
     return { name, error: String(e?.stack ?? e), ms: performance.now() - start };
   }

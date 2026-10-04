@@ -5,6 +5,8 @@
 //      those examples pass without rendering
 //   2. for examples whose GLSL changed, renders both versions in one persistent
 //      headless WebGL page and compares the pixels
+//   3. compares the three.js and TouchDesigner shader text; changes are listed
+//      with diff commands for review (they can't be rendered here)
 // Nothing is stored in git: the base compiler is built from `git archive` and
 // cached in test/.baseline/, and images are written to test/out/.
 //
@@ -147,7 +149,9 @@ async function runOnce() {
     const row = { name: r.name, compileMs: r.ms };
     rows.push(row);
     const out = (suffix) => path.join(dirs.out, `${r.name}${suffix}`);
-    for (const suffix of ['.diff.png', '.base.png', '.base.frag']) fs.rmSync(out(suffix), { force: true });
+    for (const suffix of ['.diff.png', '.base.png', '.base.frag', '.three.frag', '.three.base.frag', '.td.frag', '.td.base.frag']) {
+      fs.rmSync(out(suffix), { force: true });
+    }
 
     if (r.error) {
       row.glsl = red('sp error');
@@ -156,6 +160,30 @@ async function runOnce() {
       continue;
     }
     fs.writeFileSync(out('.frag'), r.frag);
+
+    // three.js and TouchDesigner shader text vs base. These targets can't be
+    // rendered here (three.js is rendered by npm test), so a change is
+    // reported for review rather than failing.
+    for (const target of ['three', 'td']) {
+      const now = r.targets?.[target];
+      const then = b?.targets?.[target];
+      if (adHocCode !== undefined) {
+        row[target] = dim('-');
+      } else if (now?.error) {
+        row[target] = red('error');
+        row.detail = `${target}: ${now.error}`;
+        ok = false;
+      } else if (!b || b.error || then === undefined || then?.error) {
+        row[target] = yellow('new');
+      } else if (now === then) {
+        row[target] = green('same');
+      } else {
+        row[target] = yellow('changed');
+        fs.writeFileSync(out(`.${target}.frag`), now);
+        fs.writeFileSync(out(`.${target}.base.frag`), then);
+        row.targetDiffs = [...(row.targetDiffs ?? []), `diff test/out/${r.name}.${target}.base.frag test/out/${r.name}.${target}.frag`];
+      }
+    }
 
     // 1. GLSL vs base
     let mustRender = forceRender || adHocCode !== undefined;
@@ -222,13 +250,14 @@ async function runOnce() {
     const visible = String(s ?? '').replace(/\x1b\[[0-9;]*m/g, '');
     return String(s ?? '') + ' '.repeat(Math.max(0, n - visible.length));
   };
-  console.log(dim(pad('example', 14) + pad('glsl', 10) + pad('pixels', 22) + pad('sp ms', 8) + pad('gl ms', 8)));
+  console.log(dim(pad('example', 14) + pad('glsl', 10) + pad('pixels', 22) + pad('three', 9) + pad('td', 9) + pad('sp ms', 8) + pad('gl ms', 8)));
   for (const row of rows) {
     console.log(
-      pad(row.name, 14) + pad(row.glsl, 10) + pad(row.pixels, 22) +
+      pad(row.name, 14) + pad(row.glsl, 10) + pad(row.pixels, 22) + pad(row.three, 9) + pad(row.td, 9) +
       pad(row.compileMs?.toFixed(0), 8) + pad(row.renderMs?.toFixed(0), 8) +
       (row.detail ? dim(row.detail) : '')
     );
+    for (const d of row.targetDiffs ?? []) console.log(dim(`    ${d}`));
   }
   if (adHocCode !== undefined && rows[0]?.png) {
     console.log(dim(`image: ${rows[0].png}  glsl: test/out/adhoc.frag`));
