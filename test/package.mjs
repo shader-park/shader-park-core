@@ -189,8 +189,15 @@ try {
     console.log('ok');
   `], nodeDir).trim();
   check(deep.endsWith('ok'), 'deep dist/ paths and package.json resolve');
+  const legacy = run('node', ['--input-type=commonjs', '-e', `
+    const sp = require('shader-park-core/dist/shader-park-core.cjs.js');
+    console.log(typeof sp.sculptToThreeJSShaderSource === 'function' && sp.sculptToThreeJSShaderSource('sphere(0.3);').frag.length > 0 ? 'ok' : 'missing');
+  `], nodeDir).trim();
+  check(legacy.endsWith('ok'), "require('shader-park-core/dist/shader-park-core.cjs.js') works (used by the prebuild template; broken since 0.2.0)");
   const pkgDir = path.join(nodeDir, 'node_modules/shader-park-core');
   const pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'));
+  check(pkg.browser === 'dist/shader-park-core.external.esm.js' && pkg.module === pkg.browser,
+    'browser/module fields (Parcel, webpack 4) point at the external build');
   check(pkg.unpkg === 'dist/shader-park-core.esm.js', `unpkg serves ${pkg.unpkg} (same as before)`);
   check(pkg.jsdelivr === 'dist/shader-park-core.umd.js', `jsdelivr serves ${pkg.jsdelivr} (same as before)`);
   for (const f of [pkg.unpkg, pkg.jsdelivr]) {
