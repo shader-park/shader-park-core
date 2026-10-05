@@ -19,10 +19,17 @@ export function uniformsToGLSL(uniforms) {
     return uniformsHeader;
 }
 
-// import {
-//     baseUniforms,
-//     uniformsToGLSL,
-// } from "../generators/sculpt.js";
+import {
+    minimalHeader,
+    minimalVertexSource,
+    usePBRHeader,
+    useHemisphereLight,
+    sculptureStarterCode,
+    glslFragFooter,
+} from "../glsl/glsl-lib.js";
+
+// baseUniforms and uniformsToGLSL are copied above rather than imported from
+// generators/sculpt.js, which would pull the whole compiler into this bundle
 
 // import {
 //     generatedGLSLToMinimalRenderer

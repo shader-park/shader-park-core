@@ -94,6 +94,17 @@ describe('Compiling, rendering, checking pixels', () => {
     const p5Files = generateHTMLFiles(testp5Dir, outDir, 'html', (x) => x);
     testExamples(p5Files, outDir);
 
+    // The standalone minimal renderer bundle (precompiled GLSL, no compiler)
+    // must render raw GLSL exactly like the core library does
+
+    const minimalBundleFiles = generateHTMLFiles(testGLSLDir, outDir, 'glsl', minimalBundleHTML, '.minimal-bundle');
+    testExamples(minimalBundleFiles, outDir, (fname) => compareToMinimal(fname, outDir, { flip: false, maxRatio: 0 }));
+
+    function minimalBundleHTML(src) {
+        return glslToMinimalHTMLRenderer(src, libPath)
+            .replace(libPath, '../../dist/shader-park-minimal-renderer.esm.js');
+    }
+
     // Test the three.js target through the real user path: createSculpture from
     // the build bundlers get (three imported, not bundled), rendered by
     // THREE.WebGLRenderer. The camera reproduces the minimal renderer's view, so
@@ -161,16 +172,16 @@ describe('Compiling, rendering, checking pixels', () => {
 </html>`;
     }
 
-    function compareToMinimal(fname, outputDir) {
-        const name = fname.replace(/\.three(-r\d+)?$/, '');
+    function compareToMinimal(fname, outputDir, { flip = true, maxRatio = 0.005 } = {}) {
+        const name = fname.replace(/\.(three(-r\d+)?|minimal-bundle)$/, '');
         const three = readPNG(`${outputDir}${fname}.png`);
         const minimal = readPNG(`${outputDir}${name}.png`);
         const { width, height } = three;
         const flipped = new PNG({ width, height });
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                three.data.copy(flipped.data, (y * width + x) * 4,
-                    (y * width + (width - 1 - x)) * 4, (y * width + (width - 1 - x)) * 4 + 4);
+                const sx = flip ? width - 1 - x : x;
+                three.data.copy(flipped.data, (y * width + x) * 4, (y * width + sx) * 4, (y * width + sx) * 4 + 4);
             }
         }
         const diff = new PNG({ width, height });
@@ -178,7 +189,7 @@ describe('Compiling, rendering, checking pixels', () => {
         const ratio = changed / (width * height);
         fs.writeFileSync(`${outputDir}${fname}.diff.png`, PNG.sync.write(diff));
         // small differences come from interpolated ray directions on the mesh
-        assert.isAtMost(ratio, 0.005, `${name}: the three.js render differs from the minimal renderer on ` +
+        assert.isAtMost(ratio, maxRatio, `${fname} differs from the minimal renderer on ` +
             `${(ratio * 100).toFixed(2)}% of pixels. See ${outputDir}${fname}.diff.png`);
     }
 
