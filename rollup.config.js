@@ -19,14 +19,6 @@ export default [
       resolve(), // so Rollup can find `ms`
       versionInjector(),
       commonjs({
-        namedExports: {
-          // left-hand side can be an absolute path, a path
-          // relative to the current directory, or the name
-          // of a module in node_modules
-          'node_modules/esprima/dist/esprima.js': ['parse'],
-          //'node_modules/escodegen/escodegen.js': ['generate']
-
-        },
       }), // so Rollup can convert `ms` to an ES module
       
       babel({
@@ -61,14 +53,6 @@ export default [
       resolve(), // so Rollup can find `ms`
       versionInjector(),
       commonjs({
-        namedExports: {
-          // left-hand side can be an absolute path, a path
-          // relative to the current directory, or the name
-          // of a module in node_modules
-          'node_modules/esprima/dist/esprima.js': ['parse'],
-          //'node_modules/escodegen/escodegen.js': ['generate']
-
-        },
       }), // so Rollup can convert `ms` to an ES module
 
       babel({
@@ -99,7 +83,6 @@ export default [
   // `file` and `format` for each target)
   {
     input: 'index.js',
-    //external: ['escodegen', 'esprima'],
     output: [
       { file: pkg.cjs, format: 'cjs' },
       { file: 'dist/shader-park-core.esm.js', format: 'es' }
@@ -108,14 +91,6 @@ export default [
       resolve(), // so Rollup can find `ms`
       versionInjector(),
       commonjs({
-        namedExports: {
-          // left-hand side can be an absolute path, a path
-          // relative to the current directory, or the name
-          // of a module in node_modules
-          'node_modules/esprima/dist/esprima.js': ['parse'],
-          // 'node_modules/escodegen/escodegen.js': ['generate']
-
-        },
         // include: ['node_modules/**'],
       }), // so Rollup can convert `ms` to 
       babel({
@@ -190,13 +165,6 @@ export default [
       resolve(), // so Rollup can find `ms`
       versionInjector(),
       commonjs({
-        namedExports: {
-          // left-hand side can be an absolute path, a path
-          // relative to the current directory, or the name
-          // of a module in node_modules
-          // 'node_modules/esprima/dist/esprima.js': ['parse'],
-
-        },
         // include: ['node_modules/**'],
       }), // so Rollup can convert `ms` to 
       babel({
@@ -229,8 +197,6 @@ export default [
       resolve(), // so Rollup can find `ms`
       versionInjector(),
       commonjs({
-        namedExports: { 'node_modules/esprima/dist/esprima.js': ['parse'],
-        },
       }), 
       babel({
         exclude: ['node_modules/**'],

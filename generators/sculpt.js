@@ -18,8 +18,7 @@ const { parser } = glslParserPkg;
 
 import { sdfs } from "../glsl/sdfs.js";
 
-import * as escodegen from "escodegen";
-import * as esprima from "esprima";
+import { transformOperators } from "./transform.js";
 
 function buildGeoSource(geo) {
   return `
@@ -63,152 +62,6 @@ ${useLighting ? '' : '    return ShadedMaterial(scope_0_material, scope_0_materi
 }`;
 }
 
-// Converts binary math operators to our own version
-function replaceBinaryOp(syntaxTree) {
-  if (typeof syntaxTree === "object") {
-    for (let node in syntaxTree) {
-      if (syntaxTree.hasOwnProperty(node)) {
-        replaceBinaryOp(syntaxTree[node]);
-      }
-    }
-  }
-
-  
-  // handles -variable
-  if (syntaxTree !== null && syntaxTree["type"] === "UnaryExpression") {
-    if (syntaxTree["operator"] == '-' && syntaxTree["argument"] && 
-        syntaxTree["argument"]["type"] == "Identifier") {
-      Object.assign(syntaxTree, {
-        "type": "CallExpression",
-        "callee": {
-          "type": "Identifier",
-          "name": "mult"
-        },
-        "arguments": [
-          {
-            "type": "UnaryExpression",
-            "operator": "-",
-            "argument": {
-              "type": "Literal",
-              "value": 1,
-              "raw": "1"
-            },
-            "prefix": true
-          },
-          {
-            "type": "Identifier",
-            "name": syntaxTree["argument"]["name"]
-          }
-        ]
-      });
-      delete syntaxTree['prefix']
-    }
-  }
-  
-
-  if (syntaxTree !== null && syntaxTree["type"] === "BinaryExpression") {
-    let op = syntaxTree["operator"];
-    if (op === "*" || op === "/" || op === "-" || op === "+") {
-      if (op === "*") {
-        syntaxTree["callee"] = { type: "Identifier", name: "mult" };
-      } else if (op === "/") {
-        syntaxTree["callee"] = { type: "Identifier", name: "divide" };
-      } else if (op === "-") {
-        syntaxTree["callee"] = { type: "Identifier", name: "sub" };
-      } else if (op === "+") {
-        syntaxTree["callee"] = { type: "Identifier", name: "add" };
-      }
-      syntaxTree["type"] = "CallExpression";
-      syntaxTree["arguments"] = [syntaxTree["left"], syntaxTree["right"]];
-      syntaxTree["operator"] = undefined;
-    }
-  }
-}
-
-function replaceOperatorOverload(syntaxTree) {
-  try {
-    if (syntaxTree && typeof syntaxTree === "object") {
-      for (let node in syntaxTree) {
-        if (syntaxTree.hasOwnProperty(node)) {
-          replaceOperatorOverload(syntaxTree[node]);
-        }
-      }
-    }
-    if (
-      syntaxTree &&
-      typeof syntaxTree === "object" &&
-      "type" in syntaxTree &&
-      syntaxTree.type === "ExpressionStatement" &&
-      "expression" in syntaxTree &&
-      syntaxTree.expression.type === "AssignmentExpression"
-    ) {
-      let op = syntaxTree.expression.operator;
-      if (
-        op === "+=" ||
-        op === "-=" ||
-        op === "/=" ||
-        op === "*=" ||
-        op === "%="
-      ) {
-        syntaxTree.expression.operator = "=";
-
-        syntaxTree.expression.right = {
-          type: "BinaryExpression",
-          left: syntaxTree.expression.left,
-          right: syntaxTree.expression.right,
-        };
-
-        if (op === "+=") {
-          syntaxTree.expression.right.operator = "+";
-        } else if (op === "-=") {
-          syntaxTree.expression.right.operator = "-";
-        } else if (op === "/=") {
-          syntaxTree.expression.right.operator = "/";
-        } else if (op === "*=") {
-          syntaxTree.expression.right.operator = "*";
-        } else if (op === "%=") {
-          syntaxTree.expression.right.operator = "%";
-        }
-      }
-    }
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
-}
-
-function replaceSliderInput(syntaxTree) {
-  try {
-    if (syntaxTree && typeof syntaxTree === "object") {
-      for (let node in syntaxTree) {
-        if (syntaxTree.hasOwnProperty(node)) {
-          replaceSliderInput(syntaxTree[node]);
-        }
-      }
-    }
-    if (
-      syntaxTree &&
-      typeof syntaxTree === "object" &&
-      "type" in syntaxTree &&
-      syntaxTree["type"] === "VariableDeclaration"
-    ) {
-      let d = syntaxTree["declarations"][0];
-      let name = d.id.name;
-      if (
-        d &&
-        d.init &&
-        d.init.callee !== undefined &&
-        (d.init.callee.name === "input" || d.init.callee.name === "input2D")
-      ) {
-        d.init.arguments.unshift({ type: "Literal", value: name, raw: name });
-      }
-    }
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
-}
-
 export function uniformsToGLSL(uniforms) {
   let uniformsHeader = "";
   for (let i = 0; i < uniforms.length; i++) {
@@ -238,12 +91,9 @@ export function bindStaticData(staticData, spCode) {
   );
 }
 
+// Rewrites operators on shader values into function calls (see transform.js)
 export function replaceMathOps(codeSrc) {
-  let tree = esprima.parse(codeSrc);
-  replaceOperatorOverload(tree);
-  replaceBinaryOp(tree);
-  replaceSliderInput(tree);
-  return escodegen.generate(tree);
+  return transformOperators(codeSrc);
 }
 
 export function sculptToGLSL(userProvidedSrc) {

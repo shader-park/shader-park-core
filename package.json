@@ -83,9 +83,7 @@
   "dependencies": {
     "@rollup/plugin-babel": "^6.0.3",
     "@shaderfrog/glsl-parser": "^0.2.4",
-    "acorn": "^8.18.0",
-    "escodegen": "^2.1.0",
-    "esprima": "^4.0.1"
+    "acorn": "^8.18.0"
   },
   "devDependencies": {
     "@babel/core": "^7.22.15",
