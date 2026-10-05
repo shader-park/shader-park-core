@@ -30,7 +30,6 @@
     "./glsl/bindings.js",
     "./glsl/glsl-lib.js",
     "./glsl/sdfs.js",
-    "./generators/glslParser.js",
     "./generators/sculpt.js"
   ],
   "bin": {
