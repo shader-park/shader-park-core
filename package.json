@@ -82,7 +82,6 @@
   "homepage": "https://github.com/shader-park/shader-park-core#readme",
   "dependencies": {
     "@rollup/plugin-babel": "^6.0.3",
-    "@shaderfrog/glsl-parser": "^0.2.4",
     "acorn": "^8.18.0"
   },
   "devDependencies": {
