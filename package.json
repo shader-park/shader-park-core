@@ -43,7 +43,7 @@
     "pretest": "npm run build",
     "prepublishOnly": "npm run build && npm run test",
     "test": "mocha --reporter spec test/render.js",
-    "test:package": "npm run build && node test/package.mjs",
+    "test:package": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && npm run build && node test/package.mjs",
     "test:examples": "node test/examples.mjs",
     "harness": "node test/harness/run.mjs",
     "inspect": "node test/harness/inspect.mjs",

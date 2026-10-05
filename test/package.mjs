@@ -196,6 +196,13 @@ try {
   check(legacy.endsWith('ok'), "require('shader-park-core/dist/shader-park-core.cjs.js') works (used by the prebuild template; broken since 0.2.0)");
   const pkgDir = path.join(nodeDir, 'node_modules/shader-park-core');
   const pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8'));
+  const referenced = new Set([
+    ...['main', 'cjs', 'module', 'browser', 'unpkg', 'jsdelivr', 'p5', 'TouchDesigner',
+      'minimalGLSLRendererESM', 'minimalGLSLRendererCJS'].map((f) => pkg[f]),
+    ...JSON.stringify(pkg.exports).match(/\.\/dist\/[^"*]+/g),
+  ]);
+  const missing = [...referenced].filter((f) => !fs.existsSync(path.join(pkgDir, f)));
+  check(missing.length === 0, `every file package.json points to is in the package${missing.length ? ' (missing: ' + missing.join(', ') + ')' : ''}`);
   check(pkg.browser === 'dist/shader-park-core.external.esm.js' && pkg.module === pkg.browser,
     'browser/module fields (Parcel, webpack 4) point at the external build');
   check(pkg.unpkg === 'dist/shader-park-core.esm.js', `unpkg serves ${pkg.unpkg} (same as before)`);

@@ -10,7 +10,9 @@ export default [
   {
     input: 'index.js',
     output: { name: 'shader-park-core',
-      file: pkg.browser,
+      // explicit paths: package.json's browser/module fields point at the
+      // external build, not at these files
+      file: 'dist/shader-park-core.umd.js',
       format: 'umd'
     },
     plugins: [
@@ -100,7 +102,7 @@ export default [
     //external: ['escodegen', 'esprima'],
     output: [
       { file: pkg.cjs, format: 'cjs' },
-      { file: pkg.module, format: 'es' }
+      { file: 'dist/shader-park-core.esm.js', format: 'es' }
     ],
     plugins: [
       resolve(), // so Rollup can find `ms`
