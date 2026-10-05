@@ -11,7 +11,8 @@ three.js, a minimal WebGL renderer, TouchDesigner, p5, Hydra and more.
   API is only referenced from `eval`'d strings, so tree-shaking drops it.
 - Packaging: `package.json` `exports` sends bundlers and Node to
   `dist/shader-park-core.external.{esm.js,cjs}` (three is a peer dependency,
-  imported). `dist/shader-park-core.{esm,cjs,umd}.js` stay self-contained with
+  imported); so do the `browser`/`module` fields, which Parcel and webpack 4
+  read instead of `exports`. `dist/shader-park-core.{esm,cjs,umd}.js` stay self-contained with
   three r155 bundled, for direct file and CDN use. The `three` devDependency
   must stay at 0.155.0 so those files don't change; other versions are tested
   via aliases (`three-r125`, `three-r186`).
@@ -46,6 +47,11 @@ Source runs directly in Node, so none of these tools need a build.
   in a three.js app, `import`/`require` resolving to the external builds, and
   direct file paths and CDN URLs unchanged. Run it after touching
   `package.json` or `rollup.config.js`. About 20 s.
+- `npm run test:examples`: builds the starter templates from the sibling
+  `../shader-park-examples` checkout (Vite, Parcel, plain files) with the
+  shader-park-core version each pins and with this repo's packed build, and
+  compares them (renders, errors, copies of three). Slow (a few minutes, mostly
+  installs); not in CI. Screenshots go to `test/out/examples/`.
 - CI runs `npm test`, `npm run harness -- --render` and the package test.
 
 Outputs go to `test/out/` (gitignored). Nothing renders reference images into
