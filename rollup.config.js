@@ -134,6 +134,49 @@ export default [
       })
     ]
   },
+  // Same entry with three left as an import, so apps that use three.js share
+  // their copy instead of loading a second one. package.json "exports" points
+  // bundlers and Node here; the builds above stay self-contained for direct
+  // file, CDN and script-tag use.
+  // Possible future major version: move the three.js functions to their own
+  // entry (shader-park-core/three) so the main entry never needs three.
+  {
+    input: 'index.js',
+    external: ['three'],
+    output: [
+      // .cjs because package.json has "type": "module"; Node would load a
+      // .js file here as an ES module
+      { file: 'dist/shader-park-core.external.cjs', format: 'cjs' },
+      { file: 'dist/shader-park-core.external.esm.js', format: 'es' }
+    ],
+    plugins: [
+      resolve(),
+      // the defaults only process .js/.html/.css files
+      versionInjector({
+        injectInComments: {
+          fileRegexp: /\.(c?js|html|css)$/,
+          tag: 'Version: {version} - {date}',
+          dateFormat: 'mmmm d, yyyy HH:MM:ss'
+        },
+        injectInTags: {
+          fileRegexp: /\.(c?js|html|css)$/,
+          tagId: 'VI',
+          dateFormat: 'mmmm d, yyyy HH:MM:ss'
+        }
+      }),
+      commonjs(),
+      babel({
+        exclude: ['node_modules/**'],
+        babelHelpers: "bundled"
+      }),
+      json({
+        include: 'node_modules/**',
+        preferConst: true,
+        indent: '  ',
+        compact: true,
+      })
+    ]
+  },
   // Minimal Renderer
   {
     input: 'targets/minimalGLSLRenderer.js',

@@ -34,6 +34,11 @@ With just a few lines of code, create shaders which are:
 ### Install   
 `npm install shader-park-core`
 
+#### three.js
+three.js is a peer dependency (`>=0.125.0`). When you import `shader-park-core` through a bundler (Vite, webpack 5, Rollup, esbuild) or Node, it uses your app's copy of three, so there's only one instance of three on the page. npm 7+ and pnpm install it automatically; with Yarn 1, add `three` to your project yourself.
+
+Loading a file directly (`dist/shader-park-core.esm.js`, `dist/shader-park-core.umd.js`, or the bare unpkg/jsDelivr URL) still gives a self-contained build with three r155 included.
+
 ### Usage
 See examples on [glitch](https://glitch.com/@torinmb/shader-park-examples)
 

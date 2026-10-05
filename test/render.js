@@ -95,13 +95,24 @@ describe('Compiling, rendering, checking pixels', () => {
     testExamples(p5Files, outDir);
 
     // Test the three.js target through the real user path: createSculpture from
-    // the bundle, rendered by THREE.WebGLRenderer. The camera reproduces the
-    // minimal renderer's view, so both renders should show the same sculpture.
+    // the build bundlers get (three imported, not bundled), rendered by
+    // THREE.WebGLRenderer. The camera reproduces the minimal renderer's view, so
+    // both renders should show the same sculpture. three is a peer dependency,
+    // so this runs against the oldest version the peer range allows, the one the
+    // self-contained builds bundle, and a recent one (aliased devDependencies).
 
-    const threeFiles = generateHTMLFiles(testSculptDir, outDir, 'js', threeJSHTML, '.three');
-    testExamples(threeFiles, outDir, (fname) => compareToMinimal(fname, outDir));
+    const threeVersions = {
+        'three-r125': 'three-r125',
+        'three-r155': 'three',
+        'three-r186': 'three-r186',
+    };
+    for (const [label, threePackage] of Object.entries(threeVersions)) {
+        const threeFiles = generateHTMLFiles(testSculptDir, outDir, 'js',
+            (src) => threeJSHTML(src, threePackage), `.${label}`);
+        testExamples(threeFiles, outDir, (fname) => compareToMinimal(fname, outDir));
+    }
 
-    function threeJSHTML(src) {
+    function threeJSHTML(src, threePackage) {
         // The minimal renderer casts rays from (0, 0, -2) through a plane at
         // z = 0 that is 1.75 units tall, and its image is mirrored horizontally
         // relative to a camera at that position (compareToMinimal flips it back)
@@ -110,12 +121,12 @@ describe('Compiling, rendering, checking pixels', () => {
 <html>
 <head>
     <style>html, body { margin: 0; padding: 0; background: white; }</style>
-    <script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js" } }</script>
+    <script type="importmap">{ "imports": { "three": "/node_modules/${threePackage}/build/three.module.js" } }</script>
 </head>
 <body>
     <script type="module">
     import * as THREE from 'three';
-    import { createSculpture } from '/dist/shader-park-core.esm.js';
+    import { createSculpture } from '/dist/shader-park-core.external.esm.js';
     const renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio(1);
     renderer.setSize(${pageX}, ${pageY});
@@ -151,7 +162,7 @@ describe('Compiling, rendering, checking pixels', () => {
     }
 
     function compareToMinimal(fname, outputDir) {
-        const name = fname.replace(/\.three$/, '');
+        const name = fname.replace(/\.three(-r\d+)?$/, '');
         const three = readPNG(`${outputDir}${fname}.png`);
         const minimal = readPNG(`${outputDir}${name}.png`);
         const { width, height } = three;
@@ -268,6 +279,9 @@ describe('Compiling, rendering, checking pixels', () => {
             assert.fail(`error: ${err}`);
         }
         for (const msg of logs) {
+            if (msg.text().includes('Multiple instances of Three.js')) {
+                assert.fail(`three.js was imported twice: ${msg.text()}`);
+            }
             if (msg.type() === 'error') {
                 assert.fail(`console error: ${msg.text()}`);
             }

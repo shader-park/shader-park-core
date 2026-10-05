@@ -31,3 +31,4 @@ jobs:
     - run: npm run build --if-present
     - run: npm test
     - run: npm run harness -- --render
+    - run: node test/package.mjs

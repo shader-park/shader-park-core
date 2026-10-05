@@ -9,6 +9,12 @@ three.js, a minimal WebGL renderer, TouchDesigner, p5, Hydra and more.
 - `targets/`: wraps generated GLSL for each environment.
 - The build (`npm run build`, Rollup) must stay `--no-treeshake`: much of the
   API is only referenced from `eval`'d strings, so tree-shaking drops it.
+- Packaging: `package.json` `exports` sends bundlers and Node to
+  `dist/shader-park-core.external.{esm.js,cjs}` (three is a peer dependency,
+  imported). `dist/shader-park-core.{esm,cjs,umd}.js` stay self-contained with
+  three r155 bundled, for direct file and CDN use. The `three` devDependency
+  must stay at 0.155.0 so those files don't change; other versions are tested
+  via aliases (`three-r125`, `three-r186`).
 
 ## Testing and inspecting shader output
 
@@ -33,7 +39,14 @@ Source runs directly in Node, so none of these tools need a build.
   (later calls drop from about 3 s to under 1 s), and stop it with `--stop`.
 - `npm test`: end-to-end check of the built bundle in real pages, including
   each example through three.js (`createSculpture` + `WebGLRenderer`), which
-  must match the minimal render. CI runs it, plus `npm run harness -- --render`.
+  must match the minimal render. The three.js pages use the external build
+  (three imported, not bundled) with three r125, r155 and r186.
+- `npm run test:package`: packs the package and installs it into throwaway
+  Vite and Node projects to check what users actually get: one copy of three
+  in a three.js app, `import`/`require` resolving to the external builds, and
+  direct file paths and CDN URLs unchanged. Run it after touching
+  `package.json` or `rollup.config.js`. About 20 s.
+- CI runs `npm test`, `npm run harness -- --render` and the package test.
 
 Outputs go to `test/out/` (gitignored). Nothing renders reference images into
 git; the baseline compiler is built from git history and cached in
