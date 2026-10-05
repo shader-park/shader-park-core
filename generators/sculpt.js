@@ -258,7 +258,6 @@ export function sculptToGLSL(userProvidedSrc) {
     console.log("tree", tree);
   }
 
-  let generatedJSFuncsSource = "";
   let geoSrc = "";
   let colorSrc = "";
   let userGLSL = "";
@@ -455,60 +454,34 @@ export function sculptToGLSL(userProvidedSrc) {
     }
   }
 
-  let primitivesJS = "";
-  for (let [funcName, body] of Object.entries(geometryFunctions)) {
-    let argList = body["args"];
-    primitivesJS += "function " + funcName + "(";
-    for (let argIdx = 0; argIdx < argList.length; argIdx++) {
-      if (argIdx !== 0) primitivesJS += ", ";
-      primitivesJS += "arg_" + argIdx;
-    }
-    primitivesJS += ") {\n";
-    let argIdxB = 0;
-    for (let argDim of argList) {
-      if (argDim === 1) {
-        primitivesJS +=
-          '    ensureScalar("' + funcName + '", arg_' + argIdxB + ");\n";
-      }
-      argIdxB += 1;
-    }
-    primitivesJS +=
-      '    applyMode("' + funcName + '("+getCurrentState().p+", " + ';
-    for (let argIdx = 0; argIdx < argList.length; argIdx++) {
-      primitivesJS += "collapseToString(arg_" + argIdx + ") + ";
-      if (argIdx < argList.length - 1) primitivesJS += '", " + ';
-    }
-    primitivesJS += '")");\n}\n\n';
+  // Functions built from the signatures in bindings.js. They're passed to the
+  // user's code by name (see the end of this function) and take precedence
+  // over same-named functions defined here.
+  const generated = {};
+
+  for (const [funcName, body] of Object.entries(geometryFunctions)) {
+    const argList = body["args"];
+    generated[funcName] = function (...args) {
+      argList.forEach((dim, i) => {
+        if (dim === 1) ensureScalar(funcName, args[i]);
+      });
+      const argSrc = argList.map((_, i) => collapseToString(args[i])).join(", ");
+      applyMode(funcName + "(" + collapseToString(getCurrentState().p) + ", " + argSrc + ")");
+    };
   }
-  generatedJSFuncsSource += primitivesJS;
 
-  function generateGLSLWrapper(funcJSON) {
-    let wrapperSrc = "";
-    for (let [funcName, body] of Object.entries(funcJSON)) {
-      let argList = body["args"];
-      let returnType = body["ret"];
-      wrapperSrc += "function " + funcName + "(";
-      for (let argIdx = 0; argIdx < argList.length; argIdx++) {
-        if (argIdx !== 0) wrapperSrc += ", ";
-        wrapperSrc += "arg_" + argIdx;
-      }
-      wrapperSrc += ") {\n";
-      let argIdxB = 0;
-      for (let arg of argList) {
-        wrapperSrc +=
-          "    arg_" + argIdxB + " = tryMakeNum(arg_" + argIdxB + ");\n";
-        argIdxB += 1;
-      }
-      // debug here
-      wrapperSrc += '    return new makeVarWithDims("' + funcName + '(" + ';
-      for (let argIdx = 0; argIdx < argList.length; argIdx++) {
-        wrapperSrc += "arg_" + argIdx + " + ";
-        if (argIdx < argList.length - 1) wrapperSrc += '", " + ';
-      }
-      wrapperSrc += '")", ' + returnType + ");\n}\n";
+  function addGLSLWrappers(funcJSON) {
+    for (const [funcName, body] of Object.entries(funcJSON)) {
+      const argCount = body["args"].length;
+      const returnDims = body["ret"];
+      generated[funcName] = function (...args) {
+        const argSrc = [];
+        for (let i = 0; i < argCount; i++) {
+          argSrc.push(String(tryMakeNum(args[i])));
+        }
+        return new makeVarWithDims(funcName + "(" + argSrc.join(", ") + ")", returnDims);
+      };
     }
-
-    return wrapperSrc;
   }
 
   function mix(arg_0, arg_1, arg_2) {
@@ -561,24 +534,16 @@ export function sculptToGLSL(userProvidedSrc) {
     }
   }
 
-  let mathFunctionsJS = generateGLSLWrapper(mathFunctions);
-  generatedJSFuncsSource += mathFunctionsJS;
+  addGLSLWrappers(mathFunctions);
+  addGLSLWrappers(glslBuiltInOther);
 
-  let builtInOtherJS = generateGLSLWrapper(glslBuiltInOther);
-  generatedJSFuncsSource += builtInOtherJS;
-
-  let builtInOneToOneJS = "";
-  for (let funcName of glslBuiltInOneToOne) {
-    builtInOneToOneJS += `function ${funcName}(x) {
-    x = tryMakeNum(x);
-	// debug here
-	return new makeVarWithDims("${funcName}(" + x + ")", x.dims);
-}
-`;
+  // these have a single input/output and are overloaded for all types
+  for (const funcName of glslBuiltInOneToOne) {
+    generated[funcName] = function (x) {
+      x = tryMakeNum(x);
+      return new makeVarWithDims(funcName + "(" + String(x) + ")", x.dims);
+    };
   }
-  generatedJSFuncsSource += builtInOneToOneJS;
-  ////////////////////////////////////////////////////////////
-  //End Auto Generated Code
 
   // set step size directly
   function setStepSize(val) {
@@ -1363,7 +1328,7 @@ export function sculptToGLSL(userProvidedSrc) {
 
   function fresnel(val) {
     ensureScalar("fresnel", val);
-    return pow(1 + dot(getRayDirection(), normal), val);
+    return pow(add(1, generated.dot(generated.getRayDirection(), normal)), val);
   }
 
   function lightDirection(x, y, z) {
@@ -1523,11 +1488,15 @@ export function sculptToGLSL(userProvidedSrc) {
 
   let error = undefined;
 
+  // Helpers built on the generated functions. Operators on shader values are
+  // written as add/sub/mult/divide calls (what the user-code transform turns
+  // operators into), in the same evaluation order.
+
   function revolve2D(sdf) {
     return (r, ...args) => {
       ensureScalar("revolve2D", r);
       let s = getSpace();
-      let q = vec2(length(vec3(s.x, s.z, 0)) - r, s.y);
+      let q = vec2(sub(generated.length(vec3(s.x, s.z, 0)), r), s.y);
       setSDF(sdf(q, ...args));
     };
   }
@@ -1538,21 +1507,21 @@ export function sculptToGLSL(userProvidedSrc) {
       ensureScalar("extrude2D", h);
       let s = getSpace();
       let d = sdf(vec2(s.x, s.y), ...args);
-      let w = vec2(d, abs(s.z) - h);
-      let t = vec3(max(w.x, 0.0), max(w.y, 0.0), 0);
-      setSDF(min(max(w.x, w.y), 0.0) + length(t));
+      let w = vec2(d, sub(generated.abs(s.z), h));
+      let t = vec3(generated.max(w.x, 0.0), generated.max(w.y, 0.0), 0);
+      setSDF(add(generated.min(generated.max(w.x, w.y), 0.0), generated.length(t)));
     };
   }
 
   function getSpherical() {
-    return toSpherical(getSpace());
+    return generated.toSpherical(getSpace());
   }
 
   function mirrorN(iterations, scale) {
     ensureScalar("mirrorN", scale);
-    for (let i = iterations - 1; i >= 0; i--) {
+    for (let i = sub(iterations, 1); i >= 0; i--) {
       mirrorXYZ();
-      displace(scale * pow(2, i));
+      displace(mult(scale, pow(2, i)));
     }
   }
 
@@ -1560,13 +1529,10 @@ export function sculptToGLSL(userProvidedSrc) {
     // ensureScalar('num', num);
     ensureScalar("num", scale);
     ensureScalar("num", roundness);
-    // num = collapseToString(num);
-    // scale = collapseToString(scale);
-    // roundness = collapseToString(roundness);
     shape(() => {
       mirrorN(num, scale);
       boxFrame(vec3(scale), 0);
-      expand(roundness * scale);
+      expand(mult(roundness, scale));
     })();
   }
 
@@ -1574,21 +1540,21 @@ export function sculptToGLSL(userProvidedSrc) {
     ensureDims("repeatLinear", 3, scale);
     ensureDims("repeatLinear", 3, spacing);
     ensureDims("repeatLinear", 3, counts);
-    const spc = 2 * scale * spacing;
-    const c = counts - 1;
+    const spc = mult(mult(2, scale), spacing);
+    const c = sub(counts, 1);
     const s = getSpace();
-    const rounded = floor(s / spc + 0.5);
+    const rounded = generated.floor(add(divide(s, spc), 0.5));
     const clamped = vec3(
-      clamp(rounded.x, -1 * c.x, c.x),
-      clamp(rounded.y, -1 * c.y, c.y),
-      clamp(rounded.z, -1 * c.z, c.z)
+      generated.clamp(rounded.x, mult(-1, c.x), c.x),
+      generated.clamp(rounded.y, mult(-1, c.y), c.y),
+      generated.clamp(rounded.z, mult(-1, c.z), c.z)
     );
-    displace(spc * clamped);
+    displace(mult(spc, clamped));
     // return instance x, y, z index
     // and instances local coordinates
-    const coordScaled = s / spc;
-    const index = floor(coordScaled + 0.5);
-    return { index: index, local: coordScaled - index };
+    const coordScaled = divide(s, spc);
+    const index = generated.floor(add(coordScaled, 0.5));
+    return { index: index, local: sub(coordScaled, index) };
   }
 
   // based on https://mercury.sexy/hg_sdf/
@@ -1596,57 +1562,73 @@ export function sculptToGLSL(userProvidedSrc) {
     ensureScalar("repeatRadial", repeats);
     const s = getSpace();
     const p = vec3(s.x, 0, s.z);
-    const angle = (2 * PI) / repeats;
-    const a = atan(p.z, p.x) + angle / 2;
-    const r = length(p);
-    let c = floor(a / angle);
-    const ma = mod(a, angle) - angle / 2;
-    const px = cos(ma) * r;
-    const pz = sin(ma) * r;
+    const angle = divide(mult(2, PI), repeats);
+    const a = add(generated.atan(p.z, p.x), divide(angle, 2));
+    const r = generated.length(p);
+    let c = generated.floor(divide(a, angle));
+    const ma = sub(generated.mod(a, angle), divide(angle, 2));
+    const px = mult(generated.cos(ma), r);
+    const pz = mult(generated.sin(ma), r);
     setSpace(vec3(px, s.y, pz));
-    const absC = abs(c);
+    const absC = generated.abs(c);
     // account for odd number of repeats
-    const diff = step(absC, repeats / 2);
-    c = diff * absC + (1 - diff) * c;
+    const diff = generated.step(absC, divide(repeats, 2));
+    c = add(mult(diff, absC), mult(sub(1, diff), c));
     // return radial index
     return c;
   }
 
   function scaleShape(primitive, factor) {
     return (...args) => {
-      setSpace(getSpace() / factor);
+      setSpace(divide(getSpace(), factor));
       primitive(...args);
-      setSDF(getSDF() * factor);
+      setSDF(mult(getSDF(), factor));
     };
   }
 
   function vectorContourNoise(s, offset, sinScale = 1) {
+    const { sin, noise } = generated;
     return vec3(
-      sin(noise(s + offset)* sinScale),
-      sin(noise(s + offset*2)* sinScale),
-      sin(noise(s + offset*3) * sinScale)
-    )
+      sin(mult(noise(add(s, offset)), sinScale)),
+      sin(mult(noise(add(s, mult(offset, 2))), sinScale)),
+      sin(mult(noise(add(s, mult(offset, 3))), sinScale))
+    );
   }
 
-  // Define any code that needs to reference auto generated from bindings.js code here
-  let postGeneratedFunctions = replaceMathOps(
-    [
-      getSpherical,
-      fresnel,
-      revolve2D,
-      extrude2D,
-      mirrorN,
-      grid,
-      repeatLinear,
-      repeatRadial,
-      scaleShape,
-      vectorContourNoise
-    ]
-      .map((el) => el.toString())
-      .join("\n")
-  );
+  // Everything the user's code can call by name. Generated functions override
+  // same-named ones defined above, and the helpers come last, matching the
+  // order the old eval'd source defined them in.
+  const api = {
+    PI, TWO_PI, TAU, time, mouse, normal,
+    glslFunc, glslFuncES3, glslSDF, boxFrame, link, cappedTorus, box, torus, cylinder,
+    overloadVec2GeomFunc, mix, pow, ensureSameDims,
+    setStepSize, setGeometryQuality, setMaxIterations, setMaxReflections,
+    getCurrentState, getCurrentMode, getCurrentDist, getCurrentPos, getMainMaterial,
+    getCurrentMaterial, appendSources, appendColorSource,
+    makeVar, float, vec2, vec3, vec4, applyVectorAssignmentOverload, makeVarWithDims,
+    mouseIntersection, getRayDirection, compileError, ensureScalar, ensureDims,
+    ensureGroupOp, collapseToString, mixMat, resetMixColor,
+    union, difference, intersect, blend, mixGeo, overwrite, getMode, applyMode,
+    getSpace, pushState, popState, shape, tryMakeNum, mult, add, sub, divide,
+    setSDF, getSDF, extractSDF, reset, displace, setSpace, repeat,
+    rotateX, rotateY, rotateZ, mirrorX, mirrorY, mirrorZ, mirrorXYZ, flipX, flipY, flipZ,
+    expand, shell, color, reflectiveColor, metal, shine, lightDirection,
+    backgroundColor, noLighting, basicLighting, occlusion, test, input, input2D,
+    getPixelCoord, getResolution, get2DCoords, enable2D,
+    ...generated,
+    fresnel, getSpherical, revolve2D, extrude2D, mirrorN, grid, repeatLinear,
+    repeatRadial, scaleShape, vectorContourNoise,
+  };
 
-  eval(generatedJSFuncsSource + postGeneratedFunctions + userProvidedSrc);
+  // Run the user's code with the API passed in by name. Unlike eval, this
+  // doesn't depend on local names, so it survives minification of this
+  // library. The block lets user code declare its own variables with the same
+  // names as API functions (e.g. `let color = ...`), as it could with eval.
+  const runUserCode = new Function(
+    ...Object.keys(api),
+    '"use strict";\n{\n' + userProvidedSrc + "\n}"
+  );
+  runUserCode(...Object.values(api));
 
   if (enable2DFlag) {
     setSDF(0);
