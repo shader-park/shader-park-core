@@ -242,7 +242,7 @@ export function glslToTouchDesignerShaderSource(source) {
 }
 
 export function sculptToTouchDesignerShaderSource(source) {
-  const src = sculptToGLSL(source);
+  const src = sculptToGLSL(source, { validateGLSL: false });
   if (src.error) {
     console.log(src.error);
   }

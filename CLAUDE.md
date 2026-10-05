@@ -7,7 +7,12 @@ three.js, a minimal WebGL renderer, TouchDesigner, p5, Hydra and more.
   `generators/transform.js` (acorn; operators become `add()`/`mult()` calls),
   then run; running it records GLSL.
 - `generators/glslSignature.js`: reads the last function's signature in a
-  `glslFunc` snippet. GLSL bodies aren't parsed; the GPU compiler checks them.
+  `glslFunc` snippet. `generators/validateGLSL.js` then compiles user snippets
+  with the browser's WebGL2 compiler at the end of `sculptToGLSL`, so syntax,
+  type and undefined-name errors are thrown as Shader Park errors with the
+  snippet's line numbers (skipped in Node and for TouchDesigner).
+  `node test/harness/glslCorpus.mjs` checks it against every public sculpture
+  using glslFunc: there must be 0 false positives.
 - `glsl/glsl-lib.js`: GLSL library (SDFs, lighting, raymarch loop, footers).
 - `targets/`: wraps generated GLSL for each environment.
 - User code runs via `new Function(...apiNames, code)` with the API passed in

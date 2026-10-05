@@ -123,6 +123,65 @@ describe('Compiling, rendering, checking pixels', () => {
         testExamples(threeFiles, outDir, (fname) => compareToMinimal(fname, outDir));
     }
 
+    // glslFunc code is checked with the browser's shader compiler when the
+    // sculpture compiles, so mistakes come back as Shader Park errors with the
+    // snippet's line numbers (generators/validateGLSL.js)
+
+    describe('glslFunc errors', () => {
+        let page;
+        before(async function() {
+            this.timeout(30000);
+            fs.writeFileSync(`${outDir}glsl-errors.html`, `<!DOCTYPE html><script type="module">
+                import * as sp from '/dist/shader-park-core.esm.js';
+                window.sp = sp;
+                window.ready = true;
+            </script>`);
+            page = await browser.newPage();
+            await page.goto(`http://localhost:${port}/${outDir}glsl-errors.html`);
+            await page.waitForFunction(() => window.ready);
+        });
+        after(async () => page && page.close());
+
+        // returns the thrown error message, or null
+        const compile = (code, fn = 'sculptToGLSL') => page.evaluate((code, fn) => {
+            try {
+                window.sp[fn](code);
+                return null;
+            } catch (e) {
+                return String(e);
+            }
+        }, code, fn);
+        const sculpture = (glslFn, snippet) =>
+            `let f = ${glslFn}(\`${snippet}\`); let later = input(0.5); sphere(f(0.3) * 0.1 + 0.2);`;
+
+        const errorCases = [
+            ['a syntax error', 'float f(float x) {\n  if (> 0.5) { return 1.0; }\n  return x;\n}', /line 2: '>' : syntax error\n\s+if \(> 0\.5\)/],
+            ['a type error', 'float f(float x) {\n  return x * vec2(1.0);\n}', /line 2: 'return' : function return is not matching type/],
+            ['an undefined name', 'float f(float x) {\n  float y = x;\n  return y + notDefined;\n}', /line 3: 'notDefined' : undeclared identifier/],
+        ];
+        for (const glslFn of ['glslFunc', 'glslFuncES3']) {
+            for (const [label, snippet, expected] of errorCases) {
+                it(`${glslFn}: reports ${label}`, async () => {
+                    const error = await compile(sculpture(glslFn, snippet));
+                    assert.match(error, new RegExp(`glsl error in ${glslFn} 'f', ` + expected.source));
+                });
+            }
+            it(`${glslFn}: accepts valid code using the library, uniforms and later inputs`, async () => {
+                const snippet = 'float f(float x) {\n  return noise(vec3(x, time, 0.0)) * later;\n}';
+                assert.isNull(await compile(sculpture(glslFn, snippet)));
+            });
+        }
+        it('reports errors through the three.js target', async () => {
+            const error = await compile(sculpture('glslFunc', errorCases[0][1]), 'sculptToThreeJSShaderSource');
+            assert.match(error, /glsl error in glslFunc 'f', line 2/);
+        });
+        it('skips the check for TouchDesigner (TD built-ins are valid there)', async () => {
+            const snippet = 'float f(float x) {\n  return TDSimplexNoise(vec3(x));\n}';
+            assert.match(await compile(sculpture('glslFunc', snippet)), /TDSimplexNoise/);
+            assert.isNull(await compile(sculpture('glslFunc', snippet), 'sculptToTouchDesignerShaderSource'));
+        });
+    });
+
     function threeJSHTML(src, threePackage) {
         // The minimal renderer casts rays from (0, 0, -2) through a plane at
         // z = 0 that is 1.75 units tall, and its image is mirrored horizontally

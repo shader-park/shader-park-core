@@ -17,6 +17,13 @@ import { sdfs } from "../glsl/sdfs.js";
 
 import { transformOperators } from "./transform.js";
 import { lastFunctionSignature, glslTypeSize } from "./glslSignature.js";
+import { validateGLSLSnippets } from "./validateGLSL.js";
+import {
+  minimalHeader,
+  usePBRHeader,
+  useHemisphereLight,
+  sculptureStarterCode,
+} from "../glsl/glsl-lib.js";
 
 function buildGeoSource(geo) {
   return `
@@ -94,7 +101,10 @@ export function replaceMathOps(codeSrc) {
   return transformOperators(codeSrc);
 }
 
-export function sculptToGLSL(userProvidedSrc) {
+// options.validateGLSL: check glslFunc code with the browser's shader compiler
+// (default true; only runs where WebGL2 exists). Off for TouchDesigner, whose
+// shaders can use TD built-ins (TDSimplexNoise, ...) that WebGL doesn't have.
+export function sculptToGLSL(userProvidedSrc, { validateGLSL = true } = {}) {
   const PI = Math.PI;
   const TWO_PI = Math.PI * 2;
   const TAU = TWO_PI;
@@ -166,9 +176,15 @@ export function sculptToGLSL(userProvidedSrc) {
     };
   }
 
+  // GLSL added by glslFunc / glslFuncES3 / glslSDF, checked with the browser's
+  // shader compiler once the sculpture is compiled (see validateGLSL.js)
+  const glslSnippets = [];
+  let bindingBuiltIns = false;
+
   function glslFunc(src) {
     userGLSL += src + "\n";
     const { name, returnType, params } = readSignature(src, "glsl error");
+    glslSnippets.push({ src: src + "\n", user: !bindingBuiltIns, kind: "glslFunc", name });
     const sizeOf = (type) => {
       const size = glslTypeSize(type);
       if (size === undefined) {
@@ -182,6 +198,7 @@ export function sculptToGLSL(userProvidedSrc) {
   function glslFuncES3(src) {
     userGLSL += src + "\n";
     const { name, returnType, params } = readSignature(src, "glsl error in glslFuncES3 when parsing");
+    glslSnippets.push({ src: src + "\n", user: !bindingBuiltIns, kind: "glslFuncES3", name });
 
     if (!(returnType === "void" || returnType in dimsMapping)) {
       compileError(
@@ -211,9 +228,11 @@ export function sculptToGLSL(userProvidedSrc) {
 
   ////////////// DESTRUCT SDFs
   let boundSDFs = {};
+  bindingBuiltIns = true;
   for (const [key, value] of Object.entries(sdfs)) {
     boundSDFs[key] = glslSDF(value);
   }
+  bindingBuiltIns = false;
 
   let { boxFrame, link, cappedTorus } = boundSDFs;
 
@@ -1441,6 +1460,26 @@ export function sculptToGLSL(userProvidedSrc) {
   if (enable2DFlag) {
     setSDF(0);
   }
+
+  // The snippets appear in the final shader after the header, uniforms and
+  // library; compile them in that context to report mistakes now, with the
+  // snippet's own line numbers. msdf is declared by the three.js target only.
+  const glslError = validateGLSL && validateGLSLSnippets(
+    minimalHeader +
+      usePBRHeader +
+      useHemisphereLight +
+      uniformsToGLSL(uniforms) +
+      "uniform sampler2D msdf;\n" +
+      "const float STEP_SIZE_CONSTANT = " + stepSizeConstant + ";\n" +
+      "const int MAX_ITERATIONS = " + maxIterations + ";\n" +
+      "#define MAX_REFLECTIONS " + maxReflections + "\n" +
+      sculptureStarterCode,
+    glslSnippets
+  );
+  if (glslError) {
+    compileError(glslError);
+  }
+
   let geoFinal = userGLSL + "\n" + buildGeoSource(geoSrc);
   let colorFinal = buildColorSource(colorSrc, useLighting);
 
