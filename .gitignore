@@ -4,3 +4,4 @@ yarn-error.log
 *.DS_Store
 dist
 test/.baseline
+test/.corpus

@@ -1622,13 +1622,14 @@ export function sculptToGLSL(userProvidedSrc) {
 
   // Run the user's code with the API passed in by name. Unlike eval, this
   // doesn't depend on local names, so it survives minification of this
-  // library. The block lets user code declare its own variables with the same
-  // names as API functions (e.g. `let color = ...`), as it could with eval.
+  // library. The user's code is the body of an inner function, which (like
+  // eval) lets it redeclare API names (`let color = ...`) and define the same
+  // function twice; a block would make the latter a syntax error.
   const runUserCode = new Function(
     ...Object.keys(api),
-    '"use strict";\n{\n' + userProvidedSrc + "\n}"
+    '"use strict";\nreturn function () {\n' + userProvidedSrc + "\n};"
   );
-  runUserCode(...Object.values(api));
+  runUserCode(...Object.values(api))();
 
   if (enable2DFlag) {
     setSDF(0);

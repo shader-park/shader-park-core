@@ -62,7 +62,20 @@ function compileParts(kind, src) {
   };
 }
 
+// Deterministic Math.random per job, so sculptures that use randomness compile
+// the same way every time (and the same on both sides of a comparison)
+function seedRandom(seed) {
+  let t = seed >>> 0;
+  Math.random = () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 const results = jobs.map(({ name, kind, src }) => {
+  seedRandom(12345);
   const start = performance.now();
   try {
     if (partsMode) return { name, kind, parts: compileParts(kind, src), ms: performance.now() - start };

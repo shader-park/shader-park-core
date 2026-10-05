@@ -46,6 +46,7 @@
     "test:package": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && npm run build && node test/package.mjs",
     "test:examples": "node test/examples.mjs",
     "harness": "node test/harness/run.mjs",
+    "corpus": "node test/harness/corpus.mjs",
     "inspect": "node test/harness/inspect.mjs",
     "toThreeJS": "node converters/convertThreeJS.js",
     "toOffline": "node converters/convertOfflineRenderer.js",
@@ -82,6 +83,7 @@
   "dependencies": {
     "@rollup/plugin-babel": "^6.0.3",
     "@shaderfrog/glsl-parser": "^0.2.4",
+    "acorn": "^8.18.0",
     "escodegen": "^2.1.0",
     "esprima": "^4.0.1"
   },

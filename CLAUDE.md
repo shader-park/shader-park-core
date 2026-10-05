@@ -31,6 +31,11 @@ Source runs directly in Node, so none of these tools need a build.
   It also diffs the three.js and TouchDesigner shader text against main and
   prints `diff` commands for any change. TouchDesigner can't be run here, so
   review those diffs by hand.
+- `npm run corpus`: compiles every public sculpture from shaderpark.com
+  (~4,300, downloaded once into gitignored `test/.corpus/`, refresh with
+  `-- --download`) with the working tree and with main, and compares the
+  shaders for all three targets. About 2 minutes. Run it for any change to
+  how code is compiled; the goal is 0 `different` and 0 `onlyNowFails`.
 - `npm run inspect -- <example | file | --code "...">`: renders a labeled
   contact sheet to `test/out/inspect.png` (read it as an image) with per-cell
   stats. Views: `beauty` (matches the minimal renderer exactly), `normals`,
