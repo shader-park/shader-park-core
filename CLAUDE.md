@@ -3,8 +3,11 @@
 Compiles Shader Park code (JS) to GLSL raymarching shaders, with targets for
 three.js, a minimal WebGL renderer, TouchDesigner, p5, Hydra and more.
 
-- `generators/sculpt.js`: the compiler. User code is rewritten with esprima
-  (operators become `add()`/`mult()` calls), then `eval`'d; running it records GLSL.
+- `generators/sculpt.js`: the compiler. User code is rewritten by
+  `generators/transform.js` (acorn; operators become `add()`/`mult()` calls),
+  then run; running it records GLSL.
+- `generators/glslSignature.js`: reads the last function's signature in a
+  `glslFunc` snippet. GLSL bodies aren't parsed; the GPU compiler checks them.
 - `glsl/glsl-lib.js`: GLSL library (SDFs, lighting, raymarch loop, footers).
 - `targets/`: wraps generated GLSL for each environment.
 - User code runs via `new Function(...apiNames, code)` with the API passed in
