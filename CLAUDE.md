@@ -7,8 +7,11 @@ three.js, a minimal WebGL renderer, TouchDesigner, p5, Hydra and more.
   (operators become `add()`/`mult()` calls), then `eval`'d; running it records GLSL.
 - `glsl/glsl-lib.js`: GLSL library (SDFs, lighting, raymarch loop, footers).
 - `targets/`: wraps generated GLSL for each environment.
-- The build (`npm run build`, Rollup) must stay `--no-treeshake`: much of the
-  API is only referenced from `eval`'d strings, so tree-shaking drops it.
+- User code runs via `new Function(...apiNames, code)` with the API passed in
+  explicitly (`api` at the end of `sculptToGLSL`). Library code must not rely
+  on `eval`, `Function.prototype.toString` or local names being visible to
+  user code: apps minify this library. A function users call by name has to
+  be listed in `api`.
 - Packaging: `package.json` `exports` sends bundlers and Node to
   `dist/shader-park-core.external.{esm.js,cjs}` (three is a peer dependency,
   imported); so do the `browser`/`module` fields, which Parcel and webpack 4

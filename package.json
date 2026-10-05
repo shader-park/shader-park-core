@@ -38,8 +38,8 @@
     "toMinimal": "converters/convertMinimalRender.js"
   },
   "scripts": {
-    "build": "rollup -c --no-treeshake",
-    "watch": "rollup -c -w --no-treeshake",
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
     "pretest": "npm run build",
     "prepublishOnly": "npm run build && npm run test",
     "test": "mocha --reporter spec test/render.js",
