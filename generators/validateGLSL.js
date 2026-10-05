@@ -34,6 +34,21 @@ function getContext() {
   return gl;
 }
 
+// The compiler only notices a missing ';' at the next token, so it reports the
+// following line. If the flagged token starts its line and the previous line
+// ends like a finished statement (a name, number, ')' or ']'), point at it.
+function missingSemicolonHint(message, lines, lineNumber) {
+  const token = message.match(/^'([^']+)'\s*:\s*syntax error/);
+  const code = lines[lineNumber - 1];
+  if (!token || code === undefined || !code.trim().startsWith(token[1])) return null;
+  for (let i = lineNumber - 2; i >= 0; i--) {
+    const previous = lines[i].replace(/\/\/.*$/, "").trim();
+    if (!previous || previous.startsWith("#")) continue;
+    return /[\w.)\]]$/.test(previous) ? `(is a ';' missing at the end of line ${i + 1}?)` : null;
+  }
+  return null;
+}
+
 /**
  * @param preamble everything that precedes the snippets in the real shader
  * @param snippets [{ src, user: boolean, kind, name }] in shader order
@@ -79,11 +94,14 @@ export function validateGLSLSnippets(preamble, snippets) {
     const range = ranges.find((r) => errorLine >= r.first && errorLine <= r.last);
     if (!range || !range.snippet.user) continue;
     const snippetLine = errorLine - range.first + 1;
-    const code = range.snippet.src.split("\n")[snippetLine - 1];
+    const lines = range.snippet.src.split("\n");
+    const code = lines[snippetLine - 1];
     const where = range.snippet.name ? `${range.snippet.kind} '${range.snippet.name}'` : range.snippet.kind;
+    const hint = missingSemicolonHint(m[2], lines, snippetLine);
     messages.push(
       `glsl error in ${where}, line ${snippetLine}: ${m[2].trim()}` +
-        (code !== undefined ? `\n    ${code.trim()}` : "")
+        (code !== undefined ? `\n    ${code.trim()}` : "") +
+        (hint ? `\n    ${hint}` : "")
     );
   }
   return messages.length ? messages.join("\n") : null;

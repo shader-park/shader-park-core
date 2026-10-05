@@ -171,6 +171,17 @@ describe('Compiling, rendering, checking pixels', () => {
                 assert.isNull(await compile(sculpture(glslFn, snippet)));
             });
         }
+        it('points at the line missing a semicolon', async () => {
+            const snippet = 'float f(float x) {\n  float y = x * 2.0 // comment\n\n  return y;\n}';
+            const error = await compile(sculpture('glslFunc', snippet));
+            assert.match(error, /line 4: 'return' : syntax error\n\s+return y;\n\s+\(is a ';' missing at the end of line 2\?\)/);
+        });
+        it('gives no semicolon hint when the previous line clearly continues', async () => {
+            const snippet = 'float f(float x) {\n  float y = x +\n  return y;\n}';
+            const error = await compile(sculpture('glslFunc', snippet));
+            assert.match(error, /syntax error/);
+            assert.notMatch(error, /missing/);
+        });
         it('reports errors through the three.js target', async () => {
             const error = await compile(sculpture('glslFunc', errorCases[0][1]), 'sculptToThreeJSShaderSource');
             assert.match(error, /glsl error in glslFunc 'f', line 2/);
